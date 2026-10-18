@@ -1,0 +1,29 @@
+{
+  "name": "global-booking",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Foundation for the GLOBAL BOOKING multi-industry booking platform.",
+  "type": "module",
+  "engines": {
+    "node": ">=20 <21"
+  },
+  "scripts": {
+    "dev": "tsx watch src/server.ts",
+    "typecheck": "tsc --noEmit",
+    "test": "node --import tsx --test tests/*.test.ts",
+    "build": "tsc",
+    "start": "node dist/src/server.js",
+    "validate": "npm run typecheck && npm test && npm run build"
+  },
+  "dependencies": {
+    "fastify": "^5.6.1"
+  },
+  "devDependencies": {
+    "@types/node": "^20.19.19",
+    "tsx": "^4.20.6",
+    "typescript": "^5.9.3"
+  },
+  "overrides": {
+    "light-my-request": "6.6.0"
+  }
+}
