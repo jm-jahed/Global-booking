@@ -17,6 +17,12 @@ export const INDUSTRIES = [
     description: "Patient-first scheduling across clinics, departments, and care teams.",
     serviceExamples: ["Clinical appointment", "Department selection", "Patient queue"],
   },
+] as const satisfies readonly IndustryDefinition[];
+
+/**
+ * Archived categories for future phases
+ */
+export const ARCHIVED_FUTURE_INDUSTRIES = [
   {
     slug: "salons",
     name: "Salons / Spas",
@@ -55,5 +61,8 @@ export const INDUSTRIES = [
 export type IndustrySlug = (typeof INDUSTRIES)[number]["slug"];
 
 export function getIndustry(slug: string): IndustryDefinition | undefined {
-  return INDUSTRIES.find((industry) => industry.slug === slug);
+  return (
+    INDUSTRIES.find((industry) => industry.slug === slug) ??
+    ARCHIVED_FUTURE_INDUSTRIES.find((industry) => industry.slug === slug)
+  );
 }

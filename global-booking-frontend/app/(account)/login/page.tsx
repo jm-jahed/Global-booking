@@ -1,6 +1,11 @@
-import { FoundationPage } from "@/components/shared/foundation-page";
-import { PAGE_CONTENT } from "@/config/page-content";
 import { pageMetadata } from "@/lib/utils/metadata";
-const content = PAGE_CONTENT.login;
-export const metadata = pageMetadata("Sign in", content.description);
-export default function Page() { return <FoundationPage {...content} />; }
+import { LuxuryLoginForm } from "./login-form";
+
+export const metadata = pageMetadata(
+    "Sign In",
+    "Sign in to access your luxury Global Booking executive portal."
+);
+
+export default function LoginPage() {
+    return <LuxuryLoginForm />;
+}

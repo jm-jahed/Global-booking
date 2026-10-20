@@ -10,7 +10,9 @@ const REQUIRED_STATIC_ROUTES = [
   "/booking/status", "/login", "/register", "/forgot-password",
   "/reset-password", "/dashboard", "/appointments", "/patients", "/customers",
   "/clients", "/services", "/staff", "/availability", "/locations",
-  "/notifications", "/settings", "/admin", "/admin/businesses", "/admin/users",
+  "/notifications", "/settings", "/admin", "/admin/registrations",
+  "/admin/doctors", "/admin/hospitals", "/admin/audit-logs",
+  "/admin/businesses", "/admin/users",
   "/admin/industries", "/admin/appointments", "/admin/reports", "/admin/settings",
   "/api/backend-health",
 ] as const;
@@ -35,10 +37,6 @@ test("industry configuration preserves recipient terminology", () => {
   const bySlug = Object.fromEntries(INDUSTRIES.map((industry) => [industry.slug, industry]));
   assert.equal(bySlug.doctors?.recipientTerm, "Patient");
   assert.equal(bySlug.hospitals?.recipientTerm, "Patient");
-  assert.equal(bySlug.salons?.recipientTerm, "Customer");
-  assert.equal(bySlug.mechanics?.recipientTerm, "Customer");
-  const mechanics = INDUSTRIES.find((industry) => industry.slug === "mechanics");
-  assert.equal(mechanics?.secondaryRole, "Vehicle Owner");
-  assert.equal(bySlug.consultants?.recipientTerm, "Client");
   assert.equal(new Set(INDUSTRIES.map((industry) => industry.slug)).size, INDUSTRIES.length);
+  assert.equal(INDUSTRIES.length, 2);
 });

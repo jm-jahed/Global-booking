@@ -3,7 +3,7 @@ import { pageMetadata } from "@/lib/utils/metadata";
 
 export const metadata = pageMetadata(
   "Live Queue",
-  "Real-time client check-in triage, station dispatching, and waiting room monitor."
+  "Real-time patient check-in triage, station dispatching, and waiting room monitor."
 );
 
 export default function Page() {

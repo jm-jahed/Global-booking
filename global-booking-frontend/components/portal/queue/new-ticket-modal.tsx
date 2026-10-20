@@ -87,7 +87,7 @@ export function NewTicketModal({
             </div>
             <div>
               <h2 className="modal-heading">Issue Queue Ticket</h2>
-              <p className="modal-subheading">Generate instant serial for walk-in or kiosk client.</p>
+              <p className="modal-subheading">Generate instant serial for walk-in or kiosk patient.</p>
             </div>
           </div>
           <button type="button" className="modal-close-button" onClick={handleClose} aria-label="Close modal">
@@ -162,9 +162,9 @@ export function NewTicketModal({
               </div>
             </div>
 
-            {/* Client Name */}
+            {/* Patient Name */}
             <div className="modal-field">
-              <label className="modal-label">Client Name *</label>
+              <label className="modal-label">Patient Name *</label>
               <div className="modal-input-wrap">
                 <User size={15} className="modal-input-icon" />
                 <input

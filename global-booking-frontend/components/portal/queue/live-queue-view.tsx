@@ -77,7 +77,7 @@ export function LiveQueueView() {
     // Find next waiting item
     const nextItem = queue.find((q) => q.status === "Next" || q.status === "Waiting");
     if (!nextItem) {
-      showToast("No customers waiting in line!");
+      showToast("No patients waiting in line!");
       return;
     }
 
@@ -202,7 +202,7 @@ export function LiveQueueView() {
             </span>
           </div>
           <p className="hero-tagline">
-            Real-time client check-in triage, station dispatching, and waiting room monitor.
+            Real-time patient check-in triage, station dispatching, and waiting room monitor.
           </p>
         </div>
 
@@ -287,13 +287,13 @@ export function LiveQueueView() {
           </div>
         </article>
 
-        {/* Card 3: Next Customer */}
+        {/* Card 3: Next Patient */}
         <article className="metric-card">
           <div className="metric-card-top">
             <div className="metric-icon-box">
               <Users2 size={20} className="text-gold" />
             </div>
-            <span className="metric-label">Next Customer</span>
+            <span className="metric-label">Next Patient</span>
           </div>
           <div className="metric-card-body">
             <div className="metric-number-group">
@@ -350,7 +350,7 @@ export function LiveQueueView() {
       <section className="queue-stations-section">
         <div className="section-title-line">
           <h2 className="panel-title">Active Service Stations & Counters</h2>
-          <span className="section-title-sub">Dispatch and call customers directly to individual rooms</span>
+          <span className="section-title-sub">Dispatch and call patients directly to individual rooms</span>
         </div>
 
         <div className="stations-cards-grid">
@@ -396,7 +396,7 @@ export function LiveQueueView() {
                   ) : (
                     <div className="idle-ticket-box">
                       <span className="idle-title">Ready for Next</span>
-                      <span className="idle-sub">No client at counter</span>
+                      <span className="idle-sub">No patient at counter</span>
                     </div>
                   )}
                 </div>
@@ -428,7 +428,7 @@ export function LiveQueueView() {
                       onClick={() => handleCallNext(c.id)}
                     >
                       <ArrowRight size={14} />
-                      <span>Call Next Customer in Line</span>
+                      <span>Call Next Patient in Line</span>
                     </button>
                   )}
                 </div>
@@ -444,7 +444,7 @@ export function LiveQueueView() {
           <div className="table-title-group">
             <h2 className="panel-title">Waiting Room Queue Pipeline</h2>
             <span className="queue-pipeline-count">
-              {filteredQueue.length} customers tracked
+              {filteredQueue.length} patients tracked
             </span>
           </div>
 
@@ -454,7 +454,7 @@ export function LiveQueueView() {
               <Search size={14} className="text-muted" />
               <input
                 type="text"
-                placeholder="Search ticket #, client, service..."
+                placeholder="Search ticket #, patient, service..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="table-search-input"
@@ -516,7 +516,7 @@ export function LiveQueueView() {
             <thead>
               <tr>
                 <th>Ticket #</th>
-                <th>Client</th>
+                <th>Patient</th>
                 <th>Service</th>
                 <th>Assigned Specialist</th>
                 <th>Counter Station</th>
@@ -537,7 +537,7 @@ export function LiveQueueView() {
                       <span className="queue-ticket-bold">{item.ticketNumber}</span>
                     </td>
 
-                    {/* Client */}
+                    {/* Patient */}
                     <td className="client-cell">
                       <div className="client-avatar-wrapper">
                         <Image

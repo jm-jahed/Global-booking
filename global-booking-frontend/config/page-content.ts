@@ -10,7 +10,7 @@ export const PAGE_CONTENT = {
     primaryAction: { label: "Explore industries", href: ROUTES.industries },
     points: [
       { title: "One clear foundation", description: "Shared booking concepts reduce avoidable complexity across industries." },
-      { title: "Language with intent", description: "Patients, Customers, Vehicle Owners, and Clients are named deliberately." },
+      { title: "Language with intent", description: "Patients and clinical care teams are named deliberately." },
       { title: "Security stays server-side", description: "Authorization and tenant isolation belong to the backend, not route visibility." },
     ],
   },
@@ -58,7 +58,7 @@ export const PAGE_CONTENT = {
     eyebrow: "Privacy",
     title: "Privacy must be designed into every data boundary.",
     description:
-      "This frontend currently stores no account, booking, payment, patient, customer, or client records. Future collection requires an approved purpose, retention policy, and access model.",
+      "This frontend currently stores no account, booking, payment, or patient records. Future collection requires an approved purpose, retention policy, and access model.",
     points: [
       { title: "Data minimization", description: "Collect only what an approved workflow genuinely requires." },
       { title: "Tenant isolation", description: "Business-owned information must remain separated at backend boundaries." },
@@ -143,17 +143,17 @@ export const PAGE_CONTENT = {
     eyebrow: "Medical workspace",
     title: "Patients",
     description: "No patient records are connected or displayed. Medical data requires strict, least-privilege backend controls.",
-    notice: "Patient terminology is reserved for Doctors / Specialists and Hospitals / Clinics.",
+    notice: "Patient terminology is used across Doctors / Specialists and Hospitals / Clinics.",
   },
   customers: {
-    eyebrow: "Service workspace",
-    title: "Customers",
-    description: "No customer records are connected. Future access must remain tenant-scoped and role-based.",
+    eyebrow: "Medical workspace",
+    title: "Patients",
+    description: "All appointments and records use Patient terminology.",
   },
   clients: {
-    eyebrow: "Professional workspace",
-    title: "Clients",
-    description: "No client records are connected. Consultants and professional services use Client terminology.",
+    eyebrow: "Medical workspace",
+    title: "Patients",
+    description: "All appointments and records use Patient terminology.",
   },
   services: {
     eyebrow: "Business portal",
@@ -220,5 +220,29 @@ export const PAGE_CONTENT = {
     eyebrow: "Platform administration",
     title: "Platform settings",
     description: "No production configuration is editable. Changes must be validated, authorized, and audited by the backend.",
+  },
+  adminRegistrations: {
+    eyebrow: "Super Admin Platform",
+    title: "New Registration Requests",
+    description: "Review pending Doctor and Hospital/Clinic onboarding applications. Management actions remain deferred to Phase 3.",
+    notice: "Phase 2 Navigation & Layout preview. Registration review, document verification, and approval/rejection workflows require Phase 3.",
+  },
+  adminDoctors: {
+    eyebrow: "Super Admin Platform",
+    title: "Doctors & Specialists",
+    description: "Administrative directory of registered Doctors and Specialists. Account management workflows remain deferred.",
+    notice: "Phase 2 Navigation & Layout preview. Doctor administrative dashboards and actions require Phase 4.",
+  },
+  adminHospitals: {
+    eyebrow: "Super Admin Platform",
+    title: "Hospitals & Clinics",
+    description: "Administrative directory of registered Hospitals, Clinics, and Medical Centers.",
+    notice: "Phase 2 Navigation & Layout preview. Institutional management and subscription actions require Phase 4.",
+  },
+  adminAuditLogs: {
+    eyebrow: "Super Admin Platform",
+    title: "Security & Audit Logs",
+    description: "Administrative audit trail of registration, authentication, and subscription lifecycle events.",
+    notice: "Phase 2 Navigation & Layout preview. Live audit log querying and security review tools require Phase 5.",
   },
 } as const satisfies Record<string, PageContent>;

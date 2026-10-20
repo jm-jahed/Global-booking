@@ -13,9 +13,13 @@ export interface Appointment {
   id: string;
   referenceNumber: string;
   clientName: string;
+  patientName?: string;
   clientEmail: string;
+  patientEmail?: string;
   clientPhone: string;
+  patientPhone?: string;
   clientAvatar: string;
+  patientAvatar?: string;
   service: string;
   serviceCategory: string;
   durationMinutes: number;

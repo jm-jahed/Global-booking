@@ -214,7 +214,7 @@ export const MOCK_APPOINTMENTS: Appointment[] = [
     type: "Virtual Video",
     paymentStatus: "Pending",
     roomOrLink: "https://meet.globalbooking.io/gb-1029",
-    notes: "Client rescheduled due to urgent travel obligations.",
+    notes: "Patient rescheduled due to urgent travel obligations.",
   },
   {
     id: "GB-1030",

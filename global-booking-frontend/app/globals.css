@@ -108,8 +108,7 @@ h1 em, h2 em { color: var(--gold-light); font-weight: 400; }
 .section-heading.compact { grid-template-columns: 1fr; max-width: 760px; }
 .section-heading h2 { margin: 0; font-size: clamp(42px, 5vw, 64px); line-height: 1.08; color: var(--navy-900); }
 .section-heading h2 em { color: #9a793f; }
-.section-heading > p { margin-bottom: 4px; color: var(--muted); font-size: 16px; line-height: 1.8; }
-.industry-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+.industry-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 24px; max-width: 920px; margin: 0 auto; }
 .industry-card { min-height: 326px; position: relative; padding: 30px; border: 1px solid var(--line); border-radius: 20px; background: rgba(255,255,255,.52); transition: transform 180ms ease, box-shadow 180ms ease, border-color 180ms ease; }
 .industry-card:hover { transform: translateY(-5px); border-color: rgba(197,161,91,.58); box-shadow: var(--shadow); }
 .industry-icon { width: 44px; height: 44px; display: grid; place-items: center; margin-bottom: 36px; border-radius: 13px; background: var(--navy-900); color: var(--gold-light); font: 600 18px Georgia, serif; }
@@ -221,6 +220,495 @@ h1 em, h2 em { color: var(--gold-light); font-weight: 400; }
   .footer-grid { grid-template-columns: 1fr 1fr; gap: 38px; }
   .footer-brand { grid-column: 1 / -1; }
   .footer-bottom { flex-direction: column; }
+}
+
+/* ==========================================================================
+   HOMEPAGE MEDICAL & HEALTHCARE STYLES
+   ========================================================================== */
+.medical-category-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 28px;
+  max-width: 1040px;
+  margin: 0 auto;
+}
+
+.medical-category-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  padding: 38px 34px 34px;
+  border: 1px solid var(--line);
+  border-radius: 24px;
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(12px);
+  box-shadow: 0 14px 40px rgba(7, 19, 31, 0.05);
+  transition: transform 200ms ease, box-shadow 200ms ease, border-color 200ms ease;
+}
+
+.medical-category-card:hover {
+  transform: translateY(-5px);
+  border-color: rgba(197, 161, 91, 0.55);
+  box-shadow: var(--shadow);
+}
+
+.category-icon-box {
+  width: 52px;
+  height: 52px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 24px;
+  border-radius: 16px;
+  background: var(--navy-900);
+  color: var(--gold-light);
+  border: 1px solid rgba(197, 161, 91, 0.4);
+  box-shadow: 0 8px 20px rgba(11, 27, 42, 0.15);
+}
+
+.category-role {
+  margin: 0 0 8px;
+  color: #8b6b30;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.medical-category-card h3 {
+  margin: 0 0 12px;
+  color: var(--navy-900);
+  font: 400 28px Georgia, serif;
+}
+
+.medical-category-card > p {
+  color: var(--muted);
+  font-size: 15px;
+  line-height: 1.6;
+  margin: 0 0 22px;
+}
+
+.category-feature-list {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 28px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.category-feature-list li {
+  position: relative;
+  padding-left: 20px;
+  color: #43515c;
+  font-size: 13.5px;
+  font-weight: 550;
+}
+
+.category-feature-list li::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 7px;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--gold);
+}
+
+.category-action {
+  margin-top: auto;
+  padding-top: 10px;
+}
+
+/* Appointment Booking Benefits Grid */
+.benefits-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 20px;
+  margin-top: 36px;
+}
+
+.benefit-card {
+  padding: 30px 24px;
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.65);
+  transition: transform 180ms ease, border-color 180ms ease;
+}
+
+.benefit-card:hover {
+  transform: translateY(-4px);
+  border-color: rgba(197, 161, 91, 0.5);
+}
+
+.benefit-icon {
+  width: 44px;
+  height: 44px;
+  display: grid;
+  place-items: center;
+  margin-bottom: 20px;
+  border-radius: 12px;
+  background: rgba(197, 161, 91, 0.12);
+  color: #9a793f;
+  border: 1px solid rgba(197, 161, 91, 0.3);
+}
+
+.benefit-card h3 {
+  margin: 0 0 10px;
+  color: var(--navy-900);
+  font: 400 20px Georgia, serif;
+  line-height: 1.25;
+}
+
+.benefit-card p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 13.5px;
+  line-height: 1.6;
+}
+
+/* Doctor Portfolio Introduction Section */
+.portfolio-intro-section {
+  position: relative;
+  overflow: hidden;
+  background: radial-gradient(circle at 80% 20%, #153448 0, transparent 40%), linear-gradient(135deg, var(--navy-950), var(--navy-900));
+  color: var(--white);
+  padding: 110px 0;
+}
+
+.portfolio-intro-grid {
+  display: grid;
+  grid-template-columns: 1.05fr 0.95fr;
+  align-items: center;
+  gap: 70px;
+}
+
+.portfolio-intro-copy h2 {
+  margin: 0 0 20px;
+  font-size: clamp(38px, 4.6vw, 58px);
+  line-height: 1.08;
+}
+
+.portfolio-intro-lead {
+  color: rgba(255, 255, 255, 0.72);
+  font-size: 17px;
+  line-height: 1.7;
+  margin: 0 0 32px;
+}
+
+.portfolio-highlights {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  margin-bottom: 28px;
+}
+
+.highlight-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  padding: 16px 20px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.highlight-item strong {
+  display: block;
+  color: var(--gold-light);
+  font-size: 14.5px;
+  margin-bottom: 3px;
+}
+
+.highlight-item span {
+  display: block;
+  color: rgba(255, 255, 255, 0.56);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.portfolio-note {
+  margin: 0;
+  color: rgba(225, 201, 142, 0.65);
+  font-size: 12px;
+  font-style: italic;
+}
+
+/* Portfolio Non-Functional Concept Preview Card */
+.portfolio-preview-wrapper {
+  position: relative;
+  display: flex;
+  justify-content: center;
+}
+
+.portfolio-preview-card {
+  width: 100%;
+  max-width: 440px;
+  padding: 28px;
+  border: 1px solid rgba(225, 201, 142, 0.25);
+  border-radius: 24px;
+  background: rgba(11, 23, 37, 0.82);
+  box-shadow: 0 26px 70px rgba(0, 0, 0, 0.45);
+  backdrop-filter: blur(20px);
+}
+
+.preview-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-bottom: 18px;
+  margin-bottom: 20px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.preview-badge {
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--gold-light);
+}
+
+.preview-status-pill {
+  font-size: 11px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: rgba(197, 161, 91, 0.14);
+  color: var(--gold-light);
+  border: 1px solid rgba(197, 161, 91, 0.35);
+}
+
+.preview-doctor-header {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  margin-bottom: 24px;
+}
+
+.preview-avatar-box {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  padding: 3px;
+  border: 2px solid var(--gold);
+  background: rgba(197, 161, 91, 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--gold-light);
+}
+
+.preview-doctor-details {
+  display: flex;
+  flex-direction: column;
+}
+
+.preview-doctor-title {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--gold);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  margin-bottom: 2px;
+}
+
+.preview-doctor-name {
+  font: 400 22px Georgia, serif;
+  color: var(--white);
+  line-height: 1.2;
+}
+
+.preview-doctor-spec {
+  font-size: 12.5px;
+  color: rgba(255, 255, 255, 0.6);
+  margin-top: 2px;
+}
+
+.preview-details-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.preview-stat-box {
+  padding: 12px 14px;
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.preview-stat-label {
+  display: block;
+  font-size: 10px;
+  color: rgba(255, 255, 255, 0.5);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin-bottom: 4px;
+}
+
+.preview-stat-val {
+  display: block;
+  font-size: 12px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.88);
+}
+
+.preview-action-row {
+  display: flex;
+  gap: 10px;
+}
+
+.preview-btn-mock {
+  flex: 1;
+  text-align: center;
+  padding: 10px 12px;
+  font-size: 12px;
+  font-weight: 650;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: rgba(255, 255, 255, 0.7);
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.preview-btn-mock-gold {
+  border-color: var(--gold);
+  background: var(--gold);
+  color: var(--navy-950);
+}
+
+/* Why GLOBAL BOOKING Grid */
+.why-section {
+  background: var(--cream);
+}
+
+.why-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 24px;
+}
+
+.why-card {
+  padding: 34px 28px;
+  border: 1px solid var(--line);
+  border-radius: 22px;
+  background: rgba(255, 255, 255, 0.75);
+  backdrop-filter: blur(10px);
+}
+
+.why-number {
+  display: block;
+  margin-bottom: 24px;
+  color: #9a793f;
+  font: italic 22px Georgia, serif;
+}
+
+.why-card h3 {
+  margin: 0 0 12px;
+  color: var(--navy-900);
+  font: 400 22px Georgia, serif;
+  line-height: 1.25;
+}
+
+.why-card p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1.65;
+}
+
+/* How It Works Section */
+.how-it-works-section {
+  background: var(--navy-900);
+  color: var(--white);
+}
+
+.how-it-works-grid {
+  display: grid;
+  grid-template-columns: 0.85fr 1.15fr;
+  gap: 90px;
+  align-items: center;
+}
+
+.how-copy h2 {
+  margin: 0 0 22px;
+  font-size: clamp(40px, 4.8vw, 62px);
+  line-height: 1.08;
+}
+
+.how-copy > p:not(.eyebrow) {
+  margin: 0 0 32px;
+  color: rgba(255, 255, 255, 0.65);
+  font-size: 16.5px;
+  line-height: 1.7;
+}
+
+.how-steps {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.how-step-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 22px;
+  padding: 24px 28px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.03);
+  transition: transform 180ms ease, background 180ms ease;
+}
+
+.how-step-card:hover {
+  transform: translateX(4px);
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.step-badge {
+  width: 44px;
+  height: 44px;
+  min-width: 44px;
+  display: grid;
+  place-items: center;
+  border-radius: 12px;
+  background: rgba(197, 161, 91, 0.14);
+  color: var(--gold-light);
+  border: 1px solid rgba(197, 161, 91, 0.35);
+  font: 700 16px Inter, sans-serif;
+}
+
+.step-content h3 {
+  margin: 0 0 6px;
+  font-size: 20px;
+  color: var(--white);
+}
+
+.step-content p {
+  margin: 0;
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+@media (max-width: 980px) {
+  .benefits-grid, .why-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .portfolio-intro-grid, .how-it-works-grid {
+    grid-template-columns: 1fr;
+    gap: 50px;
+  }
+}
+
+@media (max-width: 700px) {
+  .medical-category-grid, .benefits-grid, .why-grid {
+    grid-template-columns: 1fr;
+  }
+  .how-step-card {
+    padding: 20px 18px;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {

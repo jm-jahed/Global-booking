@@ -5,7 +5,8 @@ import type { ReactNode } from "react";
 import { SiteHeader } from "./site-header";
 import { SiteFooter } from "./site-footer";
 
-const PORTAL_ROUTES = [
+const STANDALONE_ROUTES = [
+  "/",
   "/dashboard",
   "/appointments",
   "/live-queue",
@@ -18,17 +19,22 @@ const PORTAL_ROUTES = [
   "/locations",
   "/notifications",
   "/settings",
+  "/login",
+  "/register",
+  "/forgot-password",
+  "/reset-password",
+  "/admin",
 ];
 
 export function AppShell({ children }: { readonly children: ReactNode }) {
   const pathname = usePathname();
 
-  // If inside portal routes, let the portal layout handle the navigation and frame
-  const isPortal = PORTAL_ROUTES.some(
+  // If inside portal or auth routes, let the specific page handle the layout
+  const isStandalone = STANDALONE_ROUTES.some(
     (route) => pathname === route || pathname?.startsWith(`${route}/`)
   );
 
-  if (isPortal) {
+  if (isStandalone) {
     return <>{children}</>;
   }
 

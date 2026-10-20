@@ -15,7 +15,7 @@ export function PortalTopBar() {
         <input
           type="text"
           className="topbar-search-input"
-          placeholder="Search anything... (clients, services, staff, etc.)"
+          placeholder="Search anything... (patients, services, staff, etc.)"
           value={searchValue}
           onChange={(e) => setSearchValue(e.target.value)}
         />

@@ -69,7 +69,7 @@ export function NewAppointmentModal({ isOpen, onClose, onAddAppointment }: NewAp
       type,
       paymentStatus: "Pending",
       roomOrLink: type === "Virtual Video" ? "https://meet.globalbooking.io/" + randId.toLowerCase() : "Suite 204",
-      notes: notes || "Newly scheduled client appointment.",
+      notes: notes || "Newly scheduled patient appointment.",
       serialNumber: `#0${Math.floor(20 + Math.random() * 30)}`,
     };
 
@@ -97,9 +97,9 @@ export function NewAppointmentModal({ isOpen, onClose, onAddAppointment }: NewAp
 
         <form onSubmit={handleSubmit} className="modal-form-content">
           <div className="modal-grid-two">
-            {/* Client Name */}
+            {/* Patient Name */}
             <div className="modal-field">
-              <label className="modal-label">Client Full Name *</label>
+              <label className="modal-label">Patient Full Name *</label>
               <div className="modal-input-wrap">
                 <User size={15} className="modal-input-icon" />
                 <input
@@ -113,7 +113,7 @@ export function NewAppointmentModal({ isOpen, onClose, onAddAppointment }: NewAp
               </div>
             </div>
 
-            {/* Client Phone */}
+            {/* Patient Phone */}
             <div className="modal-field">
               <label className="modal-label">Phone Number</label>
               <input
@@ -126,12 +126,12 @@ export function NewAppointmentModal({ isOpen, onClose, onAddAppointment }: NewAp
             </div>
           </div>
 
-          {/* Client Email */}
+          {/* Patient Email */}
           <div className="modal-field">
-            <label className="modal-label">Client Email</label>
+            <label className="modal-label">Patient Email</label>
             <input
               type="email"
-              placeholder="client@example.com"
+              placeholder="patient@example.com"
               value={clientEmail}
               onChange={(e) => setClientEmail(e.target.value)}
               className="modal-input modal-input-plain"

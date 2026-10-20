@@ -47,7 +47,7 @@ export const MOCK_QUEUE_ITEMS: QueueItem[] = [
     priority: "VIP",
     channel: "Online Booking",
     appointmentRef: "GB-1023",
-    notes: "VIP Client. Awaiting skin prep.",
+    notes: "VIP Patient. Awaiting skin prep.",
   },
   {
     id: "q-015",

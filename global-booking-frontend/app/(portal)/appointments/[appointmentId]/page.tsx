@@ -13,7 +13,7 @@ export async function generateMetadata({
   const { appointmentId } = await params;
   return pageMetadata(
     `Appointment ${appointmentId.toUpperCase()}`,
-    `Detailed schedule, client profile, and operational notes for appointment ${appointmentId}.`
+    `Detailed schedule, patient profile, and operational notes for appointment ${appointmentId}.`
   );
 }
 
@@ -40,10 +40,14 @@ export default async function Page({
   const appointment: Appointment = foundAppointment || {
     id: appointmentId.toUpperCase(),
     referenceNumber: appointmentId.toUpperCase(),
-    clientName: "Valued Client",
-    clientEmail: "client@example.com",
+    clientName: "Valued Patient",
+    clientEmail: "patient@example.com",
     clientPhone: "+1 (555) 234-5678",
     clientAvatar: "/avatars/alex-johnson.jpg",
+    patientName: "Valued Patient",
+    patientEmail: "patient@example.com",
+    patientPhone: "+1 (555) 234-5678",
+    patientAvatar: "/avatars/alex-johnson.jpg",
     service: "General Consultation",
     serviceCategory: "Medical & Health",
     durationMinutes: 45,

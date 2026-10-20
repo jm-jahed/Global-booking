@@ -36,8 +36,8 @@ const NAV_ITEMS = [
     activeMatch: (path: string) => path.startsWith("/live-queue"),
   },
   {
-    label: "Customers",
-    href: ROUTES.customers,
+    label: "Patients",
+    href: ROUTES.patients,
     icon: User,
     activeMatch: (path: string) => path.startsWith("/customers") || path.startsWith("/clients") || path.startsWith("/patients"),
   },
@@ -174,7 +174,7 @@ export function PortalSidebar() {
           </div>
           <div className="promo-content">
             <h4 className="promo-title">Manage Your Business More Efficiently</h4>
-            <p className="promo-tags">Bookings • Customers • Growth</p>
+            <p className="promo-tags">Bookings • Patients • Care</p>
           </div>
         </div>
       </div>

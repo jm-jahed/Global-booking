@@ -154,7 +154,7 @@ export function DashboardView() {
           <div className="banner-image-container">
             <Image
               src="/images/luxury-lounge.jpg"
-              alt="Better Appointments. Happier Customers."
+              alt="Better Appointments. Happier Patients."
               fill
               className="banner-image-bg"
               sizes="(max-width: 1200px) 100vw, 550px"
@@ -203,7 +203,7 @@ export function DashboardView() {
             </div>
             <div className="banner-caption-text">
               <span>Better Appointments.</span>
-              <span>Happier Customers.</span>
+              <span>Happier Patients.</span>
             </div>
           </div>
         </div>
@@ -307,7 +307,7 @@ export function DashboardView() {
             <div className="metric-icon-box">
               <UserPlus size={20} strokeWidth={2} className="text-gold" />
             </div>
-            <span className="metric-label">New Clients</span>
+            <span className="metric-label">New Patients</span>
           </div>
           <div className="metric-card-body">
             <div className="metric-number-group">
@@ -578,7 +578,7 @@ export function DashboardView() {
             <div className="quick-stat-box">
               <div className="quick-stat-header">
                 <Users2 size={14} className="text-muted" />
-                <span>Next Customer</span>
+                <span>Next Patient</span>
               </div>
               <div className="quick-stat-value text-cyan">#013</div>
             </div>
@@ -708,7 +708,7 @@ export function DashboardView() {
             <table className="appointments-table">
               <thead>
                 <tr>
-                  <th>Client Name</th>
+                  <th>Patient Name</th>
                   <th>Service</th>
                   <th>Staff / Specialist</th>
                   <th>Appointment Time</th>
@@ -720,7 +720,7 @@ export function DashboardView() {
                 {filteredAppointments.length > 0 ? (
                   filteredAppointments.map((row) => (
                     <tr key={row.id}>
-                      {/* Client Name with Avatar */}
+                      {/* Patient Name with Avatar */}
                       <td className="client-cell">
                         <div className="client-avatar-wrapper">
                           <Image
@@ -815,7 +815,7 @@ export function DashboardView() {
             <div className="qr-scan-copy">
               <h3 className="qr-scan-title">Scan to Book Instantly</h3>
               <p className="qr-scan-desc">
-                Let your customers book an appointment by scanning the QR code.
+                Let your patients book an appointment by scanning the QR code.
               </p>
             </div>
           </div>

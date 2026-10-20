@@ -52,7 +52,7 @@ export function AppointmentDetailView({ appointment: initialAppointment }: Appoi
 
   const handleCheckIn = () => {
     setAppointment({ ...appointment, status: "In Progress" });
-    showToast("Client checked in. Session marked In Progress.");
+    showToast("Patient checked in. Session marked In Progress.");
   };
 
   const handleComplete = () => {
@@ -135,7 +135,7 @@ export function AppointmentDetailView({ appointment: initialAppointment }: Appoi
               onClick={handleCheckIn}
             >
               <CheckCircle2 size={16} />
-              <span>Check-in Client</span>
+              <span>Check-in Patient</span>
             </button>
           )}
 
@@ -224,20 +224,20 @@ export function AppointmentDetailView({ appointment: initialAppointment }: Appoi
 
             {appointment.notes && (
               <div className="detail-notes-box">
-                <span className="notes-box-title">Client Booking Notes:</span>
+                <span className="notes-box-title">Patient Booking Notes:</span>
                 <p className="notes-box-text">&ldquo;{appointment.notes}&rdquo;</p>
               </div>
             )}
           </article>
 
-          {/* Card 2: Client Contact & Profile */}
+          {/* Card 2: Patient Contact & Profile */}
           <article className="dashboard-panel detail-card">
             <div className="panel-header-row">
               <div className="live-header-title-box">
                 <User size={18} className="text-gold" />
-                <h2 className="panel-title">Client Information</h2>
+                <h2 className="panel-title">Patient Information</h2>
               </div>
-              <span className="client-loyalty-badge">Loyal Client (8 Visits)</span>
+              <span className="client-loyalty-badge">Registered Patient (8 Visits)</span>
             </div>
 
             <div className="detail-client-info-grid">

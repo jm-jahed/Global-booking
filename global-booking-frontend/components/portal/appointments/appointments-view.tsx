@@ -131,7 +131,7 @@ export function AppointmentsView() {
             <h1 className="hero-title-text">Appointments</h1>
           </div>
           <p className="hero-tagline">
-            Schedule, monitor, filter, and manage all client bookings in real-time.
+            Schedule, monitor, filter, and manage all patient bookings in real-time.
           </p>
         </div>
 
@@ -314,7 +314,7 @@ export function AppointmentsView() {
             <Search size={14} className="text-muted" />
             <input
               type="text"
-              placeholder="Search client, staff, service, or #ref..."
+              placeholder="Search patient, staff, service, or #ref..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="table-search-input"
@@ -408,7 +408,7 @@ export function AppointmentsView() {
                     />
                   </th>
                   <th>Ref #</th>
-                  <th>Client</th>
+                  <th>Patient</th>
                   <th>Service</th>
                   <th>Specialist</th>
                   <th>Date & Time</th>
@@ -445,7 +445,7 @@ export function AppointmentsView() {
                         </Link>
                       </td>
 
-                      {/* Client */}
+                      {/* Patient */}
                       <td className="client-cell">
                         <div className="client-avatar-wrapper">
                           <Image

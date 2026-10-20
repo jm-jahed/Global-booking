@@ -6,7 +6,9 @@ export interface QueueItem {
   id: string;
   ticketNumber: string; // e.g. "#012"
   clientName: string;
+  patientName?: string;
   clientAvatar: string;
+  patientAvatar?: string;
   service: string;
   specialist: string;
   counterName: string;
