@@ -3,10 +3,6 @@ import { test } from "node:test";
 
 import { SUPER_ADMIN_NAV_MODULES } from "../components/admin/admin-sidebar";
 import { ROUTES } from "../config/routes";
-import {
-  MOCK_PENDING_DOCTOR_APPLICATIONS,
-  MOCK_PENDING_HOSPITAL_APPLICATIONS,
-} from "../lib/data/mock-admin-data";
 
 test("Super Admin Sidebar contains exactly six approved modules in strict order", () => {
   const expectedLabels = [
@@ -41,29 +37,12 @@ test("Sidebar module routes correspond to approved static routes", () => {
   assert.equal(SUPER_ADMIN_NAV_MODULES[5].href, ROUTES.adminSettings);
 });
 
-test("Pending registration badge strictly sources its count from Phase 1 mock data fixtures", () => {
-  const expectedMockCount =
-    MOCK_PENDING_DOCTOR_APPLICATIONS.length +
-    MOCK_PENDING_HOSPITAL_APPLICATIONS.length;
-
-  const registrationModule = SUPER_ADMIN_NAV_MODULES[0];
-  assert.equal(
-    registrationModule.badge,
-    String(expectedMockCount),
-    "Pending registration badge count must match total mock pending applications (4)",
-  );
-  assert.equal(
-    registrationModule.badgeLabel,
-    "MOCK",
-    "Badge must be explicitly identified with MOCK label",
-  );
-
-  // Other 5 modules must NOT have pending badges
-  for (let i = 1; i < SUPER_ADMIN_NAV_MODULES.length; i++) {
+test("Sidebar modules do not display mock fixture badges or labels", () => {
+  for (const module of SUPER_ADMIN_NAV_MODULES) {
     assert.equal(
-      SUPER_ADMIN_NAV_MODULES[i].badge,
+      module.badgeLabel,
       null,
-      `Module ${SUPER_ADMIN_NAV_MODULES[i].label} should not have a pending badge`,
+      `Module ${module.label} must not display a MOCK label`,
     );
   }
 });

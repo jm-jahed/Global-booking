@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
+import "./home.css";
 import {
   Calendar,
   ShieldCheck,
@@ -17,47 +18,51 @@ import {
   LogIn,
   ChevronRight,
   Menu,
+  Clock,
+  Star,
+  MapPin,
+  Sparkles,
+  Activity,
 } from "lucide-react";
 
 /* =========================================================================
-   GOLDEN HEART + PULSE (ECG) BRAND EMBLEM (MATCHING REFERENCE LOGO)
+   HEALTHCARE PULSE (ECG) BRAND EMBLEM (MATCHING DR. PORTFOLIO THEME)
    ========================================================================= */
-function GoldenHeartPulseLogo({ size = 40 }: { size?: number }) {
+function HealthcarePulseLogo({ size = 40 }: { size?: number }) {
   return (
     <svg
       viewBox="0 0 100 100"
-      style={{ width: size, height: size }}
+      style={{ width: size, height: size, flexShrink: 0, display: "block" }}
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
       aria-hidden="true"
     >
       <defs>
-        <linearGradient id="heartGoldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" stopColor="#FFF9E0" />
-          <stop offset="35%" stopColor="#F5D77F" />
-          <stop offset="70%" stopColor="#D4AE47" />
-          <stop offset="100%" stopColor="#8C6619" />
+        <linearGradient id="pulseIndigoGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stopColor="#818cf8" />
+          <stop offset="50%" stopColor="#4f46e5" />
+          <stop offset="100%" stopColor="#312e81" />
         </linearGradient>
-        <filter id="heartGlow" x="-20%" y="-20%" width="140%" height="140%">
-          <feGaussianBlur stdDeviation="2" result="blur" />
+        <filter id="pulseGlow" x="-20%" y="-20%" width="140%" height="140%">
+          <feGaussianBlur stdDeviation="2.5" result="blur" />
           <feMerge>
             <feMergeNode in="blur" />
             <feMergeNode in="SourceGraphic" />
           </feMerge>
         </filter>
       </defs>
-      <g filter="url(#heartGlow)">
+      <g filter="url(#pulseGlow)">
         <path
           d="M50 86 C25 68 12 52 12 34 C12 19 23 10 37 10 C44 10 50 14 50 14 C50 14 56 10 63 10 C77 10 88 19 88 34 C88 52 75 68 50 86 Z"
-          stroke="url(#heartGoldGrad)"
+          stroke="url(#pulseIndigoGrad)"
           strokeWidth="6"
           strokeLinecap="round"
           strokeLinejoin="round"
-          fill="rgba(212, 174, 71, 0.05)"
+          fill="rgba(99, 102, 241, 0.08)"
         />
         <path
           d="M26 44 L38 44 L44 28 L50 58 L56 34 L62 44 L74 44"
-          stroke="url(#heartGoldGrad)"
+          stroke="url(#pulseIndigoGrad)"
           strokeWidth="5"
           strokeLinecap="round"
           strokeLinejoin="round"
@@ -70,9 +75,30 @@ function GoldenHeartPulseLogo({ size = 40 }: { size?: number }) {
 export default function HomePage() {
   const [activeModal, setActiveModal] = useState<"doctor" | "hospital" | null>(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [selectedDay, setSelectedDay] = useState<number>(0);
+  const [selectedSlot, setSelectedSlot] = useState<string>("11:30 AM");
+  const [bookingConfirmed, setBookingConfirmed] = useState<boolean>(false);
+
+  const days = [
+    { label: "Today", date: "Thu 22" },
+    { label: "Tomorrow", date: "Fri 23" },
+    { label: "Sat", date: "Sat 24" },
+  ];
+
+  const slots = [
+    { time: "09:30 AM", badge: false },
+    { time: "11:30 AM", badge: true },
+    { time: "04:00 PM", badge: false },
+    { time: "05:30 PM", badge: false },
+  ];
 
   return (
     <div className="homepage-viewport-container">
+      {/* Ambient background lavender/indigo gradients matching doctor portfolio */}
+      <div className="ambient-orb orb-1" aria-hidden="true" />
+      <div className="ambient-orb orb-2" aria-hidden="true" />
+      <div className="ambient-orb orb-3" aria-hidden="true" />
+
       {/* ===================================================================
           1. HEADER / NAVIGATION BAR
           =================================================================== */}
@@ -80,7 +106,7 @@ export default function HomePage() {
         <div className="header-inner">
           {/* Brand Logo & Name */}
           <Link href="/" className="brand-group">
-            <GoldenHeartPulseLogo size={42} />
+            <HealthcarePulseLogo size={42} />
             <div className="brand-labels">
               <span className="brand-title">GLOBAL BOOKING</span>
               <span className="brand-subtitle">HEALTHCARE PRACTICE PLATFORM</span>
@@ -208,22 +234,163 @@ export default function HomePage() {
                 <span>For Hospitals & Clinics</span>
                 <ArrowRight size={14} className="cta-arrow" />
               </button>
-
-              {/* Button 3: Sign In to Practice (Links to /login) */}
-              <Link href="/login" className="cta-pill-dark">
-                <LogIn size={15} className="cta-gold-icon" />
-                <span>Sign In to Practice</span>
-              </Link>
             </div>
           </div>
 
-          {/* Right Column: Exact Photographic Workspace Composition */}
-          <div className="hero-image-col">
-            <div
-              className="hero-scene-crop"
-              role="img"
-              aria-label="Doctor in modern medical facility holding tablet, with booking laptop, patient smartphone app, and QR code standee"
-            />
+          {/* Right Column: Premium Interactive Healthcare Practice Showcase */}
+          <div className="hero-interactive-col">
+            <div className="interactive-hero-wrapper">
+              {/* Ambient background glow behind dashboard */}
+              <div className="dashboard-glow-ring" aria-hidden="true" />
+
+              {/* Floating Card: Live OPD Queue Pulse */}
+              <div className="floating-badge float-top-left">
+                <div className="badge-pulse-radar">
+                  <span className="radar-core" />
+                  <span className="radar-wave" />
+                </div>
+                <div className="badge-content">
+                  <div className="badge-title">OPD Live Queue</div>
+                  <div className="badge-sub">Token #14 with Doctor</div>
+                </div>
+                <span className="badge-tag">Chamber Live</span>
+              </div>
+
+              {/* Floating Card: QR Standee Acrylic Showcase */}
+              <div className="floating-badge float-bottom-right">
+                <div className="qr-mini-acrylic">
+                  <QrCode size={19} className="qr-svg-icon" />
+                </div>
+                <div className="badge-content">
+                  <div className="badge-title">Patient QR Check-In</div>
+                  <div className="badge-sub">Scan to view profile & book</div>
+                </div>
+                <span className="badge-stars">
+                  <Star size={11} fill="#f59e0b" color="#f59e0b" />
+                  <span>4.9</span>
+                </span>
+              </div>
+
+              {/* Main Glassmorphic Practice Showcase Card */}
+              <div className="practice-master-card">
+                {/* Top Doctor Profile Ribbon */}
+                <div className="doctor-header-row">
+                  <div className="doc-avatar-wrap">
+                    <img
+                      src="https://images.unsplash.com/photo-1622253692010-333f2da6031d?auto=format&fit=crop&w=160&q=80"
+                      alt="Dr. Jahedul Islam"
+                      className="doc-avatar-img"
+                    />
+                    <span className="avatar-online-dot" title="Available for consult" />
+                  </div>
+
+                  <div className="doc-details-col">
+                    <div className="doc-name-row">
+                      <Link href="/dr-jahedul-islam" className="doc-title-link">
+                        Dr. Jahedul Islam
+                      </Link>
+                      <span className="verified-shield" title="Verified Practitioner">
+                        <ShieldCheck size={13} />
+                        <span>Verified</span>
+                      </span>
+                    </div>
+                    <div className="doc-specialty-text">Consultant Interventional Cardiologist</div>
+                    <div className="doc-chamber-info">
+                      <MapPin size={12} className="loc-ic" />
+                      <span>Mediclinic City Hospital • Dubai Healthcare City</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Practice Metrics Bar */}
+                <div className="practice-metrics-bar">
+                  <div className="metric-item">
+                    <span className="metric-val">12+ Yrs</span>
+                    <span className="metric-lbl">Experience</span>
+                  </div>
+                  <div className="metric-divider" />
+                  <div className="metric-item">
+                    <span className="metric-val">4.9 ★</span>
+                    <span className="metric-lbl">Patient Rating</span>
+                  </div>
+                  <div className="metric-divider" />
+                  <div className="metric-item">
+                    <span className="metric-val">500 AED</span>
+                    <span className="metric-lbl">Consultation</span>
+                  </div>
+                </div>
+
+                {/* Date Selector Pills */}
+                <div className="schedule-section">
+                  <div className="schedule-header">
+                    <span className="schedule-label">
+                      <Calendar size={13} /> Select Chamber Schedule
+                    </span>
+                    <span className="live-slots-pill">Next Slot Today</span>
+                  </div>
+
+                  <div className="days-pills-row">
+                    {days.map((d, idx) => (
+                      <button
+                        key={d.date}
+                        type="button"
+                        className={`day-pill ${selectedDay === idx ? "active" : ""}`}
+                        onClick={() => {
+                          setSelectedDay(idx);
+                          setBookingConfirmed(false);
+                        }}
+                      >
+                        <span className="day-name">{d.label}</span>
+                        <span className="day-date">{d.date}</span>
+                      </button>
+                    ))}
+                  </div>
+
+                  {/* Time Slot Chips */}
+                  <div className="time-slots-grid">
+                    {slots.map((s) => (
+                      <button
+                        key={s.time}
+                        type="button"
+                        className={`time-chip ${selectedSlot === s.time ? "selected" : ""}`}
+                        onClick={() => {
+                          setSelectedSlot(s.time);
+                          setBookingConfirmed(false);
+                        }}
+                      >
+                        <Clock size={11} />
+                        <span>{s.time}</span>
+                        {s.badge && <span className="chip-badge">Fast</span>}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Action Button & Live Feedback */}
+                <div className="booking-action-footer">
+                  {bookingConfirmed ? (
+                    <div className="confirmed-toast">
+                      <div className="toast-left">
+                        <CheckCircle2 size={16} className="toast-check" />
+                        <span>Slot Reserved ({selectedSlot})!</span>
+                      </div>
+                      <Link href="/dr-jahedul-islam" className="view-portfolio-link">
+                        View Full Portfolio →
+                      </Link>
+                    </div>
+                  ) : (
+                    <button
+                      type="button"
+                      className="confirm-booking-btn"
+                      onClick={() => setBookingConfirmed(true)}
+                    >
+                      <span>Confirm Appointment Slot ({selectedSlot})</span>
+                      <ArrowRight size={14} />
+                    </button>
+                  )}
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </section>
@@ -239,11 +406,11 @@ export default function HomePage() {
         >
           <defs>
             <linearGradient id="ribbonGrad" x1="0%" y1="0%" x2="100%" y2="0%">
-              <stop offset="0%" stopColor="#8C6619" stopOpacity="0.3" />
-              <stop offset="25%" stopColor="#F5D77F" stopOpacity="0.9" />
-              <stop offset="50%" stopColor="#FFF9E0" stopOpacity="1" />
-              <stop offset="75%" stopColor="#F5D77F" stopOpacity="0.9" />
-              <stop offset="100%" stopColor="#8C6619" stopOpacity="0.3" />
+              <stop offset="0%" stopColor="#6366f1" stopOpacity="0.15" />
+              <stop offset="25%" stopColor="#4f46e5" stopOpacity="0.75" />
+              <stop offset="50%" stopColor="#38bdf8" stopOpacity="0.9" />
+              <stop offset="75%" stopColor="#4f46e5" stopOpacity="0.75" />
+              <stop offset="100%" stopColor="#6366f1" stopOpacity="0.15" />
             </linearGradient>
             <filter id="ribbonGlow" x="-10%" y="-30%" width="120%" height="160%">
               <feGaussianBlur stdDeviation="3" result="blur" />
@@ -269,93 +436,227 @@ export default function HomePage() {
       <section className="feature-cards-deck">
         <div className="deck-container">
           {/* Card 1: For Doctors & Specialists */}
-          <div className="feature-card">
-            <div className="card-thumb-doc" aria-hidden="true" />
+          <div className="feature-card doc-feature-card">
+            {/* Ambient subtle card glow */}
+            <div className="card-ambient-glow doc-glow" aria-hidden="true" />
+            
+            {/* Visual interactive preview widget */}
+            <div className="card-visual-widget">
+              <div className="widget-preview-box">
+                <div className="widget-header-row">
+                  <div className="widget-doc-avatar-wrap">
+                    <img
+                      src="https://images.unsplash.com/photo-1622253692010-333f2da6031d?auto=format&fit=crop&w=160&q=80"
+                      alt="Dr. Jahedul Islam"
+                      className="widget-doc-avatar-img"
+                    />
+                    <span className="widget-online-dot" />
+                  </div>
+                  <div className="widget-doc-meta">
+                    <div className="widget-name-row">
+                      <strong className="widget-doc-name">Dr. Jahedul Islam</strong>
+                      <span className="widget-verif-badge">✓ Verified</span>
+                    </div>
+                    <span className="widget-doc-spec">Consultant Cardiologist</span>
+                  </div>
+                </div>
+
+                <div className="widget-tags-row">
+                  <span className="widget-tag-pill highlight">
+                    <QrCode size={11} />
+                    <span>Instant Acrylic QR</span>
+                  </span>
+                  <span className="widget-tag-pill">
+                    <Activity size={11} />
+                    <span>Live Queue Sync</span>
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* Content & Action info */}
             <div className="card-info">
-              <span className="card-eyebrow">FOR DOCTORS & SPECIALISTS</span>
-              <h3 className="card-title-serif">What You Get</h3>
+              <span className="card-eyebrow doc-eyebrow">
+                <Sparkles size={11} className="card-eyebrow-icon" />
+                <span>FOR DOCTORS & SPECIALISTS</span>
+              </span>
+              <h3 className="card-title-serif">
+                Practice Excellence — <span className="title-gradient-doc">What You Get</span>
+              </h3>
               <p className="card-text">
-                Expand your reach, elevate your professional reputation, and simplify
-                patient appointments with tools crafted for modern medical practitioners.
+                Expand your patient reach, elevate your professional reputation, and manage
+                chamber timetables with zero technical friction.
               </p>
-              <button
-                type="button"
-                className="card-explore-btn"
-                onClick={() => setActiveModal("doctor")}
-              >
-                <span>Explore Doctor Benefits</span>
-                <ArrowRight size={13} />
-              </button>
+
+              <ul className="card-bullets-list">
+                <li>
+                  <CheckCircle2 size={14} className="bullet-check doc-check" />
+                  <span>Custom acrylic QR standee + branded portfolio URL</span>
+                </li>
+                <li>
+                  <CheckCircle2 size={14} className="bullet-check doc-check" />
+                  <span>Effortless consultation timetables & queue management</span>
+                </li>
+                <li>
+                  <CheckCircle2 size={14} className="bullet-check doc-check" />
+                  <span>Dedicated doctor practice login portal at <code>/login</code></span>
+                </li>
+              </ul>
+
+              <div className="card-actions-row">
+                <button
+                  type="button"
+                  className="card-explore-btn doc-explore-btn"
+                  onClick={() => setActiveModal("doctor")}
+                >
+                  <span>Explore Doctor Benefits</span>
+                  <ArrowRight size={14} className="btn-arrow" />
+                </button>
+                <Link href="/dr-jahedul-islam" className="card-link-secondary">
+                  <span>View Sample Portfolio</span>
+                  <ChevronRight size={13} />
+                </Link>
+              </div>
             </div>
           </div>
 
           {/* Card 2: For Hospitals & Clinics */}
-          <div className="feature-card">
-            <div className="card-thumb-hosp" aria-hidden="true" />
+          <div className="feature-card hosp-feature-card">
+            {/* Ambient subtle card glow */}
+            <div className="card-ambient-glow hosp-glow" aria-hidden="true" />
+
+            {/* Visual interactive preview widget */}
+            <div className="card-visual-widget">
+              <div className="widget-preview-box hosp-box">
+                <div className="widget-header-row">
+                  <div className="widget-hosp-icon-wrap">
+                    <img
+                      src="https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d?auto=format&fit=crop&w=160&q=80"
+                      alt="Mediclinic City Hospital"
+                      className="widget-doc-avatar-img"
+                    />
+                    <span className="widget-online-dot emerald" />
+                  </div>
+                  <div className="widget-doc-meta">
+                    <div className="widget-name-row">
+                      <strong className="widget-doc-name">Mediclinic City Hospital</strong>
+                      <span className="widget-verif-badge emerald">Enterprise</span>
+                    </div>
+                    <span className="widget-doc-spec">Dubai Healthcare City • OPD</span>
+                  </div>
+                </div>
+
+                <div className="widget-tags-row">
+                  <span className="widget-tag-pill emerald-pill">
+                    <Building2 size={11} />
+                    <span>Multi-Department</span>
+                  </span>
+                  <span className="widget-tag-pill emerald-pill">
+                    <CheckCircle2 size={11} />
+                    <span>Lobby QR Kiosk</span>
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* Content & Action info */}
             <div className="card-info">
-              <span className="card-eyebrow">FOR HOSPITALS & CLINICS</span>
-              <h3 className="card-title-serif">What You Get</h3>
+              <span className="card-eyebrow hosp-eyebrow">
+                <Building2 size={11} className="card-eyebrow-icon" />
+                <span>FOR HOSPITALS & CLINICS</span>
+              </span>
+              <h3 className="card-title-serif">
+                Institutional Care — <span className="title-gradient-hosp">What You Get</span>
+              </h3>
               <p className="card-text">
-                Centralize outpatient intake, present your specialized medical departments,
-                and connect your consultation suites with an organized digital front desk.
+                Centralize outpatient intake, showcase specialized medical departments, and
+                connect consultation suites with an organized digital front desk.
               </p>
-              <button
-                type="button"
-                className="card-explore-btn"
-                onClick={() => setActiveModal("hospital")}
-              >
-                <span>Explore Hospital Benefits</span>
-                <ArrowRight size={13} />
-              </button>
+
+              <ul className="card-bullets-list">
+                <li>
+                  <CheckCircle2 size={14} className="bullet-check hosp-check" />
+                  <span>Department rosters and multi-consultant chamber suites</span>
+                </li>
+                <li>
+                  <CheckCircle2 size={14} className="bullet-check hosp-check" />
+                  <span>Custom lobby QR display intake reducing reception congestion</span>
+                </li>
+                <li>
+                  <CheckCircle2 size={14} className="bullet-check hosp-check" />
+                  <span>Centralized clinic administrative portal at <code>/login</code></span>
+                </li>
+              </ul>
+
+              <div className="card-actions-row">
+                <button
+                  type="button"
+                  className="card-explore-btn hosp-explore-btn"
+                  onClick={() => setActiveModal("hospital")}
+                >
+                  <span>Explore Hospital Benefits</span>
+                  <ArrowRight size={14} className="btn-arrow" />
+                </button>
+                <Link href="/login" className="card-link-secondary hosp-secondary">
+                  <span>Hospital Admin Login</span>
+                  <ChevronRight size={13} />
+                </Link>
+              </div>
             </div>
           </div>
         </div>
       </section>
 
       {/* ===================================================================
-          5. 5-ITEM TRUST & CAPABILITY STRIP
+          5. 5-ITEM TRUST & CAPABILITY DOCK
           =================================================================== */}
-      <section className="trust-strip">
-        <div className="trust-inner">
-          <div className="trust-cell">
-            <Calendar size={18} className="trust-ic" />
-            <div className="trust-copy">
+      <section className="trust-strip-dock">
+        <div className="trust-dock-inner">
+          <div className="trust-cell-dock">
+            <div className="trust-dock-icon-box ic-indigo">
+              <Calendar size={18} />
+            </div>
+            <div className="trust-dock-copy">
               <strong>Online Appointments</strong>
-              <span>Book. Visit. Stay Healthy.</span>
+              <span>Instant slot booking & zero clash</span>
             </div>
           </div>
-          <span className="trust-v-bar" aria-hidden="true">|</span>
 
-          <div className="trust-cell">
-            <ShieldCheck size={18} className="trust-ic" />
-            <div className="trust-copy">
+          <div className="trust-cell-dock">
+            <div className="trust-dock-icon-box ic-emerald">
+              <ShieldCheck size={18} />
+            </div>
+            <div className="trust-dock-copy">
               <strong>Doctor Portfolios</strong>
-              <span>Practice Timetables & Profiles</span>
+              <span>Verified specialist credentials</span>
             </div>
           </div>
-          <span className="trust-v-bar" aria-hidden="true">|</span>
 
-          <div className="trust-cell">
-            <Building2 size={18} className="trust-ic" />
-            <div className="trust-copy">
+          <div className="trust-cell-dock">
+            <div className="trust-dock-icon-box ic-sky">
+              <Building2 size={18} />
+            </div>
+            <div className="trust-dock-copy">
               <strong>Healthcare Facilities</strong>
-              <span>Outpatient Intake & Departments</span>
+              <span>Modern OPD & department intake</span>
             </div>
           </div>
-          <span className="trust-v-bar" aria-hidden="true">|</span>
 
-          <div className="trust-cell">
-            <Lock size={17} className="trust-ic" />
-            <div className="trust-copy">
+          <div className="trust-cell-dock">
+            <div className="trust-dock-icon-box ic-amber">
+              <Lock size={17} />
+            </div>
+            <div className="trust-dock-copy">
               <strong>Protected Access</strong>
-              <span>Secure Practice Accounts</span>
+              <span>HIPAA & DHA-ready security</span>
             </div>
           </div>
-          <span className="trust-v-bar" aria-hidden="true">|</span>
 
-          <div className="trust-cell">
-            <HeartPulse size={18} className="trust-ic" />
-            <div className="trust-copy">
+          <div className="trust-cell-dock">
+            <div className="trust-dock-icon-box ic-rose">
+              <HeartPulse size={18} />
+            </div>
+            <div className="trust-dock-copy">
               <strong>Connected Practice</strong>
               <span>Accessible. Structured. Global.</span>
             </div>
@@ -364,20 +665,43 @@ export default function HomePage() {
       </section>
 
       {/* ===================================================================
-          6. PHOTOGRAPHIC GOLDEN NIGHT CITY SKYLINE FOOTER
+          6. LUXURY MIDNIGHT PRACTICE FOOTER
           =================================================================== */}
-      <footer className="skyline-footer">
-        <div className="skyline-photo-band" aria-hidden="true" />
-        <div className="footer-links-row">
-          <button type="button" onClick={() => setActiveModal("doctor")}>For Doctors</button>
-          <span>•</span>
-          <button type="button" onClick={() => setActiveModal("hospital")}>For Hospitals & Clinics</button>
-          <span>•</span>
-          <Link href="/login">Patient Sign In</Link>
-          <span>•</span>
-          <Link href="/privacy">Privacy Policy</Link>
-          <span>•</span>
-          <Link href="/terms">Terms of Service</Link>
+      <footer className="skyline-footer-premium">
+        <div className="footer-glow-bar" aria-hidden="true" />
+        <div className="footer-content-inner">
+          <div className="footer-brand-row">
+            <div className="footer-logo-group">
+              <HealthcarePulseLogo size={32} />
+              <div className="footer-brand-text">
+                <span className="footer-brand-name">GLOBAL BOOKING</span>
+                <span className="footer-brand-tag">HEALTHCARE PRACTICE PLATFORM</span>
+              </div>
+            </div>
+            <div className="footer-status-pill">
+              <span className="status-live-dot" />
+              <span>All Systems Operational • DHA & HIPAA Compliant</span>
+            </div>
+          </div>
+
+          <div className="footer-divider-line" />
+
+          <div className="footer-bottom-row">
+            <div className="footer-links-list">
+              <button type="button" onClick={() => setActiveModal("doctor")}>For Doctors</button>
+              <span className="footer-dot">•</span>
+              <button type="button" onClick={() => setActiveModal("hospital")}>For Hospitals & Clinics</button>
+              <span className="footer-dot">•</span>
+              <Link href="/login">Doctor & Staff Login</Link>
+              <span className="footer-dot">•</span>
+              <Link href="/privacy">Privacy Policy</Link>
+              <span className="footer-dot">•</span>
+              <Link href="/terms">Terms of Service</Link>
+            </div>
+            <span className="footer-copyright-text">
+              © {new Date().getFullYear()} GLOBAL BOOKING. All rights reserved.
+            </span>
+          </div>
         </div>
       </footer>
 
@@ -395,128 +719,242 @@ export default function HomePage() {
             className="modal-card"
             onClick={(e) => e.stopPropagation()}
           >
+            {/* Close button with subtle hover micro-interaction */}
             <button
               type="button"
               className="modal-close-btn"
               onClick={() => setActiveModal(null)}
-              aria-label="Close details"
+              aria-label="Close modal"
             >
-              <X size={20} />
+              <X size={18} />
             </button>
 
             {activeModal === "doctor" ? (
               <>
                 <div className="modal-top">
-                  <span className="modal-badge gold-badge">FOR DOCTORS & SPECIALISTS</span>
-                  <h2 className="modal-heading">
-                    For Doctors — <span className="modal-serif-gold">What You Get</span>
-                  </h2>
+                  <div className="modal-header-hero">
+                    <div className="modal-icon-squircle doc-theme">
+                      <span className="modal-icon-emoji">👨‍⚕️</span>
+                    </div>
+                    <div className="modal-title-col">
+                      <div className="modal-badge gold-badge">
+                        <Sparkles size={11} className="badge-sparkle-icon" />
+                        <span>FOR DOCTORS & SPECIALISTS</span>
+                      </div>
+                      <h2 className="modal-heading">
+                        For Doctors — <span className="modal-gradient-text">What You Get</span>
+                      </h2>
+                    </div>
+                  </div>
                   <p className="modal-subtext">
                     Dedicated digital tools designed to elevate your personal practice,
-                    simplify patient intake, and manage chamber timetables.
+                    simplify patient intake, and manage chamber timetables with effortless precision.
                   </p>
                 </div>
 
+                {/* Benefits List Cards */}
                 <div className="modal-benefits-grid">
                   <div className="modal-item">
-                    <div className="modal-item-head">
-                      <QrCode size={20} className="modal-ic-gold" />
-                      <h4>Benefit A: QR Code + Doctor Portfolio</h4>
+                    <div className="modal-item-left">
+                      <div className="benefit-icon-box doc-accent">
+                        <QrCode size={20} />
+                      </div>
                     </div>
-                    <p>
-                      A custom professional portfolio page highlighting your degrees,
-                      chamber visiting hours, and services, paired with an acrylic QR standee
-                      patients can scan to view your profile and book appointments directly.
-                    </p>
+                    <div className="modal-item-body">
+                      <div className="modal-item-header">
+                        <h4>Benefit A: QR Standee + Doctor Portfolio</h4>
+                        <span className="benefit-pill">Live Link & Standee</span>
+                      </div>
+                      <p>
+                        A custom professional portfolio page highlighting your degrees,
+                        chamber visiting hours, and services, paired with an acrylic QR standee
+                        patients can scan to view your profile and book appointments directly.
+                      </p>
+                    </div>
                   </div>
 
                   <div className="modal-item">
-                    <div className="modal-item-head">
-                      <Lock size={20} className="modal-ic-gold" />
-                      <h4>Benefit B: Doctor Login</h4>
+                    <div className="modal-item-left">
+                      <div className="benefit-icon-box doc-accent">
+                        <Lock size={20} />
+                      </div>
                     </div>
-                    <p>
-                      Private access via our proven login portal at <code>/login</code> to
-                      manage visiting timetables, view upcoming patient bookings, and update
-                      practice details with zero technical setup.
-                    </p>
+                    <div className="modal-item-body">
+                      <div className="modal-item-header">
+                        <h4>Benefit B: Doctor Practice Login</h4>
+                        <span className="benefit-pill">Secure Dashboard</span>
+                      </div>
+                      <p>
+                        Private access via our proven login portal at <code>/login</code> to
+                        manage visiting timetables, view upcoming patient bookings, and update
+                        practice details with zero technical setup.
+                      </p>
+                    </div>
                   </div>
 
                   <div className="modal-item">
-                    <div className="modal-item-head">
-                      <UserCheck size={20} className="modal-ic-gold" />
-                      <h4>Benefit C: Patient Login + Online Booking</h4>
+                    <div className="modal-item-left">
+                      <div className="benefit-icon-box doc-accent">
+                        <UserCheck size={20} />
+                      </div>
                     </div>
-                    <p>
-                      Patients log in smoothly, search by doctor name or specialty, and
-                      secure their consultation slot online with clear visiting schedules.
-                    </p>
+                    <div className="modal-item-body">
+                      <div className="modal-item-header">
+                        <h4>Benefit C: Patient Login + Online Booking</h4>
+                        <span className="benefit-pill">Instant Confirmation</span>
+                      </div>
+                      <p>
+                        Patients log in smoothly, search by doctor name or specialty, and
+                        secure their consultation slot online with clear visiting schedules.
+                      </p>
+                    </div>
                   </div>
                 </div>
 
+                {/* Quick Perks Strip */}
+                <div className="modal-perks-strip">
+                  <div className="perk-chip">
+                    <CheckCircle2 size={13} className="perk-check" />
+                    <span>Free Custom Acrylic QR Standee</span>
+                  </div>
+                  <div className="perk-chip">
+                    <CheckCircle2 size={13} className="perk-check" />
+                    <span>Instant URL (globalbooking.com/dr-name)</span>
+                  </div>
+                  <div className="perk-chip">
+                    <CheckCircle2 size={13} className="perk-check" />
+                    <span>Automated SMS & WhatsApp Reminders</span>
+                  </div>
+                </div>
+
+                {/* Action Bar */}
                 <div className="modal-action-bar">
+                  <Link
+                    href="/dr-jahedul-islam"
+                    className="modal-secondary-btn"
+                    onClick={() => setActiveModal(null)}
+                  >
+                    <span>View Sample Doctor Profile</span>
+                    <ArrowRight size={14} />
+                  </Link>
                   <Link href="/login" className="modal-cta-btn gold-cta">
                     <LogIn size={16} />
                     <span>Open Doctor Login (/login)</span>
-                    <ArrowRight size={14} />
+                    <ArrowRight size={15} />
                   </Link>
                 </div>
               </>
             ) : (
               <>
                 <div className="modal-top">
-                  <span className="modal-badge emerald-badge">FOR HOSPITALS & CLINICS</span>
-                  <h2 className="modal-heading">
-                    For Hospitals & Clinics — <span className="modal-serif-gold">What You Get</span>
-                  </h2>
+                  <div className="modal-header-hero">
+                    <div className="modal-icon-squircle hospital-theme">
+                      <Building2 size={24} className="hospital-svg-emblem" />
+                    </div>
+                    <div className="modal-title-col">
+                      <div className="modal-badge emerald-badge">
+                        <ShieldCheck size={11} className="badge-sparkle-icon" />
+                        <span>FOR HOSPITALS & CLINICS</span>
+                      </div>
+                      <h2 className="modal-heading">
+                        For Hospitals & Clinics — <span className="modal-gradient-text emerald">What You Get</span>
+                      </h2>
+                    </div>
+                  </div>
                   <p className="modal-subtext">
                     Institutional management tools to showcase specialized clinical
-                    wings, streamline OPD intake, and connect consultation chambers.
+                    wings, streamline OPD intake, and connect consultation chambers seamlessly.
                   </p>
                 </div>
 
+                {/* Benefits List Cards */}
                 <div className="modal-benefits-grid">
                   <div className="modal-item">
-                    <div className="modal-item-head">
-                      <QrCode size={20} className="modal-ic-emerald" />
-                      <h4>Benefit A: QR Code + Hospital Page</h4>
+                    <div className="modal-item-left">
+                      <div className="benefit-icon-box hosp-accent">
+                        <QrCode size={20} />
+                      </div>
                     </div>
-                    <p>
-                      A facility profile highlighting medical departments, OPD hours,
-                      and consultant rosters, with a custom QR code for your reception
-                      desk and lobby displays.
-                    </p>
+                    <div className="modal-item-body">
+                      <div className="modal-item-header">
+                        <h4>Benefit A: QR Code + Hospital Facility Profile</h4>
+                        <span className="benefit-pill emerald">Lobby Display</span>
+                      </div>
+                      <p>
+                        A facility profile highlighting medical departments, OPD hours,
+                        and consultant rosters, with a custom QR code for your reception
+                        desk and lobby displays.
+                      </p>
+                    </div>
                   </div>
 
                   <div className="modal-item">
-                    <div className="modal-item-head">
-                      <Lock size={20} className="modal-ic-emerald" />
-                      <h4>Benefit B: Hospital Login</h4>
+                    <div className="modal-item-left">
+                      <div className="benefit-icon-box hosp-accent">
+                        <Lock size={20} />
+                      </div>
                     </div>
-                    <p>
-                      Administrative login through <code>/login</code> to coordinate
-                      department consultation hours, update clinic guidelines, and manage
-                      doctor schedules in real time.
-                    </p>
+                    <div className="modal-item-body">
+                      <div className="modal-item-header">
+                        <h4>Benefit B: Hospital Admin Login</h4>
+                        <span className="benefit-pill emerald">Full OPD Control</span>
+                      </div>
+                      <p>
+                        Administrative login through <code>/login</code> to coordinate
+                        department consultation hours, update clinic guidelines, and manage
+                        doctor schedules in real time.
+                      </p>
+                    </div>
                   </div>
 
                   <div className="modal-item">
-                    <div className="modal-item-head">
-                      <UserCheck size={20} className="modal-ic-emerald" />
-                      <h4>Benefit C: Patient Login + Online Booking</h4>
+                    <div className="modal-item-left">
+                      <div className="benefit-icon-box hosp-accent">
+                        <UserCheck size={20} />
+                      </div>
                     </div>
-                    <p>
-                      Patients choose the required clinical department, log in, and book
-                      confirmed outpatient visits, reducing lobby overcrowding.
-                    </p>
+                    <div className="modal-item-body">
+                      <div className="modal-item-header">
+                        <h4>Benefit C: Patient Department Routing</h4>
+                        <span className="benefit-pill emerald">Zero Overcrowding</span>
+                      </div>
+                      <p>
+                        Patients choose the required clinical department, log in, and book
+                        confirmed outpatient visits, reducing lobby overcrowding.
+                      </p>
+                    </div>
                   </div>
                 </div>
 
+                {/* Quick Perks Strip */}
+                <div className="modal-perks-strip">
+                  <div className="perk-chip">
+                    <CheckCircle2 size={13} className="perk-check emerald" />
+                    <span>Reception Desk Acrylic QR Standees</span>
+                  </div>
+                  <div className="perk-chip">
+                    <CheckCircle2 size={13} className="perk-check emerald" />
+                    <span>Department Roster Coordination</span>
+                  </div>
+                  <div className="perk-chip">
+                    <CheckCircle2 size={13} className="perk-check emerald" />
+                    <span>Centralized Multi-Chamber Intake</span>
+                  </div>
+                </div>
+
+                {/* Action Bar */}
                 <div className="modal-action-bar">
-                  <Link href="/login" className="modal-cta-btn gold-cta">
+                  <button
+                    type="button"
+                    className="modal-secondary-btn"
+                    onClick={() => setActiveModal(null)}
+                  >
+                    <span>Close Window</span>
+                  </button>
+                  <Link href="/login" className="modal-cta-btn emerald-cta">
                     <Building2 size={16} />
                     <span>Open Hospital Login (/login)</span>
-                    <ArrowRight size={14} />
+                    <ArrowRight size={15} />
                   </Link>
                 </div>
               </>
@@ -524,745 +962,7 @@ export default function HomePage() {
           </div>
         </div>
       )}
-
-      {/* ===================================================================
-          SCOPED STYLING SYSTEM (EXACT REFERENCE DESIGN SPECIFICATION)
-          =================================================================== */}
-      <style jsx>{`
-        @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800&family=Playfair+Display:ital,wght@1,600;1,700;1,800&display=swap');
-
-        .homepage-viewport-container {
-          min-height: 100vh;
-          background: #080a0f;
-          color: #f1f5f9;
-          font-family: var(--font-inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif);
-          position: relative;
-          overflow-x: hidden;
-          -webkit-font-smoothing: antialiased;
-        }
-
-        /* ---------------- Header ---------------- */
-        .site-header {
-          position: sticky;
-          top: 0;
-          z-index: 100;
-          background: rgba(8, 10, 15, 0.94);
-          backdrop-filter: blur(16px);
-          -webkit-backdrop-filter: blur(16px);
-          border-bottom: 1px solid rgba(212, 174, 71, 0.22);
-        }
-        .header-inner {
-          max-width: 1220px;
-          margin: 0 auto;
-          padding: 12px 28px;
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-          gap: 20px;
-        }
-        .brand-group {
-          display: flex;
-          align-items: center;
-          gap: 12px;
-          text-decoration: none;
-        }
-        .brand-labels {
-          display: flex;
-          flex-direction: column;
-        }
-        .brand-title {
-          font-family: 'Cinzel', serif, Georgia;
-          font-size: 1.22rem;
-          font-weight: 700;
-          letter-spacing: 0.08em;
-          color: #f6d884;
-          line-height: 1.1;
-        }
-        .brand-subtitle {
-          font-size: 0.6rem;
-          font-weight: 600;
-          color: #94a3b8;
-          letter-spacing: 0.14em;
-          text-transform: uppercase;
-          margin-top: 2px;
-        }
-
-        .center-nav {
-          display: flex;
-          align-items: center;
-          gap: 18px;
-        }
-        .nav-link-btn {
-          background: none;
-          border: none;
-          color: #cbd5e1;
-          font-size: 0.88rem;
-          font-weight: 500;
-          cursor: pointer;
-          padding: 6px 4px;
-          transition: color 0.15s;
-        }
-        .nav-link-btn:hover {
-          color: #f6d884;
-        }
-        .nav-sep {
-          color: rgba(255, 255, 255, 0.22);
-          font-size: 0.85rem;
-        }
-
-        .header-actions {
-          display: flex;
-          align-items: center;
-          gap: 14px;
-        }
-        .sign-in-btn {
-          display: inline-flex;
-          align-items: center;
-          gap: 7px;
-          color: #f1f5f9;
-          font-size: 0.88rem;
-          font-weight: 500;
-          text-decoration: none;
-          transition: color 0.15s;
-        }
-        .sign-in-btn:hover {
-          color: #f6d884;
-        }
-        .sign-in-icon {
-          color: #f6d884;
-        }
-        .get-started-btn {
-          display: inline-flex;
-          align-items: center;
-          padding: 8px 22px;
-          border-radius: 9999px;
-          font-size: 0.84rem;
-          font-weight: 700;
-          color: #111827;
-          background: linear-gradient(135deg, #fff7cc 0%, #f5d77f 40%, #d4ae47 100%);
-          border: none;
-          cursor: pointer;
-          box-shadow: 0 4px 14px rgba(212, 174, 71, 0.35);
-          transition: transform 0.15s, box-shadow 0.2s;
-        }
-        .get-started-btn:hover {
-          transform: translateY(-1px);
-          box-shadow: 0 6px 20px rgba(212, 174, 71, 0.48);
-        }
-
-        .mobile-toggle {
-          display: none;
-          background: none;
-          border: none;
-          color: #cbd5e1;
-          cursor: pointer;
-          padding: 4px;
-        }
-        .mobile-drawer {
-          display: flex;
-          flex-direction: column;
-          gap: 12px;
-          padding: 16px 28px 20px;
-          background: #0c1018;
-          border-bottom: 1px solid rgba(212, 174, 71, 0.2);
-        }
-        .mobile-drawer button {
-          background: none;
-          border: none;
-          color: #cbd5e1;
-          font-size: 0.92rem;
-          text-align: left;
-          cursor: pointer;
-          padding: 6px 0;
-        }
-        .mobile-drawer-divider {
-          height: 1px;
-          background: rgba(255, 255, 255, 0.08);
-          margin: 4px 0;
-        }
-        .mobile-login {
-          color: #f6d884;
-          font-weight: 600;
-          display: flex;
-          align-items: center;
-          gap: 8px;
-          text-decoration: none;
-          font-size: 0.92rem;
-        }
-
-        /* ---------------- Hero Section ---------------- */
-        .hero-section {
-          padding: 30px 24px 10px;
-        }
-        .hero-container {
-          max-width: 1220px;
-          margin: 0 auto;
-          display: grid;
-          grid-template-columns: 1fr 1.15fr;
-          gap: 36px;
-          align-items: center;
-        }
-
-        .hero-text-col {
-          display: flex;
-          flex-direction: column;
-          align-items: flex-start;
-          z-index: 2;
-        }
-        .hero-pretitle {
-          font-size: 0.82rem;
-          font-weight: 700;
-          letter-spacing: 0.14em;
-          color: #d4ae47;
-          margin-bottom: 6px;
-        }
-        .hero-headline {
-          margin: 0 0 14px;
-          line-height: 1.1;
-        }
-        .serif-italic-title {
-          font-family: 'Playfair Display', Georgia, serif;
-          font-style: italic;
-          font-weight: 700;
-          font-size: 3.4rem;
-          background: linear-gradient(135deg, #ffffff 10%, #fff1ba 50%, #e6be50 100%);
-          -webkit-background-clip: text;
-          -webkit-text-fill-color: transparent;
-          letter-spacing: -0.01em;
-          display: inline-block;
-          filter: drop-shadow(0 2px 14px rgba(212, 174, 71, 0.25));
-        }
-        .hero-description {
-          font-size: 0.94rem;
-          line-height: 1.55;
-          color: #cbd5e1;
-          margin-bottom: 22px;
-          max-width: 480px;
-        }
-
-        .hero-cta-group {
-          display: flex;
-          align-items: center;
-          gap: 10px;
-          flex-wrap: nowrap;
-        }
-        .cta-pill-gold {
-          display: inline-flex;
-          align-items: center;
-          gap: 7px;
-          padding: 8px 16px;
-          border-radius: 9999px;
-          font-size: 0.82rem;
-          font-weight: 700;
-          color: #111827;
-          background: linear-gradient(135deg, #fff7cc 0%, #f5d77f 40%, #d4ae47 100%);
-          border: none;
-          cursor: pointer;
-          white-space: nowrap;
-          box-shadow: 0 4px 14px rgba(212, 174, 71, 0.38);
-          transition: transform 0.15s, box-shadow 0.2s;
-        }
-        .cta-pill-gold:hover {
-          transform: translateY(-2px);
-          box-shadow: 0 6px 20px rgba(212, 174, 71, 0.52);
-        }
-        .cta-icon-avatar {
-          font-size: 0.95rem;
-        }
-        .cta-arrow {
-          transition: transform 0.15s;
-        }
-        .cta-pill-gold:hover .cta-arrow {
-          transform: translateX(3px);
-        }
-
-        .cta-pill-dark {
-          display: inline-flex;
-          align-items: center;
-          gap: 8px;
-          padding: 8px 14px;
-          border-radius: 8px;
-          font-size: 0.82rem;
-          font-weight: 600;
-          color: #f1f5f9;
-          background: rgba(18, 24, 38, 0.85);
-          border: 1px solid rgba(212, 174, 71, 0.6);
-          cursor: pointer;
-          text-decoration: none;
-          white-space: nowrap;
-          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
-          transition: border-color 0.15s, background 0.15s, transform 0.15s;
-        }
-        .cta-pill-dark:hover {
-          background: rgba(212, 174, 71, 0.18);
-          border-color: #f6d884;
-          transform: translateY(-2px);
-          color: #f6d884;
-        }
-        .cta-gold-icon {
-          color: #f5d77f;
-          display: inline-flex;
-          align-items: center;
-        }
-
-        /* Hero Right Scene (Photographic Master Crop) */
-        .hero-image-col {
-          display: flex;
-          justify-content: flex-end;
-        }
-        .hero-scene-crop {
-          width: 560px;
-          height: 380px;
-          background-image: url('/images/global-booking-home.jpg');
-          background-position: -464px -65px;
-          background-size: 1024px 682px;
-          background-repeat: no-repeat;
-          border-radius: 14px;
-          border: 1px solid rgba(212, 174, 71, 0.25);
-          box-shadow:
-            0 12px 36px rgba(0, 0, 0, 0.8),
-            0 0 45px rgba(212, 174, 71, 0.15);
-          mask-image: linear-gradient(to right, transparent 0%, black 5%, black 100%);
-          -webkit-mask-image: linear-gradient(to right, transparent 0%, black 5%, black 100%);
-          position: relative;
-        }
-
-        /* ---------------- Curved Ribbon Divider ---------------- */
-        .curved-divider-wrapper {
-          width: 100%;
-          height: 38px;
-          position: relative;
-          z-index: 5;
-          margin-top: -12px;
-          overflow: hidden;
-        }
-        .curved-ribbon-svg {
-          width: 100%;
-          height: 100%;
-          display: block;
-        }
-
-        /* ---------------- Feature Cards Deck ---------------- */
-        .feature-cards-deck {
-          position: relative;
-          z-index: 6;
-          padding: 8px 24px 18px;
-          background: radial-gradient(ellipse at 50% 0%, rgba(212, 174, 71, 0.06) 0%, rgba(8, 10, 15, 0) 70%);
-        }
-        .deck-container {
-          max-width: 1220px;
-          margin: 0 auto;
-          display: grid;
-          grid-template-columns: 1fr 1fr;
-          gap: 22px;
-        }
-        .feature-card {
-          background: linear-gradient(135deg, rgba(16, 22, 34, 0.94) 0%, rgba(9, 13, 20, 0.98) 100%);
-          border: 1px solid rgba(212, 174, 71, 0.42);
-          border-radius: 14px;
-          padding: 14px 18px;
-          display: flex;
-          align-items: center;
-          gap: 16px;
-          box-shadow:
-            0 8px 24px rgba(0, 0, 0, 0.55),
-            inset 0 0 20px rgba(212, 174, 71, 0.05);
-          transition: transform 0.2s, border-color 0.2s, box-shadow 0.2s;
-        }
-        .feature-card:hover {
-          transform: translateY(-2px);
-          border-color: rgba(245, 215, 127, 0.7);
-          box-shadow:
-            0 12px 30px rgba(0, 0, 0, 0.7),
-            0 0 25px rgba(212, 174, 71, 0.2);
-        }
-
-        /* Card Thumbnails (Direct Photographic Crops from Reference Mockup) */
-        .card-thumb-doc {
-          width: 132px;
-          height: 94px;
-          flex-shrink: 0;
-          border-radius: 10px;
-          background-image: url('/images/global-booking-home.jpg');
-          background-position: -48px -476px;
-          background-size: 1024px 682px;
-          background-repeat: no-repeat;
-          border: 1px solid rgba(212, 174, 71, 0.4);
-          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
-        }
-        .card-thumb-hosp {
-          width: 132px;
-          height: 94px;
-          flex-shrink: 0;
-          border-radius: 10px;
-          background-image: url('/images/global-booking-home.jpg');
-          background-position: -540px -476px;
-          background-size: 1024px 682px;
-          background-repeat: no-repeat;
-          border: 1px solid rgba(212, 174, 71, 0.4);
-          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
-        }
-
-        .card-info {
-          display: flex;
-          flex-direction: column;
-          align-items: flex-start;
-          flex: 1;
-        }
-        .card-eyebrow {
-          font-size: 0.64rem;
-          font-weight: 700;
-          letter-spacing: 0.12em;
-          color: #d4ae47;
-          text-transform: uppercase;
-          margin-bottom: 2px;
-        }
-        .card-title-serif {
-          font-family: 'Playfair Display', Georgia, serif;
-          font-style: italic;
-          font-weight: 700;
-          font-size: 1.32rem;
-          color: #ffffff;
-          margin: 0 0 4px;
-          line-height: 1.15;
-        }
-        .card-text {
-          font-size: 0.78rem;
-          line-height: 1.42;
-          color: #94a3b8;
-          margin: 0 0 9px;
-        }
-        .card-explore-btn {
-          display: inline-flex;
-          align-items: center;
-          gap: 6px;
-          padding: 5px 14px;
-          border-radius: 9999px;
-          font-size: 0.75rem;
-          font-weight: 600;
-          color: #f6d884;
-          background: rgba(212, 174, 71, 0.08);
-          border: 1px solid rgba(212, 174, 71, 0.45);
-          cursor: pointer;
-          transition: background 0.15s, border-color 0.15s, transform 0.15s;
-        }
-        .card-explore-btn:hover {
-          background: rgba(212, 174, 71, 0.22);
-          border-color: #f6d884;
-          transform: translateX(2px);
-        }
-
-        /* ---------------- Trust Strip ---------------- */
-        .trust-strip {
-          position: relative;
-          z-index: 6;
-          border-top: 1px solid rgba(212, 174, 71, 0.18);
-          border-bottom: 1px solid rgba(212, 174, 71, 0.18);
-          background: rgba(6, 8, 12, 0.9);
-          padding: 10px 24px;
-        }
-        .trust-inner {
-          max-width: 1220px;
-          margin: 0 auto;
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-          flex-wrap: wrap;
-          gap: 12px;
-        }
-        .trust-cell {
-          display: flex;
-          align-items: center;
-          gap: 9px;
-        }
-        .trust-ic {
-          color: #f6d884;
-          flex-shrink: 0;
-        }
-        .trust-copy {
-          display: flex;
-          flex-direction: column;
-        }
-        .trust-copy strong {
-          font-size: 0.78rem;
-          font-weight: 700;
-          color: #f1f5f9;
-          letter-spacing: 0.01em;
-        }
-        .trust-copy span {
-          font-size: 0.67rem;
-          color: #94a3b8;
-          margin-top: 1px;
-        }
-        .trust-v-bar {
-          color: rgba(212, 174, 71, 0.35);
-          font-size: 0.9rem;
-        }
-
-        /* ---------------- Skyline Footer ---------------- */
-        .skyline-footer {
-          position: relative;
-          background: #040507;
-          overflow: hidden;
-          padding-bottom: 14px;
-        }
-        .skyline-photo-band {
-          width: 100%;
-          height: 65px;
-          background-image: url('/images/global-booking-home.jpg');
-          background-position: center bottom;
-          background-size: 100% auto;
-          background-repeat: no-repeat;
-        }
-        .footer-links-row {
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          gap: 12px;
-          font-size: 0.76rem;
-          color: #64748b;
-          flex-wrap: wrap;
-          margin-top: 4px;
-        }
-        .footer-links-row button {
-          background: none;
-          border: none;
-          color: #94a3b8;
-          font-size: 0.76rem;
-          cursor: pointer;
-          padding: 2px 0;
-          transition: color 0.15s;
-        }
-        .footer-links-row button:hover,
-        .footer-links-row a:hover {
-          color: #f6d884;
-        }
-        .footer-links-row a {
-          color: #94a3b8;
-          text-decoration: none;
-          transition: color 0.15s;
-        }
-
-        /* ---------------- Luxury Benefit Modals ---------------- */
-        .modal-backdrop {
-          position: fixed;
-          top: 0;
-          left: 0;
-          right: 0;
-          bottom: 0;
-          z-index: 999;
-          background: rgba(4, 6, 10, 0.85);
-          backdrop-filter: blur(14px);
-          -webkit-backdrop-filter: blur(14px);
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          padding: 20px;
-          animation: modalFadeIn 0.2s ease-out;
-        }
-        @keyframes modalFadeIn {
-          from { opacity: 0; }
-          to { opacity: 1; }
-        }
-
-        .modal-card {
-          width: 100%;
-          max-width: 680px;
-          background: linear-gradient(145deg, #0e141f 0%, #080b11 100%);
-          border: 1px solid rgba(212, 174, 71, 0.45);
-          border-radius: 18px;
-          padding: 28px 32px;
-          position: relative;
-          box-shadow:
-            0 24px 60px rgba(0, 0, 0, 0.9),
-            0 0 40px rgba(212, 174, 71, 0.2);
-          max-height: 90vh;
-          overflow-y: auto;
-        }
-        .modal-close-btn {
-          position: absolute;
-          top: 18px;
-          right: 18px;
-          background: rgba(255, 255, 255, 0.08);
-          border: 1px solid rgba(255, 255, 255, 0.12);
-          color: #cbd5e1;
-          border-radius: 50%;
-          width: 32px;
-          height: 32px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          cursor: pointer;
-          transition: background 0.15s, color 0.15s;
-        }
-        .modal-close-btn:hover {
-          background: rgba(212, 174, 71, 0.2);
-          color: #f6d884;
-        }
-
-        .modal-top {
-          margin-bottom: 20px;
-        }
-        .modal-badge {
-          display: inline-block;
-          font-size: 0.65rem;
-          font-weight: 700;
-          letter-spacing: 0.12em;
-          padding: 4px 12px;
-          border-radius: 9999px;
-          margin-bottom: 8px;
-        }
-        .gold-badge {
-          background: rgba(212, 174, 71, 0.15);
-          color: #f6d884;
-          border: 1px solid rgba(212, 174, 71, 0.4);
-        }
-        .emerald-badge {
-          background: rgba(16, 185, 129, 0.15);
-          color: #6ee7b7;
-          border: 1px solid rgba(16, 185, 129, 0.4);
-        }
-        .modal-heading {
-          font-size: 1.55rem;
-          font-weight: 700;
-          margin: 0 0 6px;
-          color: #ffffff;
-        }
-        .modal-serif-gold {
-          font-family: 'Playfair Display', Georgia, serif;
-          font-style: italic;
-          color: #f6d884;
-        }
-        .modal-subtext {
-          font-size: 0.86rem;
-          color: #94a3b8;
-          line-height: 1.5;
-          margin: 0;
-        }
-
-        .modal-benefits-grid {
-          display: flex;
-          flex-direction: column;
-          gap: 14px;
-          margin-bottom: 24px;
-        }
-        .modal-item {
-          background: rgba(255, 255, 255, 0.03);
-          border: 1px solid rgba(255, 255, 255, 0.08);
-          border-radius: 12px;
-          padding: 14px 16px;
-        }
-        .modal-item-head {
-          display: flex;
-          align-items: center;
-          gap: 10px;
-          margin-bottom: 6px;
-        }
-        .modal-item-head h4 {
-          margin: 0;
-          font-size: 0.94rem;
-          font-weight: 700;
-          color: #f1f5f9;
-        }
-        .modal-ic-gold {
-          color: #f6d884;
-        }
-        .modal-ic-emerald {
-          color: #6ee7b7;
-        }
-        .modal-item p {
-          margin: 0;
-          font-size: 0.82rem;
-          color: #94a3b8;
-          line-height: 1.48;
-        }
-        .modal-item code {
-          background: rgba(0, 0, 0, 0.4);
-          color: #f6d884;
-          padding: 2px 6px;
-          border-radius: 4px;
-          font-size: 0.8rem;
-        }
-
-        .modal-action-bar {
-          display: flex;
-          justify-content: flex-end;
-          border-top: 1px solid rgba(255, 255, 255, 0.08);
-          padding-top: 16px;
-        }
-        .modal-cta-btn {
-          display: inline-flex;
-          align-items: center;
-          gap: 8px;
-          padding: 10px 22px;
-          border-radius: 9999px;
-          font-size: 0.86rem;
-          font-weight: 700;
-          text-decoration: none;
-          transition: transform 0.15s, box-shadow 0.2s;
-        }
-        .gold-cta {
-          color: #111827;
-          background: linear-gradient(135deg, #fff7cc 0%, #f5d77f 40%, #d4ae47 100%);
-          box-shadow: 0 4px 14px rgba(212, 174, 71, 0.35);
-        }
-        .gold-cta:hover {
-          transform: translateY(-1px);
-          box-shadow: 0 6px 20px rgba(212, 174, 71, 0.48);
-        }
-
-        /* ---------------- Responsive Breakpoints ---------------- */
-        @media (max-width: 1024px) {
-          .hero-container {
-            grid-template-columns: 1fr;
-            text-align: center;
-          }
-          .hero-text-col {
-            align-items: center;
-          }
-          .hero-cta-group {
-            justify-content: center;
-          }
-          .hero-image-col {
-            justify-content: center;
-          }
-          .deck-container {
-            grid-template-columns: 1fr;
-          }
-          .trust-inner {
-            justify-content: center;
-            gap: 16px;
-          }
-          .trust-v-bar {
-            display: none;
-          }
-        }
-
-        @media (max-width: 768px) {
-          .center-nav {
-            display: none;
-          }
-          .mobile-toggle {
-            display: block;
-          }
-          .serif-italic-title {
-            font-size: 2.6rem;
-          }
-          .hero-scene-crop {
-            width: 100%;
-            height: 280px;
-            background-size: cover;
-            background-position: center;
-          }
-          .feature-card {
-            flex-direction: column;
-            text-align: center;
-          }
-          .card-info {
-            align-items: center;
-          }
-        }
-      `}</style>
     </div>
   );
 }
+

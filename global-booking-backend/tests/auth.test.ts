@@ -10,6 +10,12 @@ import {
 } from "../src/modules/auth/auth.service.js";
 import { buildApp } from "../src/app.js";
 import { ADMIN_COOKIE_NAME, requirePermission } from "../src/modules/auth/auth.guard.js";
+import {
+  checkRateLimit,
+  resetLoginRateLimit,
+  pruneExpiredLoginAttempts,
+  getLoginAttemptCount,
+} from "../src/modules/auth/auth.routes.js";
 import type { AdminUserRecord } from "../src/modules/auth/auth.types.js";
 
 /* =========================================================================
@@ -28,6 +34,11 @@ test("Environment validation accepts valid server configuration", () => {
   assert.equal(env.nodeEnv, "development");
   assert.ok(env.jwtSecret.length >= 32);
   assert.ok(env.cookieSecret.length >= 32);
+});
+
+test("Environment validation defaults to port 3003 when PORT is omitted", () => {
+  const env = readServerEnvironment({});
+  assert.equal(env.port, 3003);
 });
 
 test("Environment validation throws when PORT is invalid", () => {
@@ -253,3 +264,45 @@ test("Server-side permission guard allows authorized roles and rejects missing p
   assert.equal(allowedRes.statusCode, 200);
   assert.equal(allowedRes.json().granted, true);
 });
+
+test("checkRateLimit tracks attempts, enforces 5 attempt limit, and resetLoginRateLimit clears counter", () => {
+  const testKey = "127.0.0.1:ratelimit_test@globalbooking.ae";
+  resetLoginRateLimit(testKey);
+
+  // 1 to 5 attempts should pass
+  assert.equal(checkRateLimit(testKey), true);
+  assert.equal(checkRateLimit(testKey), true);
+  assert.equal(checkRateLimit(testKey), true);
+  assert.equal(checkRateLimit(testKey), true);
+  assert.equal(checkRateLimit(testKey), true);
+  assert.equal(getLoginAttemptCount(testKey), 5);
+
+  // 6th attempt within same minute should be rejected
+  assert.equal(checkRateLimit(testKey), false);
+
+  // Successful login clears rate limit
+  resetLoginRateLimit(testKey);
+  assert.equal(getLoginAttemptCount(testKey), 0);
+  assert.equal(checkRateLimit(testKey), true);
+
+  // Cleanup
+  resetLoginRateLimit(testKey);
+});
+
+test("pruneExpiredLoginAttempts cleans up records whose window has elapsed", () => {
+  const expiredKey = "127.0.0.1:expired@globalbooking.ae";
+  const now = Date.now();
+
+  // Create attempt at timestamp 'now'
+  checkRateLimit(expiredKey, now);
+  assert.equal(getLoginAttemptCount(expiredKey), 1);
+
+  // Prune with timestamp within window should not prune (window is 60s)
+  pruneExpiredLoginAttempts(now + 10_000);
+  assert.equal(getLoginAttemptCount(expiredKey), 1);
+
+  // Prune after 61s should prune the entry
+  pruneExpiredLoginAttempts(now + 61_000);
+  assert.equal(getLoginAttemptCount(expiredKey), 0);
+});
+

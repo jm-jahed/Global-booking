@@ -3,14 +3,44 @@ import type { LoginRequestBody, AdminSessionPayload } from "./auth.types.js";
 import { normalizeEmail, verifyPassword, sanitizeAdminProfile } from "./auth.service.js";
 import { authenticateAdmin, ADMIN_COOKIE_NAME } from "./auth.guard.js";
 import { mongoAdapter } from "../../infrastructure/database/mongo.adapter.js";
+import { generateSafeDoctorSlug } from "../portal/doctor-portal.routes.js";
 
-// Basic in-memory rate limiting map for login attempts: IP/email -> { attempts, lastAttempt }
+// In-memory rate limiting map for login attempts: IP/email -> { attempts, resetAt }
 const loginAttemptMap = new Map<string, { attempts: number; resetAt: number }>();
 const MAX_LOGIN_ATTEMPTS = 5;
 const RATE_LIMIT_WINDOW_MS = 60_000; // 1 minute
 
-function checkRateLimit(key: string): boolean {
-  const now = Date.now();
+/**
+ * Prunes expired entries from login attempt tracker to prevent memory leak.
+ */
+export function pruneExpiredLoginAttempts(now = Date.now()): void {
+  for (const [key, record] of loginAttemptMap.entries()) {
+    if (now > record.resetAt) {
+      loginAttemptMap.delete(key);
+    }
+  }
+}
+
+/**
+ * Resets login attempt counter for a specific rate limit key on successful login.
+ */
+export function resetLoginRateLimit(key: string): void {
+  loginAttemptMap.delete(key);
+}
+
+/**
+ * Retrieves current attempt count for inspection or testing.
+ */
+export function getLoginAttemptCount(key: string): number {
+  return loginAttemptMap.get(key)?.attempts || 0;
+}
+
+export function checkRateLimit(key: string, now = Date.now()): boolean {
+  // Automatically prune if map grows over 50 entries
+  if (loginAttemptMap.size > 50) {
+    pruneExpiredLoginAttempts(now);
+  }
+
   const record = loginAttemptMap.get(key);
 
   if (!record || now > record.resetAt) {
@@ -69,58 +99,213 @@ export async function registerAuthRoutes(app: FastifyInstance): Promise<void> {
       const adminCol = mongoAdapter.getAdminCollection();
       const adminRecord = await adminCol.findOne({ email: normalizedEmail });
 
-      // Constant-time-like rejection to avoid leaking account existence
-      const passwordMatch = adminRecord
-        ? await verifyPassword(password, adminRecord.passwordHash)
-        : false;
+      if (adminRecord) {
+        const passwordMatch = await verifyPassword(password, adminRecord.passwordHash);
 
-      if (!adminRecord || !passwordMatch || !adminRecord.isActive) {
-        return reply.status(401).send({
-          statusCode: 401,
-          error: "Unauthorized",
-          message: "Invalid administrative email or password.",
+        if (!passwordMatch || !adminRecord.isActive) {
+          return reply.status(401).send({
+            statusCode: 401,
+            error: "Unauthorized",
+            message: "Invalid administrative email or password.",
+          });
+        }
+
+        // Successful authentication: clear rate limiter for this user/IP
+        resetLoginRateLimit(rateLimitKey);
+
+        // Successful authentication: create session payload
+        const sessionPayload: AdminSessionPayload = {
+          adminId: adminRecord.adminId,
+          email: adminRecord.email,
+          role: adminRecord.role,
+          permissions: adminRecord.permissions,
+        };
+
+        const token = app.jwt.sign(sessionPayload, { expiresIn: "24h" });
+        const isProduction = process.env.NODE_ENV === "production";
+
+        // Set signed HTTP-only session cookie
+        reply.setCookie(ADMIN_COOKIE_NAME, token, {
+          path: "/",
+          httpOnly: true,
+          secure: isProduction,
+          sameSite: "lax",
+          signed: true,
+          maxAge: 86400, // 24 hours
+        });
+
+        // Update last login timestamp asynchronously
+        const nowIso = new Date().toISOString();
+        await adminCol.updateOne(
+          { adminId: adminRecord.adminId },
+          { $set: { lastLoginAt: nowIso, updatedAt: nowIso } },
+        );
+
+        return reply.status(200).send({
+          statusCode: 200,
+          token,
+          user: sanitizeAdminProfile({ ...adminRecord, lastLoginAt: nowIso }),
         });
       }
 
-      // Successful authentication: create session payload
-      const sessionPayload: AdminSessionPayload = {
-        adminId: adminRecord.adminId,
-        email: adminRecord.email,
-        role: adminRecord.role,
-        permissions: adminRecord.permissions,
-      };
+      // If no admin record exists, check doctor accounts
+      const docCol = mongoAdapter.getDoctorCollection();
+      const doctorRecord = await docCol.findOne({ email: normalizedEmail });
 
-      const token = app.jwt.sign(sessionPayload, { expiresIn: "24h" });
+      if (doctorRecord && doctorRecord.passwordHash) {
+        const passwordMatch = await verifyPassword(password, doctorRecord.passwordHash);
 
-      const isProduction = process.env.NODE_ENV === "production";
+        if (!passwordMatch) {
+          return reply.status(401).send({
+            statusCode: 401,
+            error: "Unauthorized",
+            message: "Invalid email or password.",
+          });
+        }
 
-      // Set signed HTTP-only session cookie
-      reply.setCookie(ADMIN_COOKIE_NAME, token, {
-        path: "/",
-        httpOnly: true,
-        secure: isProduction,
-        sameSite: "lax",
-        signed: true,
-        maxAge: 86400, // 24 hours
-      });
+        if (doctorRecord.accountStatus === "SUSPENDED") {
+          return reply.status(403).send({
+            statusCode: 403,
+            error: "Forbidden",
+            message: "This Doctor account is currently suspended. Please contact platform administration.",
+          });
+        }
 
-      // Update last login timestamp asynchronously
-      const nowIso = new Date().toISOString();
-      await adminCol.updateOne(
-        { adminId: adminRecord.adminId },
-        { $set: { lastLoginAt: nowIso, updatedAt: nowIso } },
-      );
+        // Successful authentication: clear rate limiter
+        resetLoginRateLimit(rateLimitKey);
 
-      return reply.status(200).send({
-        statusCode: 200,
-        user: sanitizeAdminProfile({ ...adminRecord, lastLoginAt: nowIso }),
+        const sessionPayload: AdminSessionPayload = {
+          adminId: doctorRecord.id,
+          email: doctorRecord.email,
+          role: "DOCTOR",
+          permissions: ["VIEW_DOCTORS"],
+        };
+
+        const token = app.jwt.sign(sessionPayload, { expiresIn: "24h" });
+        const isProduction = process.env.NODE_ENV === "production";
+
+        reply.setCookie(ADMIN_COOKIE_NAME, token, {
+          path: "/",
+          httpOnly: true,
+          secure: isProduction,
+          sameSite: "lax",
+          signed: true,
+          maxAge: 86400, // 24 hours
+        });
+
+        const nowIso = new Date().toISOString();
+        await docCol.updateOne(
+          { id: doctorRecord.id },
+          { $set: { updatedAt: nowIso } },
+        );
+
+        return reply.status(200).send({
+          statusCode: 200,
+          token,
+          user: {
+            id: doctorRecord.id,
+            email: doctorRecord.email,
+            name: doctorRecord.fullName,
+            fullName: doctorRecord.fullName,
+            role: "DOCTOR",
+            specialty: doctorRecord.specialty,
+            doctorId: doctorRecord.doctorId,
+            licenseNumber: doctorRecord.licenseNumber,
+            accountStatus: doctorRecord.accountStatus,
+            slug: doctorRecord.slug || generateSafeDoctorSlug(doctorRecord.fullName, doctorRecord.doctorId || doctorRecord.id),
+            avatar: doctorRecord.avatar,
+            chamberLocationsSummary: doctorRecord.chamberLocationsSummary,
+            chambers: doctorRecord.chambers,
+            permissions: ["VIEW_DOCTORS"],
+            isActive: true,
+            createdAt: doctorRecord.createdAt,
+          },
+        });
+      }
+
+      // If no admin or doctor record, check hospital accounts
+      const hspCol = mongoAdapter.getHospitalCollection();
+      const hospitalRecord = await hspCol.findOne({ email: normalizedEmail });
+
+      if (hospitalRecord && hospitalRecord.passwordHash) {
+        const passwordMatch = await verifyPassword(password, hospitalRecord.passwordHash);
+
+        if (!passwordMatch) {
+          return reply.status(401).send({
+            statusCode: 401,
+            error: "Unauthorized",
+            message: "Invalid email or password.",
+          });
+        }
+
+        if (hospitalRecord.accountStatus === "SUSPENDED") {
+          return reply.status(403).send({
+            statusCode: 403,
+            error: "Forbidden",
+            message: "This Hospital account is currently suspended. Please contact platform administration.",
+          });
+        }
+
+        // Successful authentication: clear rate limiter
+        resetLoginRateLimit(rateLimitKey);
+
+        const sessionPayload: AdminSessionPayload = {
+          adminId: hospitalRecord.id,
+          email: hospitalRecord.email,
+          role: "HOSPITAL",
+          permissions: ["VIEW_HOSPITALS"],
+        };
+
+        const token = app.jwt.sign(sessionPayload, { expiresIn: "24h" });
+        const isProduction = process.env.NODE_ENV === "production";
+
+        reply.setCookie(ADMIN_COOKIE_NAME, token, {
+          path: "/",
+          httpOnly: true,
+          secure: isProduction,
+          sameSite: "lax",
+          signed: true,
+          maxAge: 86400, // 24 hours
+        });
+
+        const nowIso = new Date().toISOString();
+        await hspCol.updateOne(
+          { id: hospitalRecord.id },
+          { $set: { updatedAt: nowIso } },
+        );
+
+        return reply.status(200).send({
+          statusCode: 200,
+          token,
+          user: {
+            id: hospitalRecord.id,
+            email: hospitalRecord.email,
+            name: hospitalRecord.institutionName,
+            institutionName: hospitalRecord.institutionName,
+            role: "HOSPITAL",
+            facilityType: hospitalRecord.facilityType,
+            hospitalId: hospitalRecord.hospitalId,
+            licenseNumber: hospitalRecord.licenseNumber,
+            accountStatus: hospitalRecord.accountStatus,
+            permissions: ["VIEW_HOSPITALS"],
+            isActive: true,
+            createdAt: hospitalRecord.createdAt,
+          },
+        });
+      }
+
+      // Neither admin, doctor, nor hospital found with valid credentials
+      return reply.status(401).send({
+        statusCode: 401,
+        error: "Unauthorized",
+        message: "Invalid email or password.",
       });
     },
   );
 
   /**
    * GET /api/v1/auth/admin/me
-   * Returns current authenticated administrator profile
+   * Returns current authenticated administrator, doctor, or hospital profile
    */
   app.get(
     "/api/v1/auth/admin/me",
@@ -140,6 +325,72 @@ export async function registerAuthRoutes(app: FastifyInstance): Promise<void> {
           statusCode: 503,
           error: "Service Unavailable",
           message: "Database persistence is unavailable.",
+        });
+      }
+
+      if (session.role === "DOCTOR") {
+        const docCol = mongoAdapter.getDoctorCollection();
+        const doc = await docCol.findOne({ id: session.adminId });
+
+        if (!doc || doc.accountStatus === "SUSPENDED") {
+          return reply.status(401).send({
+            statusCode: 401,
+            error: "Unauthorized",
+            message: "Doctor account is inactive or not found.",
+          });
+        }
+
+        return reply.status(200).send({
+          statusCode: 200,
+          user: {
+            id: doc.id,
+            email: doc.email,
+            name: doc.fullName,
+            fullName: doc.fullName,
+            role: "DOCTOR",
+            specialty: doc.specialty,
+            doctorId: doc.doctorId,
+            licenseNumber: doc.licenseNumber,
+            accountStatus: doc.accountStatus,
+            slug: doc.slug || generateSafeDoctorSlug(doc.fullName, doc.doctorId || doc.id),
+            avatar: doc.avatar,
+            chamberLocationsSummary: doc.chamberLocationsSummary,
+            chambers: doc.chambers,
+            permissions: ["VIEW_DOCTORS"],
+            isActive: true,
+            createdAt: doc.createdAt,
+          },
+        });
+      }
+
+      if (session.role === "HOSPITAL") {
+        const hspCol = mongoAdapter.getHospitalCollection();
+        const hsp = await hspCol.findOne({ id: session.adminId });
+
+        if (!hsp || hsp.accountStatus === "SUSPENDED") {
+          return reply.status(401).send({
+            statusCode: 401,
+            error: "Unauthorized",
+            message: "Hospital account is inactive or not found.",
+          });
+        }
+
+        return reply.status(200).send({
+          statusCode: 200,
+          user: {
+            id: hsp.id,
+            email: hsp.email,
+            name: hsp.institutionName,
+            institutionName: hsp.institutionName,
+            role: "HOSPITAL",
+            facilityType: hsp.facilityType,
+            hospitalId: hsp.hospitalId,
+            licenseNumber: hsp.licenseNumber,
+            accountStatus: hsp.accountStatus,
+            permissions: ["VIEW_HOSPITALS"],
+            isActive: true,
+            createdAt: hsp.createdAt,
+          },
         });
       }
 

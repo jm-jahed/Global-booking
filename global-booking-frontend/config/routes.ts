@@ -27,6 +27,7 @@ export const ROUTES = {
   notifications: "/notifications",
   settings: "/settings",
   admin: "/admin",
+  adminLogin: "/admin/login",
   adminRegistrations: "/admin/registrations",
   adminDoctors: "/admin/doctors",
   adminHospitals: "/admin/hospitals",

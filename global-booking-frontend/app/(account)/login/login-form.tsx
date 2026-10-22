@@ -15,8 +15,8 @@ import {
   CheckCircle2,
   X,
   ArrowLeft,
-  Sparkles,
 } from "lucide-react";
+import { adminLogin } from "@/lib/api/admin-client";
 
 function LuxuryGoldEmblem() {
   return (
@@ -148,17 +148,32 @@ export function LuxuryLoginForm() {
     }
 
     setSubmitting(true);
-    // Simulate luxury authentication transition
-    setTimeout(() => {
+    try {
+      const res = await adminLogin({ email: trimmedEmail, password });
+      if (res?.user) {
+        if (
+          res.user.role === "SUPER_ADMIN" ||
+          res.user.role === "OPERATIONS_ADMIN" ||
+          res.user.role === "BILLING_ADMIN" ||
+          res.user.role === "AUDIT_VIEWER"
+        ) {
+          router.push("/admin/registrations");
+        } else {
+          router.push("/dashboard");
+        }
+        return;
+      }
+      setError("Authentication failed: Invalid credentials or missing account profile.");
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Authentication failed.";
+      if (msg.includes("Failed to fetch") || msg.includes("NetworkError")) {
+        setError("Unable to connect to the authentication server. Please check your network connection or verify that the server is online.");
+      } else {
+        setError(msg);
+      }
+    } finally {
       setSubmitting(false);
-      router.push("/dashboard");
-    }, 900);
-  };
-
-  const handleFillDemo = () => {
-    setEmail("admin@globalerp.com");
-    setPassword("GlobalERP2026!");
-    setError(null);
+    }
   };
 
   return (
@@ -217,20 +232,6 @@ export function LuxuryLoginForm() {
             <p className="welcome-subtitle">
               Sign in to manage your appointments, patients, and bookings
             </p>
-          </div>
-
-          {/* Demo Quick-Fill Pill */}
-          <div className="demo-chip-box">
-            <button
-              type="button"
-              onClick={handleFillDemo}
-              className="demo-chip-btn"
-              title="Click to fill demo executive credentials"
-            >
-              <Sparkles size={13} className="demo-sparkle" />
-              <span>Demo Account: admin@globalbooking.com</span>
-              <span className="demo-action-text">Autofill</span>
-            </button>
           </div>
 
           {/* Error Notification Banner */}
@@ -692,49 +693,6 @@ export function LuxuryLoginForm() {
           color: #94a3b8;
           margin: 0;
           line-height: 1.4;
-        }
-
-        /* Demo Quick-Fill Pill */
-        .demo-chip-box {
-          display: flex;
-          justify-content: center;
-          margin-bottom: 16px;
-        }
-
-        .demo-chip-btn {
-          display: inline-flex;
-          align-items: center;
-          gap: 7px;
-          padding: 6px 12px;
-          background: rgba(201, 162, 75, 0.09);
-          border: 1px dashed rgba(212, 175, 55, 0.45);
-          border-radius: 999px;
-          color: #e6c97a;
-          font-size: 11.5px;
-          font-weight: 500;
-          cursor: pointer;
-          transition: all 0.2s ease;
-        }
-
-        .demo-chip-btn:hover {
-          background: rgba(201, 162, 75, 0.18);
-          border-color: #f5d77f;
-          transform: translateY(-1px);
-        }
-
-        .demo-sparkle {
-          color: #f5d77f;
-        }
-
-        .demo-action-text {
-          font-size: 10px;
-          font-weight: 700;
-          text-transform: uppercase;
-          letter-spacing: 0.05em;
-          background: #c9a24b;
-          color: #050e0a;
-          padding: 2px 6px;
-          border-radius: 4px;
         }
 
         /* Error Banner */

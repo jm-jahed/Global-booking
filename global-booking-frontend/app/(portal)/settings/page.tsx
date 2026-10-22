@@ -1,6 +1,12 @@
-import { FoundationPage } from "@/components/shared/foundation-page";
-import { PAGE_CONTENT } from "@/config/page-content";
+import { PortalSettingsView } from "@/components/portal/portfolio/portal-settings-view";
 import { pageMetadata } from "@/lib/utils/metadata";
-const content = PAGE_CONTENT.settings;
-export const metadata = pageMetadata("Settings", content.description);
-export default function Page() { return <FoundationPage {...content} />; }
+
+export const metadata = pageMetadata(
+  "My Profile & Portfolio",
+  "Manage your personal doctor portfolio, medical qualifications, visiting chambers, consultation fees, and public profile."
+);
+
+export default function Page() {
+  return <PortalSettingsView />;
+}
+

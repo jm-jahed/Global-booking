@@ -10,7 +10,7 @@ export interface ServerEnvironment {
 }
 
 const DEFAULT_HOST = "127.0.0.1";
-const DEFAULT_PORT = 3000;
+const DEFAULT_PORT = 3003;
 const DEFAULT_DB_NAME = "global_booking";
 const DEFAULT_FRONTEND_ORIGIN = "http://localhost:3000";
 

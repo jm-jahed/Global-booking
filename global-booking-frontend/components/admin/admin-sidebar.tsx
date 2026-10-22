@@ -1,8 +1,9 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import {
   ClipboardList,
   Stethoscope,
@@ -14,23 +15,19 @@ import {
   X,
 } from "lucide-react";
 import { ROUTES } from "@/config/routes";
-import {
-  MOCK_SUPER_ADMIN_USERS,
-  MOCK_PENDING_DOCTOR_APPLICATIONS,
-  MOCK_PENDING_HOSPITAL_APPLICATIONS,
-} from "@/lib/data/mock-admin-data";
-
-/**
- * Total pending registration applications from Phase 1 mock data.
- * Explicitly identified as fictional mock data fixtures.
- */
-const TOTAL_MOCK_PENDING_REGISTRATIONS =
-  MOCK_PENDING_DOCTOR_APPLICATIONS.length +
-  MOCK_PENDING_HOSPITAL_APPLICATIONS.length;
+import { adminLogout } from "@/lib/api/admin-client";
 
 export interface AdminSidebarProps {
   readonly isOpen?: boolean;
   readonly onClose?: () => void;
+  readonly adminUser?: {
+    readonly id?: string;
+    readonly name?: string;
+    readonly email?: string;
+    readonly role?: string;
+    readonly permissions?: readonly string[];
+    readonly avatar?: string;
+  } | null;
 }
 
 /**
@@ -41,9 +38,9 @@ export const SUPER_ADMIN_NAV_MODULES = [
     label: "New Registration Requests",
     href: ROUTES.adminRegistrations,
     icon: ClipboardList,
-    badge: `${TOTAL_MOCK_PENDING_REGISTRATIONS}`,
-    badgeLabel: "MOCK",
-    badgeTooltip: `Mock Fixture: ${TOTAL_MOCK_PENDING_REGISTRATIONS} pending applications (${MOCK_PENDING_DOCTOR_APPLICATIONS.length} Doctors, ${MOCK_PENDING_HOSPITAL_APPLICATIONS.length} Hospitals)`,
+    badge: null,
+    badgeLabel: null,
+    badgeTooltip: null,
     activeMatch: (path: string) =>
       path === "/admin" ||
       path === "/admin/" ||
@@ -96,9 +93,39 @@ export const SUPER_ADMIN_NAV_MODULES = [
   },
 ] as const;
 
-export function AdminSidebar({ isOpen = false, onClose }: AdminSidebarProps) {
+export function AdminSidebar({ isOpen = false, onClose, adminUser }: AdminSidebarProps) {
   const pathname = usePathname();
-  const currentAdmin = MOCK_SUPER_ADMIN_USERS[0];
+  const router = useRouter();
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
+
+  const handleExitSession = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    if (isLoggingOut) return;
+    try {
+      setIsLoggingOut(true);
+      await adminLogout();
+    } catch {
+      // ignore
+    } finally {
+      setIsLoggingOut(false);
+      onClose?.();
+      router.push(ROUTES.adminLogin);
+    }
+  };
+
+  const displayName = adminUser?.name || "Administrator";
+  const displayRole =
+    adminUser?.role === "SUPER_ADMIN"
+      ? "Super Admin"
+      : adminUser?.role === "OPERATIONS_ADMIN"
+      ? "Operations Admin"
+      : adminUser?.role === "BILLING_ADMIN"
+      ? "Billing Admin"
+      : adminUser?.role === "AUDIT_VIEWER"
+      ? "Audit Viewer"
+      : adminUser?.role || "Administrator";
+  const displayId = adminUser?.id ? ` (${adminUser.id})` : "";
+  const initial = displayName.charAt(0).toUpperCase() || "A";
 
   return (
     <aside
@@ -149,10 +176,10 @@ export function AdminSidebar({ isOpen = false, onClose }: AdminSidebarProps) {
           )}
         </div>
 
-        {/* Mock Environment Identifier */}
-        <div className="admin-mock-env-pill" title="Phase 2 layout preview using mock fixtures only">
-          <span className="admin-mock-dot" aria-hidden="true" />
-          <span>Mock Test Mode</span>
+        {/* Environment Identifier */}
+        <div className="admin-live-env-pill" title="Live System Active — Connected to MongoDB Atlas">
+          <span className="admin-live-dot" aria-hidden="true" />
+          <span>Production Live</span>
         </div>
       </div>
 
@@ -182,7 +209,7 @@ export function AdminSidebar({ isOpen = false, onClose }: AdminSidebarProps) {
                     <span
                       className="admin-nav-badge"
                       title={item.badgeTooltip ?? undefined}
-                      aria-label={`${item.badge} pending requests (${item.badgeLabel} fixture)`}
+                      aria-label={`${item.badge} pending requests`}
                     >
                       {item.badge}
                       {item.badgeLabel && <small>{item.badgeLabel}</small>}
@@ -202,31 +229,68 @@ export function AdminSidebar({ isOpen = false, onClose }: AdminSidebarProps) {
       <div className="admin-sidebar-footer">
         <div
           className="admin-actor-card"
-          title="Fictional mock administrator identity from Phase 1 data"
+          title="Authenticated Platform Administrator"
         >
-          <Image
-            src={currentAdmin.avatar}
-            alt={currentAdmin.name}
-            width={36}
-            height={36}
-            className="admin-actor-avatar"
-          />
+          {adminUser?.avatar ? (
+            <Image
+              src={adminUser.avatar}
+              alt={displayName}
+              width={36}
+              height={36}
+              className="admin-actor-avatar"
+            />
+          ) : (
+            <div
+              className="admin-actor-avatar"
+              style={{
+                width: 36,
+                height: 36,
+                borderRadius: "50%",
+                background: "linear-gradient(135deg, rgba(229,184,105,0.2) 0%, rgba(229,184,105,0.05) 100%)",
+                border: "1px solid rgba(229,184,105,0.3)",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                color: "#e5b869",
+                fontWeight: 700,
+                fontSize: 14,
+                flexShrink: 0,
+              }}
+              aria-hidden="true"
+            >
+              {initial}
+            </div>
+          )}
           <div className="admin-actor-details">
-            <span className="admin-actor-name">{currentAdmin.name}</span>
-            <span className="admin-actor-role">Super Admin ({currentAdmin.id})</span>
-            <span className="admin-actor-context-tag">Mock Actor Fixture</span>
+            <span className="admin-actor-name">{displayName}</span>
+            <span className="admin-actor-role">
+              {displayRole}
+              {displayId}
+            </span>
+            <span className="admin-actor-context-tag">Live System Active</span>
           </div>
         </div>
 
-        <Link
-          href={ROUTES.login}
+        <button
+          type="button"
           className="admin-sidebar-exit-btn"
-          title="Exit Admin Preview to Login Page (Mock Action)"
-          onClick={onClose}
+          title="Exit Admin Session"
+          onClick={handleExitSession}
+          disabled={isLoggingOut}
+          style={{
+            width: "100%",
+            background: "none",
+            border: "none",
+            cursor: "pointer",
+            textAlign: "left",
+            display: "flex",
+            alignItems: "center",
+            gap: "8px",
+          }}
         >
           <LogOut size={14} aria-hidden="true" />
-          <span>Exit Admin Session</span>
-        </Link>
+          <span>{isLoggingOut ? "Exiting session..." : "Exit Admin Session"}</span>
+        </button>
       </div>
     </aside>
   );

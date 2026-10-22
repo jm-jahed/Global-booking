@@ -54,10 +54,12 @@ export interface SafeAdminProfile {
   readonly createdAt: string;
 }
 
+export type UserRole = SuperAdminRole | "DOCTOR" | "HOSPITAL";
+
 export interface AdminSessionPayload {
   readonly adminId: string;
   readonly email: string;
-  readonly role: SuperAdminRole;
+  readonly role: UserRole;
   readonly permissions: readonly AdminPermission[];
 }
 

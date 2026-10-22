@@ -1,6 +1,6 @@
 export type QueueStatus = "Serving" | "Next" | "Waiting" | "Delayed" | "Completed";
 export type PriorityLevel = "Standard" | "VIP" | "Urgent";
-export type CheckInChannel = "Online Booking" | "QR Walk-In" | "Kiosk Check-In";
+export type CheckInChannel = "Online Booking" | "QR Walk-In" | "Kiosk Check-In" | "Chamber Visit";
 
 export interface QueueItem {
   id: string;
@@ -19,6 +19,9 @@ export interface QueueItem {
   channel: CheckInChannel;
   notes?: string;
   appointmentRef?: string;
+  patientPhone?: string;
+  patientAgeGender?: string;
+  patientId?: string;
 }
 
 export interface CounterStation {

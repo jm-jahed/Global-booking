@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Calendar,
   CalendarDays,
@@ -23,6 +23,7 @@ import {
   TrendingDown,
 } from "lucide-react";
 import { ROUTES } from "@/config/routes";
+import { getStoredPortalUser } from "@/lib/api/admin-client";
 
 interface AppointmentRow {
   id: string;
@@ -103,6 +104,14 @@ export function DashboardView() {
   const [tableSearch, setTableSearch] = useState("");
   const [selectedService, setSelectedService] = useState("All Services");
   const [selectedStatus, setSelectedStatus] = useState("All Status");
+  const [doctorName, setDoctorName] = useState("Doctor Practice");
+
+  useEffect(() => {
+    const u = getStoredPortalUser();
+    if (u?.fullName || u?.name) {
+      setDoctorName(u.fullName || u.name);
+    }
+  }, []);
 
   // Filtered appointments
   const filteredAppointments = APPOINTMENTS_DATA.filter((apt) => {
@@ -145,8 +154,8 @@ export function DashboardView() {
             </div>
             <h1 className="hero-title-text">Dashboard</h1>
           </div>
-          <p className="hero-greeting">Good morning, Alex</p>
-          <p className="hero-tagline">Here&apos;s what&apos;s happening across your business today.</p>
+          <p className="hero-greeting">Welcome back, {doctorName}</p>
+          <p className="hero-tagline">Here&apos;s what&apos;s happening across your clinical practice today.</p>
         </div>
 
         {/* Right side luxury architectural banner */}

@@ -10,7 +10,7 @@ const REQUIRED_STATIC_ROUTES = [
   "/booking/status", "/login", "/register", "/forgot-password",
   "/reset-password", "/dashboard", "/appointments", "/patients", "/customers",
   "/clients", "/services", "/staff", "/availability", "/locations",
-  "/notifications", "/settings", "/admin", "/admin/registrations",
+  "/notifications", "/settings", "/admin", "/admin/login", "/admin/registrations",
   "/admin/doctors", "/admin/hospitals", "/admin/audit-logs",
   "/admin/businesses", "/admin/users",
   "/admin/industries", "/admin/appointments", "/admin/reports", "/admin/settings",
@@ -39,4 +39,17 @@ test("industry configuration preserves recipient terminology", () => {
   assert.equal(bySlug.hospitals?.recipientTerm, "Patient");
   assert.equal(new Set(INDUSTRIES.map((industry) => industry.slug)).size, INDUSTRIES.length);
   assert.equal(INDUSTRIES.length, 2);
+});
+
+test("portal separation guarantees /admin for Super Admin and /login for Doctor/Hospital", () => {
+  assert.equal(ROUTES.admin, "/admin");
+  assert.equal(ROUTES.adminLogin, "/admin/login");
+  assert.ok(ROUTES.adminDoctors.startsWith("/admin/"));
+  assert.ok(ROUTES.adminHospitals.startsWith("/admin/"));
+  assert.ok(ROUTES.adminRegistrations.startsWith("/admin/"));
+
+  assert.equal(ROUTES.login, "/login");
+  assert.equal(ROUTES.dashboard, "/dashboard");
+  assert.equal(ROUTES.appointments, "/appointments");
+  assert.equal(ROUTES.patients, "/patients");
 });

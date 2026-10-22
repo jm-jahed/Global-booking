@@ -1,21 +1,17 @@
 "use client";
 
-import Image from "next/image";
+import { useState, useMemo, useEffect } from "react";
 import Link from "next/link";
-import { useState, useMemo } from "react";
 import {
   CalendarDays,
   Calendar,
   Clock,
   Plus,
   Search,
-  Filter,
   CheckCircle2,
   Clock4,
   AlertCircle,
   XCircle,
-  Eye,
-  SlidersHorizontal,
   Table as TableIcon,
   Calendar as CalendarIcon,
   Kanban,
@@ -23,66 +19,177 @@ import {
   Check,
   ChevronDown,
   User,
-  ArrowUpRight,
+  Activity,
+  Stethoscope,
+  Globe,
+  PhoneCall,
+  MapPin,
+  ExternalLink,
+  RefreshCw,
+  Sparkles,
+  ShieldCheck,
+  FileText,
+  UserCheck,
 } from "lucide-react";
-import { MOCK_APPOINTMENTS } from "@/lib/data/mock-appointments";
-import { Appointment, AppointmentStatus } from "@/types/appointment";
+import {
+  getDoctorAppointments,
+  updateAppointmentStatus,
+  saveDoctorAppointment,
+  deleteDoctorAppointment,
+  type DoctorAppointment,
+  type DoctorAppointmentStatus,
+  type DoctorAppointmentChannel,
+} from "@/lib/services/doctor-appointments-service";
 import { NewAppointmentModal } from "./new-appointment-modal";
+import { getStoredPortalUser } from "@/lib/api/admin-client";
 
 type ViewMode = "table" | "calendar" | "kanban";
 
 export function AppointmentsView() {
-  const [appointments, setAppointments] = useState<Appointment[]>(MOCK_APPOINTMENTS);
+  const [appointments, setAppointments] = useState<DoctorAppointment[]>([]);
   const [viewMode, setViewMode] = useState<ViewMode>("table");
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("All Status");
-  const [serviceFilter, setServiceFilter] = useState<string>("All Services");
+  const [channelFilter, setChannelFilter] = useState<string>("All Channels");
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [newOnlineAlert, setNewOnlineAlert] = useState<DoctorAppointment | null>(null);
+  const [isSyncing, setIsSyncing] = useState(false);
+  const [currentUser, setCurrentUser] = useState<any>(null);
+
+  useEffect(() => {
+    const stored = getStoredPortalUser();
+    if (stored) {
+      setCurrentUser(stored);
+    }
+  }, []);
+
+  const doctorName = currentUser?.fullName || currentUser?.name || "Doctor Practice";
+  const doctorSpecialty = currentUser?.specialty || "Consultant Specialist";
+  const doctorSlug =
+    currentUser?.slug ||
+    (currentUser?.fullName || currentUser?.name
+      ? String(currentUser.fullName || currentUser.name)
+          .toLowerCase()
+          .replace(/[^a-z0-9]+/g, "-")
+          .replace(/(^-|-$)+/g, "")
+      : "");
+  const chamberLocation =
+    currentUser?.chamberLocationsSummary ||
+    (Array.isArray(currentUser?.chambers) && currentUser?.chambers[0]?.facilityName) ||
+    "Main Consultation Chamber";
+
+  // Load genuine doctor clinical appointments & listen for real-time online bookings
+  const loadAppointments = () => {
+    const list = getDoctorAppointments();
+    setAppointments(list);
+
+    // Check if there was an online booking created in the last 15 minutes
+    const latestOnline = list.find(
+      (a) => a.channel === "Online Web" && Date.now() - new Date(a.createdAt).getTime() < 900000
+    );
+    if (latestOnline) {
+      setNewOnlineAlert(latestOnline);
+    }
+  };
+
+  useEffect(() => {
+    loadAppointments();
+
+    // Event listener for storage changes across browser tabs
+    const handleStorageChange = (e: StorageEvent) => {
+      if (
+        e.key === "global_booking_doctor_appointments" ||
+        e.key?.startsWith("global_booking_appointments_")
+      ) {
+        loadAppointments();
+      }
+    };
+
+    // Custom window event for same-tab online booking confirmation
+    const handleCustomUpdate = () => {
+      loadAppointments();
+    };
+
+    window.addEventListener("storage", handleStorageChange);
+    window.addEventListener("global-booking-updated", handleCustomUpdate);
+
+    // Auto-sync poll every 3.5 seconds to guarantee instant reflection of online bookings
+    const interval = setInterval(() => {
+      loadAppointments();
+    }, 3500);
+
+    return () => {
+      window.removeEventListener("storage", handleStorageChange);
+      window.removeEventListener("global-booking-updated", handleCustomUpdate);
+      clearInterval(interval);
+    };
+  }, []);
 
   const showToast = (msg: string) => {
     setToastMessage(msg);
     setTimeout(() => setToastMessage(null), 3500);
   };
 
-  const handleAddAppointment = (newApp: Appointment) => {
-    setAppointments([newApp, ...appointments]);
-    showToast(`Appointment ${newApp.referenceNumber} for ${newApp.clientName} booked successfully!`);
+  const handleManualSync = () => {
+    setIsSyncing(true);
+    loadAppointments();
+    setTimeout(() => {
+      setIsSyncing(false);
+      showToast("Synchronized live clinical appointments with online web bookings!");
+    }, 400);
   };
 
-  const handleStatusChange = (id: string, newStatus: AppointmentStatus) => {
-    setAppointments(
-      appointments.map((a) => (a.id === id ? { ...a, status: newStatus } : a))
-    );
+  const handleAddAppointment = (newApp: DoctorAppointment) => {
+    const updated = saveDoctorAppointment(newApp);
+    setAppointments(updated);
+    showToast(`Appointment ${newApp.serialNumber} for ${newApp.patientName} scheduled successfully!`);
+  };
+
+  const handleStatusChange = (id: string, newStatus: DoctorAppointmentStatus) => {
+    const updated = updateAppointmentStatus(id, newStatus);
+    setAppointments(updated);
     showToast(`Appointment status updated to ${newStatus}`);
   };
 
-  // KPIs
+  const handleDelete = (id: string, name: string) => {
+    if (confirm(`Remove appointment for patient ${name}?`)) {
+      const updated = deleteDoctorAppointment(id);
+      setAppointments(updated);
+      showToast(`Appointment removed from roster.`);
+    }
+  };
+
+  // Real KPIs (Dr. Jahedul Islam's practice)
   const kpis = useMemo(() => {
     const total = appointments.length;
     const confirmed = appointments.filter((a) => a.status === "Confirmed").length;
-    const pending = appointments.filter((a) => a.status === "Pending").length;
+    const inConsultation = appointments.filter((a) => a.status === "In Consultation").length;
+    const onlineCount = appointments.filter((a) => a.channel === "Online Web").length;
     const completed = appointments.filter((a) => a.status === "Completed").length;
-    const inProgress = appointments.filter((a) => a.status === "In Progress").length;
-    return { total, confirmed, pending, completed, inProgress };
+    return { total, confirmed, inConsultation, onlineCount, completed };
   }, [appointments]);
 
   // Filtered List
   const filteredAppointments = useMemo(() => {
     return appointments.filter((apt) => {
       const matchSearch =
-        apt.clientName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        apt.patientName.toLowerCase().includes(searchQuery.toLowerCase()) ||
         apt.service.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        apt.staffName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        apt.referenceNumber.toLowerCase().includes(searchQuery.toLowerCase());
+        apt.patientPhone.includes(searchQuery) ||
+        apt.serialNumber.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        apt.chamberLocation.toLowerCase().includes(searchQuery.toLowerCase());
+
       const matchStatus =
         statusFilter === "All Status" || apt.status === statusFilter;
-      const matchService =
-        serviceFilter === "All Services" || apt.service === serviceFilter;
-      return matchSearch && matchStatus && matchService;
+
+      const matchChannel =
+        channelFilter === "All Channels" || apt.channel === channelFilter;
+
+      return matchSearch && matchStatus && matchChannel;
     });
-  }, [appointments, searchQuery, statusFilter, serviceFilter]);
+  }, [appointments, searchQuery, statusFilter, channelFilter]);
 
   // Select all logic
   const handleSelectAll = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -102,11 +209,10 @@ export function AppointmentsView() {
   };
 
   const handleBulkConfirm = () => {
-    setAppointments(
-      appointments.map((a) =>
-        selectedIds.includes(a.id) ? { ...a, status: "Confirmed" } : a
-      )
-    );
+    selectedIds.forEach((id) => {
+      updateAppointmentStatus(id, "Confirmed");
+    });
+    loadAppointments();
     showToast(`${selectedIds.length} appointments marked as Confirmed!`);
     setSelectedIds([]);
   };
@@ -121,156 +227,179 @@ export function AppointmentsView() {
         </div>
       )}
 
-      {/* TOP HEADER */}
+      {/* ONLINE THEKE BOOKING ASHLE REAL-TIME ALERT BANNER */}
+      {newOnlineAlert && (
+        <div className="online-booking-alert-banner">
+          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            <span className="live-alert-pulse-ring" />
+            <Globe size={16} color="#60a5fa" />
+            <span style={{ fontSize: 13, fontWeight: 600, color: "#ffffff" }}>
+              New Online Web Booking Received:
+            </span>
+            <span style={{ fontSize: 13, color: "#e5b869", fontWeight: 700 }}>
+              {newOnlineAlert.patientName}
+            </span>
+            <span style={{ fontSize: 12, color: "#94a3b8" }}>
+              • {newOnlineAlert.service} • Serial: {newOnlineAlert.serialNumber} • {newOnlineAlert.time}
+            </span>
+          </div>
+          <button
+            type="button"
+            onClick={() => setNewOnlineAlert(null)}
+            className="dismiss-alert-btn"
+          >
+            Acknowledge
+          </button>
+        </div>
+      )}
+
+      {/* TOP HEADER: Doctor Personal Practice Branding */}
       <section className="appointments-header-section">
         <div className="header-text-group">
           <div className="module-title-row">
             <div className="hero-icon-calendar">
-              <CalendarDays size={24} className="text-gold" />
+              <Stethoscope size={22} className="text-gold" />
             </div>
-            <h1 className="hero-title-text">Appointments</h1>
+            <div>
+              <h1 className="hero-title-text">Appointments & Consultations</h1>
+              <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 2 }}>
+                <span style={{ fontSize: 11.5, color: "#94a3b8", fontWeight: 500 }}>
+                  {doctorName} • {doctorSpecialty}
+                </span>
+                <span className="live-sync-pill">
+                  <span className="suite-pulse-dot" />
+                  Live Web Sync Active
+                </span>
+              </div>
+            </div>
           </div>
-          <p className="hero-tagline">
-            Schedule, monitor, filter, and manage all patient bookings in real-time.
-          </p>
         </div>
 
         <div className="header-action-buttons">
           <button
             type="button"
             className="secondary-action-button"
-            onClick={() => showToast("Schedule exported as CSV.")}
+            onClick={handleManualSync}
+            title="Refresh appointments and sync with public booking page"
           >
-            <Download size={15} />
-            <span>Export List</span>
+            <RefreshCw size={14} className={isSyncing ? "spin-animation" : ""} />
+            <span>Sync Web</span>
           </button>
+
+          <Link
+            href={`/${doctorSlug}/book`}
+            target="_blank"
+            className="secondary-action-button"
+            title="Open patient public booking portal in new tab"
+          >
+            <ExternalLink size={14} />
+            <span>Public Booking Page</span>
+          </Link>
+
           <button
             type="button"
             className="primary-gold-button"
             onClick={() => setIsModalOpen(true)}
           >
-            <Plus size={16} strokeWidth={2.4} />
-            <span>New Appointment</span>
+            <Plus size={15} strokeWidth={2.4} />
+            <span>New Patient Appointment</span>
           </button>
         </div>
       </section>
 
-      {/* 4 STAT CARDS */}
+      {/* 4 COMPACT CLINICAL METRIC CARDS */}
       <section className="dashboard-metrics-grid" aria-label="Appointment KPI Summaries">
-        {/* Total */}
+        {/* Total Patients */}
         <article className="metric-card">
           <div className="metric-card-top">
             <div className="metric-icon-box">
-              <CalendarDays size={20} className="text-gold" />
+              <CalendarDays size={18} className="text-gold" />
             </div>
-            <span className="metric-label">Total Appointments</span>
+            <span className="metric-label">Total Consultations</span>
           </div>
           <div className="metric-card-body">
             <div className="metric-number-group">
               <div className="metric-value">{kpis.total}</div>
               <div className="metric-trend trend-up">
-                <span className="trend-arrow">↑ 14%</span>
-                <span className="trend-context">vs. yesterday</span>
+                <span className="trend-arrow">Practice Today</span>
               </div>
             </div>
             <div className="metric-sparkline-box">
-              <svg width="84" height="38" viewBox="0 0 84 38" fill="none">
-                <path
-                  d="M2,32 Q20,30 30,22 T56,12 T82,4"
-                  stroke="#e5b869"
-                  strokeWidth="2.2"
-                  strokeLinecap="round"
-                />
-                <circle cx="82" cy="4" r="2.5" fill="#e5b869" />
+              <svg width="68" height="28" viewBox="0 0 68 28" fill="none">
+                <path d="M2,24 Q18,22 28,15 T48,9 T66,3" stroke="#e5b869" strokeWidth="2" strokeLinecap="round" />
+                <circle cx="66" cy="3" r="2" fill="#e5b869" />
               </svg>
             </div>
           </div>
         </article>
 
-        {/* Confirmed */}
+        {/* Confirmed Patients */}
         <article className="metric-card">
           <div className="metric-card-top">
-            <div className="metric-icon-box">
-              <CheckCircle2 size={20} className="text-gold" />
+            <div className="metric-icon-box" style={{ background: "rgba(16, 185, 129, 0.12)", color: "#10b981" }}>
+              <CheckCircle2 size={18} />
             </div>
-            <span className="metric-label">Confirmed Sessions</span>
+            <span className="metric-label">Confirmed & Arrived</span>
           </div>
           <div className="metric-card-body">
             <div className="metric-number-group">
               <div className="metric-value">{kpis.confirmed}</div>
               <div className="metric-trend trend-up">
-                <span className="trend-arrow">66%</span>
-                <span className="trend-context">of total today</span>
+                <span className="trend-arrow" style={{ color: "#34d399" }}>Ready in Chamber</span>
               </div>
             </div>
             <div className="metric-sparkline-box">
-              <svg width="84" height="38" viewBox="0 0 84 38" fill="none">
-                <path
-                  d="M2,34 Q22,30 36,20 T62,14 T82,6"
-                  stroke="#e5b869"
-                  strokeWidth="2.2"
-                  strokeLinecap="round"
-                />
-                <circle cx="82" cy="6" r="2.5" fill="#e5b869" />
+              <svg width="68" height="28" viewBox="0 0 68 28" fill="none">
+                <path d="M2,24 Q18,18 32,14 T52,8 T66,2" stroke="#10b981" strokeWidth="2" strokeLinecap="round" />
+                <circle cx="66" cy="2" r="2" fill="#10b981" />
               </svg>
             </div>
           </div>
         </article>
 
-        {/* Pending */}
-        <article className="metric-card">
+        {/* Online Web Bookings ("ONLINE THEKE BOOKING ASHLE") */}
+        <article className="metric-card" style={{ borderColor: "rgba(96, 165, 250, 0.35)", background: "linear-gradient(135deg, rgba(37, 99, 235, 0.08) 0%, rgba(11, 19, 37, 0.95) 100%)" }}>
           <div className="metric-card-top">
-            <div className="metric-icon-box">
-              <Clock4 size={20} className="text-gold" />
+            <div className="metric-icon-box" style={{ background: "rgba(59, 130, 246, 0.15)", color: "#60a5fa" }}>
+              <Globe size={18} />
             </div>
-            <span className="metric-label">Pending Review</span>
+            <span className="metric-label" style={{ color: "#93c5fd" }}>Online Web Bookings</span>
           </div>
           <div className="metric-card-body">
             <div className="metric-number-group">
-              <div className="metric-value">{kpis.pending}</div>
-              <div className="metric-trend trend-down">
-                <span className="trend-arrow">Requires action</span>
-              </div>
-            </div>
-            <div className="metric-sparkline-box">
-              <svg width="84" height="38" viewBox="0 0 84 38" fill="none">
-                <path
-                  d="M2,10 Q18,12 32,20 T58,28 T82,32"
-                  stroke="#e5b869"
-                  strokeWidth="2.2"
-                  strokeLinecap="round"
-                />
-                <circle cx="82" cy="32" r="2.5" fill="#e5b869" />
-              </svg>
-            </div>
-          </div>
-        </article>
-
-        {/* Completed */}
-        <article className="metric-card">
-          <div className="metric-card-top">
-            <div className="metric-icon-box">
-              <Check size={20} className="text-gold" />
-            </div>
-            <span className="metric-label">Completed / In Progress</span>
-          </div>
-          <div className="metric-card-body">
-            <div className="metric-number-group">
-              <div className="metric-value">{kpis.completed + kpis.inProgress}</div>
+              <div className="metric-value" style={{ color: "#bfdbfe" }}>{kpis.onlineCount}</div>
               <div className="metric-trend trend-up">
-                <span className="trend-arrow">↑ 8%</span>
-                <span className="trend-context">throughput</span>
+                <span className="trend-arrow" style={{ color: "#60a5fa" }}>Live Website Sync</span>
               </div>
             </div>
             <div className="metric-sparkline-box">
-              <svg width="84" height="38" viewBox="0 0 84 38" fill="none">
-                <path
-                  d="M2,30 Q24,26 38,18 T64,10 T82,5"
-                  stroke="#e5b869"
-                  strokeWidth="2.2"
-                  strokeLinecap="round"
-                />
-                <circle cx="82" cy="5" r="2.5" fill="#e5b869" />
+              <svg width="68" height="28" viewBox="0 0 68 28" fill="none">
+                <path d="M2,22 Q16,14 32,18 T52,6 T66,2" stroke="#60a5fa" strokeWidth="2" strokeLinecap="round" />
+                <circle cx="66" cy="2" r="2" fill="#60a5fa" />
+              </svg>
+            </div>
+          </div>
+        </article>
+
+        {/* In Consultation / Completed */}
+        <article className="metric-card">
+          <div className="metric-card-top">
+            <div className="metric-icon-box" style={{ background: "rgba(245, 158, 11, 0.12)", color: "#f59e0b" }}>
+              <Activity size={18} />
+            </div>
+            <span className="metric-label">In Consultation / Done</span>
+          </div>
+          <div className="metric-card-body">
+            <div className="metric-number-group">
+              <div className="metric-value">{kpis.inConsultation + kpis.completed}</div>
+              <div className="metric-trend trend-up">
+                <span className="trend-arrow">{kpis.inConsultation} Active • {kpis.completed} Done</span>
+              </div>
+            </div>
+            <div className="metric-sparkline-box">
+              <svg width="68" height="28" viewBox="0 0 68 28" fill="none">
+                <path d="M2,24 Q24,20 36,12 T54,8 T66,4" stroke="#f59e0b" strokeWidth="2" strokeLinecap="round" />
+                <circle cx="66" cy="4" r="2" fill="#f59e0b" />
               </svg>
             </div>
           </div>
@@ -286,24 +415,24 @@ export function AppointmentsView() {
             className={`view-mode-button ${viewMode === "table" ? "active" : ""}`}
             onClick={() => setViewMode("table")}
           >
-            <TableIcon size={15} />
-            <span>Table View</span>
-          </button>
-          <button
-            type="button"
-            className={`view-mode-button ${viewMode === "calendar" ? "active" : ""}`}
-            onClick={() => setViewMode("calendar")}
-          >
-            <CalendarIcon size={15} />
-            <span>Schedule</span>
+            <TableIcon size={14} />
+            <span>Clinical Table</span>
           </button>
           <button
             type="button"
             className={`view-mode-button ${viewMode === "kanban" ? "active" : ""}`}
             onClick={() => setViewMode("kanban")}
           >
-            <Kanban size={15} />
-            <span>Board</span>
+            <Kanban size={14} />
+            <span>Live OPD Board</span>
+          </button>
+          <button
+            type="button"
+            className={`view-mode-button ${viewMode === "calendar" ? "active" : ""}`}
+            onClick={() => setViewMode("calendar")}
+          >
+            <CalendarIcon size={14} />
+            <span>Schedule Roster</span>
           </button>
         </div>
 
@@ -314,11 +443,26 @@ export function AppointmentsView() {
             <Search size={14} className="text-muted" />
             <input
               type="text"
-              placeholder="Search patient, staff, service, or #ref..."
+              placeholder="Search patient, mobile, serial #, or chamber..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="table-search-input"
             />
+          </div>
+
+          {/* Booking Channel Filter */}
+          <div className="filter-dropdown-wrap">
+            <select
+              value={channelFilter}
+              onChange={(e) => setChannelFilter(e.target.value)}
+              className="table-filter-select"
+            >
+              <option value="All Channels">All Channels</option>
+              <option value="Online Web">Online Web</option>
+              <option value="In-Person Chamber">In-Person Chamber</option>
+              <option value="Phone Booking">Phone Booking</option>
+            </select>
+            <ChevronDown size={12} className="dropdown-arrow-icon" />
           </div>
 
           {/* Status Filter */}
@@ -330,36 +474,18 @@ export function AppointmentsView() {
             >
               <option value="All Status">All Status</option>
               <option value="Confirmed">Confirmed</option>
+              <option value="In Consultation">In Consultation</option>
               <option value="Pending">Pending</option>
-              <option value="In Progress">In Progress</option>
               <option value="Completed">Completed</option>
               <option value="Cancelled">Cancelled</option>
             </select>
-            <ChevronDown size={13} className="dropdown-arrow-icon" />
-          </div>
-
-          {/* Category Filter */}
-          <div className="filter-dropdown-wrap">
-            <select
-              value={serviceFilter}
-              onChange={(e) => setServiceFilter(e.target.value)}
-              className="table-filter-select"
-            >
-              <option value="All Services">All Services</option>
-              <option value="General Consultation">General Consultation</option>
-              <option value="Dental Checkup">Dental Checkup</option>
-              <option value="Skin Care Treatment">Skin Care Treatment</option>
-              <option value="Physiotherapy">Physiotherapy</option>
-              <option value="Hair Treatment">Hair Treatment</option>
-              <option value="Cardiology Review">Cardiology Review</option>
-            </select>
-            <ChevronDown size={13} className="dropdown-arrow-icon" />
+            <ChevronDown size={12} className="dropdown-arrow-icon" />
           </div>
 
           {/* Date Indicator */}
           <div className="filter-date-pill">
             <Calendar size={13} className="text-gold" />
-            <span>Apr 15, 2025</span>
+            <span>Today, 24 Apr 2026</span>
           </div>
         </div>
       </section>
@@ -368,7 +494,7 @@ export function AppointmentsView() {
       {selectedIds.length > 0 && (
         <div className="bulk-actions-banner">
           <span className="bulk-selection-count">
-            {selectedIds.length} appointment{selectedIds.length > 1 ? "s" : ""} selected
+            {selectedIds.length} patient appointment{selectedIds.length > 1 ? "s" : ""} selected
           </span>
           <div className="bulk-actions-buttons">
             <button
@@ -389,14 +515,14 @@ export function AppointmentsView() {
         </div>
       )}
 
-      {/* VIEW 1: TABLE VIEW */}
+      {/* VIEW 1: CLINICAL TABLE VIEW (Fixed Height Table Card, Zero Window Scrolling) */}
       {viewMode === "table" && (
         <article className="dashboard-panel appointments-table-card">
           <div className="table-responsive-wrapper">
             <table className="appointments-table">
               <thead>
                 <tr>
-                  <th style={{ width: "40px" }}>
+                  <th style={{ width: "36px" }}>
                     <input
                       type="checkbox"
                       checked={
@@ -407,15 +533,15 @@ export function AppointmentsView() {
                       className="portal-checkbox"
                     />
                   </th>
-                  <th>Ref #</th>
-                  <th>Patient</th>
-                  <th>Service</th>
-                  <th>Specialist</th>
-                  <th>Date & Time</th>
+                  <th style={{ width: "70px" }}>Serial #</th>
+                  <th>Patient Details</th>
+                  <th>Clinical Cardiology Service</th>
+                  <th>Chamber Location</th>
+                  <th>Schedule</th>
                   <th>Channel</th>
-                  <th>Price</th>
-                  <th>Status</th>
-                  <th>Actions</th>
+                  <th>Fee</th>
+                  <th>Clinical Status</th>
+                  <th style={{ textAlign: "right" }}>Actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -435,130 +561,156 @@ export function AppointmentsView() {
                         />
                       </td>
 
-                      {/* Reference code */}
-                      <td className="ref-cell">
-                        <Link
-                          href={`/appointments/${apt.id}`}
-                          className="ref-code-link"
-                        >
-                          {apt.referenceNumber}
-                        </Link>
-                      </td>
-
-                      {/* Patient */}
-                      <td className="client-cell">
-                        <div className="client-avatar-wrapper">
-                          <Image
-                            src={apt.clientAvatar}
-                            alt={apt.clientName}
-                            width={34}
-                            height={34}
-                            className="client-avatar-img"
-                          />
-                        </div>
-                        <div className="client-info-stack">
-                          <Link
-                            href={`/appointments/${apt.id}`}
-                            className="client-name-text client-hover-link"
-                          >
-                            {apt.clientName}
-                          </Link>
-                          <span className="client-email-sub">{apt.clientEmail}</span>
-                        </div>
-                      </td>
-
-                      {/* Service */}
-                      <td className="service-cell">
-                        <div className="service-info-stack">
-                          <span className="service-title">{apt.service}</span>
-                          <span className="service-category-tag">{apt.serviceCategory}</span>
-                        </div>
-                      </td>
-
-                      {/* Staff */}
-                      <td className="staff-cell">
-                        <div className="staff-avatar-row">
-                          <Image
-                            src={apt.staffAvatar}
-                            alt={apt.staffName}
-                            width={24}
-                            height={24}
-                            className="staff-avatar-mini"
-                          />
-                          <span>{apt.staffName}</span>
-                        </div>
-                      </td>
-
-                      {/* Date & Time */}
-                      <td className="time-cell">
-                        <div className="time-info-stack">
-                          <span className="time-main">{apt.time}</span>
-                          <span className="time-duration">{apt.durationMinutes} min</span>
-                        </div>
-                      </td>
-
-                      {/* Channel */}
+                      {/* Serial Number Token */}
                       <td>
-                        <span className="channel-badge">{apt.type}</span>
-                      </td>
-
-                      {/* Price */}
-                      <td className="price-cell">
-                        <span className="price-amount">${apt.price}</span>
-                        <span className={`payment-indicator ${apt.paymentStatus.toLowerCase().replace(/\s+/g, "-")}`}>
-                          {apt.paymentStatus}
+                        <span className="serial-badge-pill">
+                          {apt.serialNumber}
                         </span>
                       </td>
 
-                      {/* Status */}
-                      <td className="status-cell">
-                        <span
-                          className={`status-pill ${
-                            apt.status === "Confirmed"
-                              ? "status-confirmed"
-                              : apt.status === "Pending"
-                              ? "status-pending"
-                              : apt.status === "In Progress"
-                              ? "status-inprogress"
-                              : apt.status === "Completed"
-                              ? "status-completed"
-                              : "status-cancelled"
-                          }`}
+                      {/* Patient Details */}
+                      <td className="client-cell">
+                        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                          <div className="patient-avatar-badge">
+                            {apt.patientName.charAt(0)}
+                          </div>
+                          <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+                            <span style={{ fontSize: 13, fontWeight: 700, color: "#ffffff" }}>
+                              {apt.patientName}
+                            </span>
+                            <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 11, color: "#94a3b8" }}>
+                              <span>{apt.patientPhone}</span>
+                              <span>•</span>
+                              <span>{apt.patientAgeGender}</span>
+                              <span className="blood-group-pill">{apt.bloodGroup}</span>
+                            </div>
+                          </div>
+                        </div>
+                      </td>
+
+                      {/* Clinical Cardiology Service */}
+                      <td>
+                        <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+                          <span style={{ fontSize: 13, fontWeight: 600, color: "#e2e8f0" }}>
+                            {apt.service}
+                          </span>
+                          <span style={{ fontSize: 11, color: "#38bdf8" }}>
+                            Cardiology Care
+                          </span>
+                        </div>
+                      </td>
+
+                      {/* Chamber Location */}
+                      <td>
+                        <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12, color: "#cbd5e1" }}>
+                          <MapPin size={13} color="#e5b869" />
+                          <span>{apt.chamberLocation}</span>
+                        </div>
+                      </td>
+
+                      {/* Schedule Time & Date */}
+                      <td>
+                        <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+                          <span style={{ fontSize: 12.5, fontWeight: 700, color: "#ffffff" }}>
+                            {apt.time}
+                          </span>
+                          <span style={{ fontSize: 11, color: "#94a3b8" }}>
+                            {apt.date} ({apt.duration})
+                          </span>
+                        </div>
+                      </td>
+
+                      {/* Booking Channel Badge */}
+                      <td>
+                        {apt.channel === "Online Web" ? (
+                          <span className="channel-pill online-pill" title="Booked directly from public doctor website">
+                            <Globe size={10} /> Online Web
+                          </span>
+                        ) : apt.channel === "Phone Booking" ? (
+                          <span className="channel-pill phone-pill" title="Booked via phone reception desk">
+                            <PhoneCall size={10} /> Phone
+                          </span>
+                        ) : (
+                          <span className="channel-pill inperson-pill" title="In-person chamber desk visit">
+                            <UserCheck size={10} /> In-Person
+                          </span>
+                        )}
+                      </td>
+
+                      {/* Price & Payment */}
+                      <td>
+                        <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+                          <span style={{ fontSize: 12.5, fontWeight: 700, color: "#e5b869" }}>
+                            {apt.price}
+                          </span>
+                          <span style={{ fontSize: 10.5, color: apt.paymentStatus === "Paid" ? "#34d399" : "#fbbf24" }}>
+                            {apt.paymentStatus}
+                          </span>
+                        </div>
+                      </td>
+
+                      {/* Clinical Status Dropdown */}
+                      <td>
+                        <select
+                          value={apt.status}
+                          onChange={(e) => handleStatusChange(apt.id, e.target.value as DoctorAppointmentStatus)}
+                          className={`status-select-badge status-${apt.status.toLowerCase().replace(/\s+/g, "-")}`}
                         >
-                          {apt.status === "Pending" && <span className="status-dot-amber" />}
-                          {apt.status === "In Progress" && <span className="status-dot-cyan" />}
-                          {apt.status}
-                        </span>
+                          <option value="Confirmed">Confirmed</option>
+                          <option value="In Consultation">In Consultation</option>
+                          <option value="Pending">Pending</option>
+                          <option value="Completed">Completed</option>
+                          <option value="Cancelled">Cancelled</option>
+                        </select>
                       </td>
 
-                      {/* Actions */}
-                      <td className="actions-cell">
-                        <div className="action-button-group">
-                          <Link
-                            href={`/appointments/${apt.id}`}
-                            className="action-icon-button"
-                            title="View full appointment details"
-                          >
-                            <Eye size={14} />
-                          </Link>
-                          {apt.status === "Pending" && (
+                      {/* Doctor Quick Actions */}
+                      <td style={{ textAlign: "right" }}>
+                        <div style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
+                          {apt.status !== "In Consultation" && apt.status !== "Completed" && (
                             <button
                               type="button"
-                              className="action-icon-button action-btn-confirm"
-                              title="Confirm appointment"
-                              onClick={() => handleStatusChange(apt.id, "Confirmed")}
+                              onClick={() => handleStatusChange(apt.id, "In Consultation")}
+                              className="action-btn-call"
+                              title="Call patient into consultation room"
                             >
-                              <Check size={14} />
+                              Call In
                             </button>
                           )}
+
+                          {apt.status === "In Consultation" && (
+                            <button
+                              type="button"
+                              onClick={() => handleStatusChange(apt.id, "Completed")}
+                              className="action-btn-done"
+                              title="Mark clinical consultation completed"
+                            >
+                              Done
+                            </button>
+                          )}
+
+                          <button
+                            type="button"
+                            onClick={() => handleDelete(apt.id, apt.patientName)}
+                            className="action-btn-del"
+                            title="Cancel / remove appointment"
+                          >
+                            ×
+                          </button>
                         </div>
                       </td>
                     </tr>
                   ))
                 ) : (
                   <tr>
-                    <td colSpan={10} className="empty-table-state">
-                      No appointments matching &quot;{searchQuery}&quot; found.
+                    <td colSpan={10} style={{ textAlign: "center", padding: "40px 20px", color: "#94a3b8" }}>
+                      <Stethoscope size={28} color="#e5b869" style={{ margin: "0 auto 10px", opacity: 0.6 }} />
+                      <p style={{ margin: 0, fontSize: 14, fontWeight: 600, color: "#ffffff" }}>
+                        No doctor appointments found matching current filters.
+                      </p>
+                      <p style={{ margin: "4px 0 0", fontSize: 12 }}>
+                        Online patient bookings submitted via public profile will automatically sync here in real-time.
+                      </p>
                     </td>
                   </tr>
                 )}
@@ -568,293 +720,108 @@ export function AppointmentsView() {
         </article>
       )}
 
-      {/* VIEW 2: CALENDAR SCHEDULE VIEW */}
-      {viewMode === "calendar" && (
-        <article className="dashboard-panel schedule-timeline-card">
-          <div className="schedule-header-row">
-            <h2 className="panel-title">Tuesday, April 15, 2025</h2>
-            <div className="schedule-legend-group">
-              <span className="legend-chip chip-confirmed">● Confirmed</span>
-              <span className="legend-chip chip-pending">● Pending</span>
-              <span className="legend-chip chip-inprogress">● In Progress</span>
-              <span className="legend-chip chip-completed">● Completed</span>
-            </div>
-          </div>
-
-          <div className="timeline-schedule-grid">
-            {[
-              "08:00 AM",
-              "09:00 AM",
-              "10:00 AM",
-              "11:00 AM",
-              "12:00 PM",
-              "01:00 PM",
-              "02:00 PM",
-              "03:00 PM",
-              "04:00 PM",
-              "05:00 PM",
-              "06:00 PM",
-            ].map((slotTime) => {
-              // Find appointments starting around this hour
-              const slotHour = slotTime.split(":")[0];
-              const slotPeriod = slotTime.split(" ")[1];
-              const matchingApts = appointments.filter((apt) => {
-                const [aptHour, rest] = apt.time.split(":");
-                const aptPeriod = rest.split(" ")[1];
-                return aptHour === slotHour && aptPeriod === slotPeriod;
-              });
-
-              return (
-                <div key={slotTime} className="timeline-slot-row">
-                  <div className="timeline-time-label">{slotTime}</div>
-                  <div className="timeline-slot-content">
-                    {matchingApts.map((apt) => (
-                      <Link
-                        key={apt.id}
-                        href={`/appointments/${apt.id}`}
-                        className={`timeline-appointment-pill ${
-                          apt.status === "Confirmed"
-                            ? "slot-confirmed"
-                            : apt.status === "Pending"
-                            ? "slot-pending"
-                            : apt.status === "In Progress"
-                            ? "slot-inprogress"
-                            : "slot-completed"
-                        }`}
-                      >
-                        <div className="slot-pill-left">
-                          <Image
-                            src={apt.clientAvatar}
-                            alt={apt.clientName}
-                            width={22}
-                            height={22}
-                            className="slot-avatar"
-                          />
-                          <span className="slot-client-name">{apt.clientName}</span>
-                          <span className="slot-time-badge">{apt.time} - {apt.endTime}</span>
-                        </div>
-                        <div className="slot-pill-right">
-                          <span className="slot-service-name">{apt.service}</span>
-                          <span className="slot-staff-name">{apt.staffName}</span>
-                        </div>
-                      </Link>
-                    ))}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </article>
-      )}
-
-      {/* VIEW 3: KANBAN BOARD VIEW */}
+      {/* VIEW 2: LIVE OPD QUEUE (BOARD) */}
       {viewMode === "kanban" && (
-        <section className="kanban-columns-grid">
-          {/* Column 1: Pending */}
-          <div className="kanban-column-card">
-            <div className="kanban-col-header header-amber">
-              <div className="kanban-title-wrap">
-                <span className="kanban-col-dot dot-amber" />
-                <h3 className="kanban-col-title">Pending Review</h3>
-              </div>
-              <span className="kanban-count-badge">
-                {appointments.filter((a) => a.status === "Pending").length}
-              </span>
-            </div>
-            <div className="kanban-cards-stack">
-              {appointments
-                .filter((a) => a.status === "Pending")
-                .map((apt) => (
-                  <div key={apt.id} className="kanban-item-card">
-                    <div className="kanban-item-top">
-                      <span className="kanban-ref">{apt.referenceNumber}</span>
-                      <span className="kanban-time">{apt.time}</span>
-                    </div>
-                    <div className="kanban-client-row">
-                      <Image
-                        src={apt.clientAvatar}
-                        alt={apt.clientName}
-                        width={28}
-                        height={28}
-                        className="client-avatar-img"
-                      />
-                      <span className="kanban-client-name">{apt.clientName}</span>
-                    </div>
-                    <div className="kanban-service-row">{apt.service}</div>
-                    <div className="kanban-footer-row">
-                      <span className="kanban-staff">{apt.staffName}</span>
-                      <div className="kanban-card-actions">
-                        <button
-                          type="button"
-                          className="kanban-action-btn"
-                          onClick={() => handleStatusChange(apt.id, "Confirmed")}
-                        >
-                          Confirm
-                        </button>
-                        <Link href={`/appointments/${apt.id}`} className="kanban-link-btn">
-                          <ArrowUpRight size={13} />
-                        </Link>
+        <div className="opd-board-grid">
+          {["Pending", "Confirmed", "In Consultation", "Completed"].map((statusCol) => {
+            const colItems = filteredAppointments.filter((a) => a.status === statusCol);
+            return (
+              <div key={statusCol} className="opd-column">
+                <div className="opd-col-header">
+                  <span className="opd-col-title">{statusCol}</span>
+                  <span className="opd-col-count">{colItems.length}</span>
+                </div>
+                <div className="opd-col-items">
+                  {colItems.map((item) => (
+                    <div key={item.id} className="opd-patient-card">
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+                        <span className="serial-badge-pill">{item.serialNumber}</span>
+                        <span className="opd-time-tag">{item.time}</span>
+                      </div>
+                      <div style={{ marginTop: 8 }}>
+                        <div style={{ fontSize: 13, fontWeight: 700, color: "#ffffff" }}>
+                          {item.patientName}
+                        </div>
+                        <div style={{ fontSize: 11, color: "#38bdf8", marginTop: 2 }}>
+                          {item.service}
+                        </div>
+                        <div style={{ fontSize: 11, color: "#94a3b8", marginTop: 4 }}>
+                          {item.chamberLocation}
+                        </div>
+                      </div>
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 10, paddingTop: 8, borderTop: "1px solid rgba(255,255,255,0.06)" }}>
+                        <span className="channel-pill" style={{ fontSize: 9 }}>
+                          {item.channel}
+                        </span>
+                        {item.status !== "Completed" && (
+                          <button
+                            type="button"
+                            onClick={() => handleStatusChange(item.id, item.status === "In Consultation" ? "Completed" : "In Consultation")}
+                            style={{
+                              background: "rgba(229, 184, 105, 0.15)",
+                              border: "1px solid rgba(229, 184, 105, 0.3)",
+                              color: "#e5b869",
+                              padding: "3px 8px",
+                              borderRadius: 6,
+                              fontSize: 10,
+                              fontWeight: 600,
+                              cursor: "pointer",
+                            }}
+                          >
+                            {item.status === "In Consultation" ? "Finish" : "Call In"}
+                          </button>
+                        )}
                       </div>
                     </div>
-                  </div>
-                ))}
-            </div>
-          </div>
-
-          {/* Column 2: Confirmed */}
-          <div className="kanban-column-card">
-            <div className="kanban-col-header header-green">
-              <div className="kanban-title-wrap">
-                <span className="kanban-col-dot dot-green" />
-                <h3 className="kanban-col-title">Confirmed</h3>
+                  ))}
+                  {colItems.length === 0 && (
+                    <div style={{ textAlign: "center", padding: "20px 10px", fontSize: 11.5, color: "#64748b" }}>
+                      No patients in this stage
+                    </div>
+                  )}
+                </div>
               </div>
-              <span className="kanban-count-badge">
-                {appointments.filter((a) => a.status === "Confirmed").length}
-              </span>
-            </div>
-            <div className="kanban-cards-stack">
-              {appointments
-                .filter((a) => a.status === "Confirmed")
-                .map((apt) => (
-                  <div key={apt.id} className="kanban-item-card">
-                    <div className="kanban-item-top">
-                      <span className="kanban-ref">{apt.referenceNumber}</span>
-                      <span className="kanban-time">{apt.time}</span>
-                    </div>
-                    <div className="kanban-client-row">
-                      <Image
-                        src={apt.clientAvatar}
-                        alt={apt.clientName}
-                        width={28}
-                        height={28}
-                        className="client-avatar-img"
-                      />
-                      <span className="kanban-client-name">{apt.clientName}</span>
-                    </div>
-                    <div className="kanban-service-row">{apt.service}</div>
-                    <div className="kanban-footer-row">
-                      <span className="kanban-staff">{apt.staffName}</span>
-                      <div className="kanban-card-actions">
-                        <button
-                          type="button"
-                          className="kanban-action-btn"
-                          onClick={() => handleStatusChange(apt.id, "In Progress")}
-                        >
-                          Check In
-                        </button>
-                        <Link href={`/appointments/${apt.id}`} className="kanban-link-btn">
-                          <ArrowUpRight size={13} />
-                        </Link>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-            </div>
-          </div>
-
-          {/* Column 3: In Progress */}
-          <div className="kanban-column-card">
-            <div className="kanban-col-header header-cyan">
-              <div className="kanban-title-wrap">
-                <span className="kanban-col-dot dot-cyan" />
-                <h3 className="kanban-col-title">In Progress</h3>
-              </div>
-              <span className="kanban-count-badge">
-                {appointments.filter((a) => a.status === "In Progress").length}
-              </span>
-            </div>
-            <div className="kanban-cards-stack">
-              {appointments
-                .filter((a) => a.status === "In Progress")
-                .map((apt) => (
-                  <div key={apt.id} className="kanban-item-card">
-                    <div className="kanban-item-top">
-                      <span className="kanban-ref">{apt.referenceNumber}</span>
-                      <span className="kanban-time">{apt.time}</span>
-                    </div>
-                    <div className="kanban-client-row">
-                      <Image
-                        src={apt.clientAvatar}
-                        alt={apt.clientName}
-                        width={28}
-                        height={28}
-                        className="client-avatar-img"
-                      />
-                      <span className="kanban-client-name">{apt.clientName}</span>
-                    </div>
-                    <div className="kanban-service-row">{apt.service}</div>
-                    <div className="kanban-footer-row">
-                      <span className="kanban-staff">{apt.staffName}</span>
-                      <div className="kanban-card-actions">
-                        <button
-                          type="button"
-                          className="kanban-action-btn"
-                          onClick={() => handleStatusChange(apt.id, "Completed")}
-                        >
-                          Complete
-                        </button>
-                        <Link href={`/appointments/${apt.id}`} className="kanban-link-btn">
-                          <ArrowUpRight size={13} />
-                        </Link>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-            </div>
-          </div>
-
-          {/* Column 4: Completed */}
-          <div className="kanban-column-card">
-            <div className="kanban-col-header header-gold">
-              <div className="kanban-title-wrap">
-                <span className="kanban-col-dot dot-gold" />
-                <h3 className="kanban-col-title">Completed</h3>
-              </div>
-              <span className="kanban-count-badge">
-                {appointments.filter((a) => a.status === "Completed").length}
-              </span>
-            </div>
-            <div className="kanban-cards-stack">
-              {appointments
-                .filter((a) => a.status === "Completed")
-                .map((apt) => (
-                  <div key={apt.id} className="kanban-item-card">
-                    <div className="kanban-item-top">
-                      <span className="kanban-ref">{apt.referenceNumber}</span>
-                      <span className="kanban-time">{apt.time}</span>
-                    </div>
-                    <div className="kanban-client-row">
-                      <Image
-                        src={apt.clientAvatar}
-                        alt={apt.clientName}
-                        width={28}
-                        height={28}
-                        className="client-avatar-img"
-                      />
-                      <span className="kanban-client-name">{apt.clientName}</span>
-                    </div>
-                    <div className="kanban-service-row">{apt.service}</div>
-                    <div className="kanban-footer-row">
-                      <span className="kanban-staff">{apt.staffName}</span>
-                      <div className="kanban-card-actions">
-                        <span className="kanban-done-tag">Finished</span>
-                        <Link href={`/appointments/${apt.id}`} className="kanban-link-btn">
-                          <ArrowUpRight size={13} />
-                        </Link>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-            </div>
-          </div>
-        </section>
+            );
+          })}
+        </div>
       )}
 
-      {/* New Appointment Modal */}
+      {/* VIEW 3: SCHEDULE ROSTER VIEW */}
+      {viewMode === "calendar" && (
+        <div className="schedule-roster-view">
+          <div style={{ padding: "16px 20px", borderBottom: "1px solid rgba(255,255,255,0.08)", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+            <span style={{ fontSize: 14, fontWeight: 700, color: "#ffffff" }}>
+              Visiting Schedule &amp; Slots Roster ({doctorName})
+            </span>
+            <span style={{ fontSize: 12, color: "#e5b869" }}>
+              Active Chambers: {chamberLocation}
+            </span>
+          </div>
+          <div style={{ padding: 20, display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: 14 }}>
+            {filteredAppointments.map((apt) => (
+              <div key={apt.id} style={{ background: "#0a1324", border: "1px solid rgba(229,184,105,0.18)", borderRadius: 12, padding: 14 }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
+                  <span className="serial-badge-pill">{apt.serialNumber}</span>
+                  <span style={{ fontSize: 12, fontWeight: 700, color: "#e5b869" }}>{apt.time}</span>
+                </div>
+                <div style={{ fontSize: 13, fontWeight: 700, color: "#ffffff" }}>{apt.patientName}</div>
+                <div style={{ fontSize: 11, color: "#94a3b8", marginTop: 2 }}>{apt.patientPhone} • {apt.patientAgeGender}</div>
+                <div style={{ fontSize: 11.5, color: "#38bdf8", marginTop: 6 }}>{apt.service}</div>
+                <div style={{ fontSize: 10.5, color: "#64748b", marginTop: 4 }}>{apt.chamberLocation}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* NEW APPOINTMENT MODAL */}
       <NewAppointmentModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         onAddAppointment={handleAddAppointment}
+        doctorName={doctorName}
+        chamberLocation={chamberLocation}
+        doctorSpecialty={doctorSpecialty}
       />
     </div>
   );
