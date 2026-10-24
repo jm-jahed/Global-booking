@@ -639,21 +639,9 @@ export function LiveQueueView() {
             <span className="live-queue-live-dot" title="Real-time synchronized" />
           </div>
           <div className="live-queue-title-wrap">
-            <div className="live-queue-title-row">
-              <h1 className="live-queue-title-text">
-                Live Queue Management
-              </h1>
-              <span className="live-queue-system-pill">
-                <span className="live-pulsing-dot" />
-                <span className="live-equalizer-bars">
-                  <span></span>
-                  <span></span>
-                  <span></span>
-                  <span></span>
-                </span>
-                LIVE QUEUE SYSTEM
-              </span>
-            </div>
+            <h1 className="live-queue-title-text">
+              Live Queue Management
+            </h1>
             <p className="live-queue-subtitle-text">
               Real-time patient queue, live token call & serial tracking
             </p>
