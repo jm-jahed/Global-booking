@@ -186,61 +186,75 @@ export function LiveDisplayModal({
       <div className="tv-display-container" onClick={(e) => e.stopPropagation()}>
         {/* Top TV Bar */}
         <header className="tv-display-header">
-          <div className="tv-brand-block">
-            <div className="tv-brand-icon">
-              <svg
-                width="28"
-                height="28"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="#e5b869"
-                strokeWidth="2"
-              >
-                <rect x="3" y="4" width="18" height="18" rx="3" />
-                <line x1="16" y1="2" x2="16" y2="6" />
-                <line x1="8" y1="2" x2="8" y2="6" />
-                <line x1="3" y1="10" x2="21" y2="10" />
-                <circle cx="8" cy="14" r="1" fill="#e5b869" />
-                <circle cx="12" cy="14" r="1" fill="#e5b869" />
-                <circle cx="16" cy="14" r="1" fill="#e5b869" />
-              </svg>
-            </div>
-            <div>
-              <div className="tv-brand-title">
-                <span className="text-white font-extrabold tracking-wider">GLOBAL </span>
-                <span className="text-gold font-extrabold tracking-wider">BOOKING</span>
+          <div className="tv-header-top-row">
+            <div className="tv-brand-block">
+              <div className="tv-brand-icon">
+                <svg
+                  width="28"
+                  height="28"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="#e5b869"
+                  strokeWidth="2"
+                >
+                  <rect x="3" y="4" width="18" height="18" rx="3" />
+                  <line x1="16" y1="2" x2="16" y2="6" />
+                  <line x1="8" y1="2" x2="8" y2="6" />
+                  <line x1="3" y1="10" x2="21" y2="10" />
+                  <circle cx="8" cy="14" r="1" fill="#e5b869" />
+                  <circle cx="12" cy="14" r="1" fill="#e5b869" />
+                  <circle cx="16" cy="14" r="1" fill="#e5b869" />
+                </svg>
               </div>
-              <span className="tv-brand-sub">WAITING ROOM LIVE DISPLAY • {activeDoctorName.toUpperCase()}</span>
+              <div>
+                <div className="tv-brand-title">
+                  <span className="text-white font-extrabold tracking-wider">GLOBAL </span>
+                  <span className="text-gold font-extrabold tracking-wider">BOOKING</span>
+                </div>
+                <span className="tv-brand-sub">WAITING ROOM LIVE DISPLAY • {activeDoctorName.toUpperCase()}</span>
+              </div>
             </div>
-          </div>
 
-          <div className="tv-header-center">
-            <span className="tv-live-pill">
-              <span className="live-pulsing-dot" />
-              <span className="live-equalizer-bars">
-                <span></span>
-                <span></span>
-                <span></span>
-                <span></span>
-              </span>
-              LIVE QUEUE SYSTEM
-            </span>
-          </div>
-
-          <div className="tv-header-right">
-            <div className="tv-clock-box">
-              <span className="tv-clock-time">{time}</span>
-              <span className="tv-clock-date">{todayDate}</span>
-            </div>
             <button
               type="button"
-              className="tv-close-btn"
+              className="tv-close-btn tv-close-btn-mobile-only"
               onClick={onClose}
               title="Exit TV Display (Esc)"
               aria-label="Close TV Display"
             >
               <X size={20} />
             </button>
+          </div>
+
+          <div className="tv-header-meta-row">
+            <div className="tv-header-center">
+              <span className="tv-live-pill">
+                <span className="live-pulsing-dot" />
+                <span className="live-equalizer-bars">
+                  <span></span>
+                  <span></span>
+                  <span></span>
+                  <span></span>
+                </span>
+                LIVE QUEUE SYSTEM
+              </span>
+            </div>
+
+            <div className="tv-header-right">
+              <div className="tv-clock-box">
+                <span className="tv-clock-time">{time}</span>
+                <span className="tv-clock-date">{todayDate}</span>
+              </div>
+              <button
+                type="button"
+                className="tv-close-btn tv-close-btn-desktop-only"
+                onClick={onClose}
+                title="Exit TV Display (Esc)"
+                aria-label="Close TV Display"
+              >
+                <X size={20} />
+              </button>
+            </div>
           </div>
         </header>
 

@@ -819,15 +819,15 @@ export function LiveQueueView() {
       {/* MAIN TWO-COLUMN LAYOUT: TABLE ON LEFT + QUEUE CONTROL PAD ON RIGHT */}
       <div className="queue-main-split">
         
-        {/* LEFT COLUMN: LIVE QUEUE TABLE */}
-        <div style={{ background: "#080f1e", border: "1px solid rgba(255, 255, 255, 0.08)", borderRadius: 16, overflow: "hidden", boxShadow: "0 10px 40px rgba(0,0,0,0.5)" }}>
+        {/* LEFT COLUMN: LIVE QUEUE TABLE & MOBILE CARDS */}
+        <div className="live-queue-table-card">
           {/* Table Card Topbar with Search & Filters */}
-          <div style={{ padding: "16px 20px", borderBottom: "1px solid rgba(255, 255, 255, 0.06)", display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 12 }}>
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", width: "100%", flexWrap: "wrap", gap: 10 }}>
+          <div className="live-queue-topbar">
+            <div className="live-queue-topbar-header">
               <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                <h2 style={{ margin: 0, fontSize: 16, fontWeight: 700, color: "#ffffff" }}>Live Queue</h2>
-                <div style={{ display: "inline-flex", alignItems: "center", gap: 5, padding: "3px 9px", background: "rgba(16, 185, 129, 0.15)", border: "1px solid rgba(16, 185, 129, 0.3)", borderRadius: 20, color: "#10b981", fontSize: 11, fontWeight: 700 }}>
-                  <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#10b981", boxShadow: "0 0 6px #10b981" }} />
+                <h2 className="live-queue-card-title">Live Queue</h2>
+                <div className="live-queue-live-badge">
+                  <span className="live-pulsing-dot-small" />
                   <span>Live</span>
                 </div>
               </div>
@@ -846,200 +846,141 @@ export function LiveQueueView() {
               </button>
             </div>
 
-            <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
-              {/* Selected-Date Control (DD-MM-YYYY) */}
-              <div
-                style={{
-                  display: "inline-flex",
-                  alignItems: "center",
-                  background: "#050913",
-                  border: "1px solid rgba(229, 184, 105, 0.4)",
-                  borderRadius: 8,
-                  padding: "2px 6px",
-                  gap: 4,
-                  boxShadow: "0 0 10px rgba(229, 184, 105, 0.08)",
-                }}
-              >
-                {/* Previous Day Button */}
-                <button
-                  type="button"
-                  onClick={handlePrevDay}
-                  title="Previous Day"
-                  aria-label="Previous Day"
-                  style={{
-                    background: "transparent",
-                    border: "none",
-                    color: "#94a3b8",
-                    cursor: "pointer",
-                    padding: "4px 3px",
-                    display: "flex",
-                    alignItems: "center",
-                    borderRadius: 4,
-                  }}
-                >
-                  <ChevronLeft size={14} />
-                </button>
-
-                {/* Calendar Icon + Clickable Date Picker trigger */}
-                <div
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 6,
-                    position: "relative",
-                  }}
-                >
-                  <Calendar size={13} color="#e5b869" />
-                  <input
-                    type="text"
-                    value={displayInputVal}
-                    onChange={handleDisplayInputChange}
-                    placeholder="DD-MM-YYYY"
-                    title="Queue Date (DD-MM-YYYY)"
-                    aria-label="Queue Date"
-                    style={{
-                      width: 95,
-                      background: "transparent",
-                      border: "none",
-                      color: "#ffffff",
-                      fontSize: 12,
-                      fontWeight: 700,
-                      letterSpacing: "0.03em",
-                      outline: "none",
-                      textAlign: "center",
-                      fontFamily: "monospace",
-                    }}
-                  />
-                  {/* Native Hidden Date Picker input to allow clicking calendar */}
-                  <input
-                    ref={dateInputRef}
-                    type="date"
-                    value={selectedDateKey}
-                    onChange={(e) => handleDateSelect(e.target.value)}
-                    style={{
-                      position: "absolute",
-                      opacity: 0,
-                      width: 0,
-                      height: 0,
-                      pointerEvents: "none",
-                    }}
-                    tabIndex={-1}
-                    aria-hidden="true"
-                  />
+            <div className="live-queue-filters-row">
+              {/* Row 1 on Mobile: Date Navigator + Search Input Side-by-Side */}
+              <div className="live-queue-row-date-search">
+                {/* Selected-Date Control (DD-MM-YYYY) */}
+                <div className="live-queue-date-control">
+                  {/* Previous Day Button */}
                   <button
                     type="button"
-                    onClick={() => {
-                      if (dateInputRef.current) {
-                        if (typeof (dateInputRef.current as any).showPicker === "function") {
-                          (dateInputRef.current as any).showPicker();
-                        } else {
-                          dateInputRef.current.focus();
-                          dateInputRef.current.click();
-                        }
-                      }
-                    }}
-                    title="Open Calendar Picker"
-                    aria-label="Open Calendar Picker"
-                    style={{
-                      background: "rgba(229, 184, 105, 0.12)",
-                      border: "1px solid rgba(229, 184, 105, 0.25)",
-                      borderRadius: 4,
-                      color: "#e5b869",
-                      padding: "2px 5px",
-                      fontSize: 10,
-                      cursor: "pointer",
-                      fontWeight: 700,
-                    }}
+                    onClick={handlePrevDay}
+                    title="Previous Day"
+                    aria-label="Previous Day"
+                    className="live-queue-date-nav-btn"
                   >
-                    📅
+                    <ChevronLeft size={14} />
                   </button>
+
+                  {/* Calendar Icon + Clickable Date Picker trigger */}
+                  <div style={{ display: "flex", alignItems: "center", gap: 6, position: "relative" }}>
+                    <Calendar size={13} color="#e5b869" />
+                    <input
+                      type="text"
+                      value={displayInputVal}
+                      onChange={handleDisplayInputChange}
+                      placeholder="DD-MM-YYYY"
+                      title="Queue Date (DD-MM-YYYY)"
+                      aria-label="Queue Date"
+                      className="live-queue-date-input"
+                    />
+                    {/* Native Hidden Date Picker input to allow clicking calendar */}
+                    <input
+                      ref={dateInputRef}
+                      type="date"
+                      value={selectedDateKey}
+                      onChange={(e) => handleDateSelect(e.target.value)}
+                      style={{
+                        position: "absolute",
+                        opacity: 0,
+                        width: 0,
+                        height: 0,
+                        pointerEvents: "none",
+                      }}
+                      tabIndex={-1}
+                      aria-hidden="true"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (dateInputRef.current) {
+                          if (typeof (dateInputRef.current as any).showPicker === "function") {
+                            (dateInputRef.current as any).showPicker();
+                          } else {
+                            dateInputRef.current.focus();
+                            dateInputRef.current.click();
+                          }
+                        }
+                      }}
+                      title="Open Calendar Picker"
+                      aria-label="Open Calendar Picker"
+                      className="live-queue-calendar-trigger-btn"
+                    >
+                      📅
+                    </button>
+                  </div>
+
+                  {/* Next Day Button */}
+                  <button
+                    type="button"
+                    onClick={handleNextDay}
+                    title="Next Day"
+                    aria-label="Next Day"
+                    className="live-queue-date-nav-btn"
+                  >
+                    <ChevronRight size={14} />
+                  </button>
+
+                  {/* Jump to Today Button (when viewing another date) */}
+                  {!isSelectedDateToday && (
+                    <button
+                      type="button"
+                      onClick={handleResetToToday}
+                      title={`Jump to Today (${formatIsoToDDMMYYYY(chamberTodayDateKey)})`}
+                      className="live-queue-today-jump-btn"
+                    >
+                      Today
+                    </button>
+                  )}
                 </div>
 
-                {/* Next Day Button */}
-                <button
-                  type="button"
-                  onClick={handleNextDay}
-                  title="Next Day"
-                  aria-label="Next Day"
-                  style={{
-                    background: "transparent",
-                    border: "none",
-                    color: "#94a3b8",
-                    cursor: "pointer",
-                    padding: "4px 3px",
-                    display: "flex",
-                    alignItems: "center",
-                    borderRadius: 4,
-                  }}
+                {/* Search */}
+                <div className="live-queue-search-wrap">
+                  <Search size={14} color="#64748b" className="live-queue-search-icon" />
+                  <input
+                    type="text"
+                    placeholder="Search token, name..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="live-queue-search-input"
+                  />
+                </div>
+              </div>
+
+              {/* Dropdowns Container (Side-by-side on mobile, inline on desktop) */}
+              <div className="live-queue-selects-wrap">
+                {/* Chamber Filter */}
+                <select
+                  value={selectedChamberId}
+                  onChange={(e) => setSelectedChamberId(e.target.value)}
+                  className="live-queue-filter-select"
                 >
-                  <ChevronRight size={14} />
-                </button>
+                  <option value="">All Services ({chambers.length})</option>
+                  {chambers.map((ch: any) => (
+                    <option key={ch.id} value={ch.id}>
+                      {ch.facilityName || ch.name || "Chamber"}
+                    </option>
+                  ))}
+                </select>
 
-                {/* Jump to Today Button (when viewing another date) */}
-                {!isSelectedDateToday && (
-                  <button
-                    type="button"
-                    onClick={handleResetToToday}
-                    title={`Jump to Today (${formatIsoToDDMMYYYY(chamberTodayDateKey)})`}
-                    style={{
-                      background: "rgba(16, 185, 129, 0.15)",
-                      border: "1px solid rgba(16, 185, 129, 0.35)",
-                      borderRadius: 5,
-                      color: "#10b981",
-                      padding: "2px 7px",
-                      fontSize: 10.5,
-                      fontWeight: 700,
-                      cursor: "pointer",
-                    }}
-                  >
-                    Today
-                  </button>
-                )}
+                {/* Status Filter */}
+                <select
+                  value={statusFilter}
+                  onChange={(e) => setStatusFilter(e.target.value)}
+                  className="live-queue-filter-select"
+                >
+                  <option value="All Status">All Status</option>
+                  <option value="In Progress">In Progress</option>
+                  <option value="Waiting">Waiting</option>
+                  <option value="Completed">Completed</option>
+                  <option value="Skipped">Skipped (Absent)</option>
+                </select>
               </div>
-
-              {/* Search */}
-              <div style={{ position: "relative", width: 200 }}>
-                <Search size={14} color="#64748b" style={{ position: "absolute", left: 10, top: "50%", transform: "translateY(-50%)" }} />
-                <input
-                  type="text"
-                  placeholder="Search token, name..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  style={{ width: "100%", padding: "7px 10px 7px 30px", background: "#050913", border: "1px solid rgba(255, 255, 255, 0.1)", borderRadius: 8, color: "#ffffff", fontSize: 12, outline: "none", boxSizing: "border-box" }}
-                />
-              </div>
-
-              {/* Chamber Filter */}
-              <select
-                value={selectedChamberId}
-                onChange={(e) => setSelectedChamberId(e.target.value)}
-                style={{ padding: "7px 10px", background: "#050913", border: "1px solid rgba(255, 255, 255, 0.1)", borderRadius: 8, color: "#ffffff", fontSize: 12, outline: "none", cursor: "pointer" }}
-              >
-                <option value="">All Services ({chambers.length})</option>
-                {chambers.map((ch: any) => (
-                  <option key={ch.id} value={ch.id}>
-                    {ch.facilityName || ch.name || "Chamber"}
-                  </option>
-                ))}
-              </select>
-
-              {/* Status Filter */}
-              <select
-                value={statusFilter}
-                onChange={(e) => setStatusFilter(e.target.value)}
-                style={{ padding: "7px 10px", background: "#050913", border: "1px solid rgba(255, 255, 255, 0.1)", borderRadius: 8, color: "#ffffff", fontSize: 12, outline: "none", cursor: "pointer" }}
-              >
-                <option value="All Status">All Status</option>
-                <option value="In Progress">In Progress</option>
-                <option value="Waiting">Waiting</option>
-                <option value="Completed">Completed</option>
-                <option value="Skipped">Skipped (Absent)</option>
-              </select>
             </div>
           </div>
 
-          {/* Table Element */}
-          <div style={{ overflowX: "auto" }}>
+          {/* DESKTOP TABLE VIEW (Visible on tablet & desktop, hidden on mobile) */}
+          <div className="live-queue-desktop-table-wrap">
             <table style={{ width: "100%", borderCollapse: "collapse", textAlign: "left", fontSize: 12.5 }}>
               <thead>
                 <tr style={{ background: "rgba(255, 255, 255, 0.02)", borderBottom: "1px solid rgba(255, 255, 255, 0.06)", color: "#64748b", fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.04em" }}>
@@ -1304,21 +1245,160 @@ export function LiveQueueView() {
                   })
                 ) : (
                   <tr>
-                    <td colSpan={5} style={{ textAlign: "center", padding: "48px 20px", color: "#94a3b8" }}>
-                      <Users2 size={32} color="#e5b869" style={{ margin: "0 auto 10px", opacity: 0.6 }} />
-                      <p style={{ margin: "0 0 4px", fontSize: 14, fontWeight: 700, color: "#ffffff" }}>
-                        {queue.length === 0 ? "No Patients in Live Queue" : "No patients matching filter."}
-                      </p>
-                      <p style={{ margin: 0, fontSize: 12, color: "#64748b" }}>
-                        {queue.length === 0
-                          ? "Click 'Next' or 'Check In' on the Queue Control panel to issue an OPD ticket."
-                          : "Try adjusting your search query or status filter."}
-                      </p>
+                    <td colSpan={5} style={{ textAlign: "center", padding: "54px 20px" }}>
+                      <div className="queue-empty-luxury-container">
+                        <div className="queue-empty-halo">
+                          <Users2 size={32} color="#e5b869" />
+                        </div>
+                        <p className="queue-empty-title">
+                          {queue.length === 0 ? "No Patients in Live Queue" : "No patients matching filter."}
+                        </p>
+                        <p className="queue-empty-sub">
+                          {queue.length === 0
+                            ? "Click 'Next' or 'Check In' on the Queue Control panel to issue an OPD ticket."
+                            : "Try adjusting your search query or status filter."}
+                        </p>
+                      </div>
                     </td>
                   </tr>
                 )}
               </tbody>
             </table>
+          </div>
+
+          {/* MOBILE CARDS VIEW (Visible only on mobile <= 768px) */}
+          <div className="live-queue-mobile-cards-wrap">
+            {filteredQueue.length > 0 ? (
+              filteredQueue.map((item, index) => {
+                const isNowServing = item.status === "Serving";
+                const isNext = item.status === "Next";
+                return (
+                  <div
+                    key={item.id}
+                    className={`queue-mobile-patient-card ${
+                      isNowServing ? "card-serving" : isNext ? "card-next" : ""
+                    }`}
+                  >
+                    {/* Top Row: Token, Serial & Status Badge */}
+                    <div className="queue-mobile-card-top">
+                      <div className="queue-mobile-token-row">
+                        <span className="queue-mobile-serial-tag">#{index + 1}</span>
+                        <span className={`queue-mobile-token-pill ${isNowServing ? "token-serving" : ""}`}>
+                          {item.ticketNumber}
+                        </span>
+                        {isNowServing && (
+                          <span className="queue-mobile-serving-badge">
+                            <span className="live-pulsing-dot-small" /> Serving
+                          </span>
+                        )}
+                        {isNext && (
+                          <span className="queue-mobile-next-badge">Next</span>
+                        )}
+                      </div>
+
+                      <span
+                        className={`queue-mobile-status-badge status-${item.status.toLowerCase()}`}
+                      >
+                        {isNowServing ? "In Progress" : item.status === "Skipped" ? "Absent" : item.status}
+                      </span>
+                    </div>
+
+                    {/* Middle Row: Patient Avatar & Meta */}
+                    <div className="queue-mobile-card-patient">
+                      <div
+                        className="queue-mobile-patient-avatar"
+                        style={{ background: getAvatarGradient(index) }}
+                      >
+                        {item.clientName.charAt(0)}
+                      </div>
+                      <div className="queue-mobile-patient-details">
+                        <span className="queue-mobile-patient-name">{item.clientName}</span>
+                        <span className="queue-mobile-patient-sub">
+                          {item.service || "Consultation"} • {item.patientId}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Bottom Row: Actions */}
+                    <div className="queue-mobile-card-actions">
+                      {item.status === "Completed" ? (
+                        <div className="queue-mobile-action-completed-row">
+                          <span className="queue-mobile-completed-tag">
+                            <CheckCircle2 size={13} color="#34d399" /> Completed
+                          </span>
+                          <button
+                            type="button"
+                            className="queue-mobile-btn-recall"
+                            onClick={() => handleCallSpecificTicket(item.id)}
+                          >
+                            Recall
+                          </button>
+                        </div>
+                      ) : item.status === "Skipped" ? (
+                        <div className="queue-mobile-action-skipped-row">
+                          <span className="queue-mobile-skipped-tag">Absent</span>
+                          <button
+                            type="button"
+                            className="queue-mobile-btn-recall-absent"
+                            onClick={() => handleCallSpecificTicket(item.id)}
+                          >
+                            Recall Patient
+                          </button>
+                        </div>
+                      ) : isNowServing ? (
+                        <div className="queue-mobile-action-serving-row">
+                          <button
+                            type="button"
+                            className="queue-mobile-btn-next-action"
+                            onClick={() => handleNext()}
+                          >
+                            Complete & Next
+                          </button>
+                          <button
+                            type="button"
+                            className="queue-mobile-btn-skip-action"
+                            onClick={() => handleSkipSpecificTicket(item.id)}
+                          >
+                            Skip
+                          </button>
+                        </div>
+                      ) : (
+                        <div className="queue-mobile-action-waiting-row">
+                          <button
+                            type="button"
+                            className="queue-mobile-btn-call-action"
+                            onClick={() => handleCallSpecificTicket(item.id)}
+                          >
+                            Call Into Chamber
+                          </button>
+                          <button
+                            type="button"
+                            className="queue-mobile-btn-skip-action"
+                            onClick={() => handleSkipSpecificTicket(item.id)}
+                          >
+                            Skip
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                );
+              })
+            ) : (
+              <div className="queue-empty-luxury-container mobile-empty-card">
+                <div className="queue-empty-halo">
+                  <Users2 size={32} color="#e5b869" />
+                </div>
+                <h4 className="queue-empty-title">
+                  {queue.length === 0 ? "No Patients in Live Queue" : "No patients matching filter."}
+                </h4>
+                <p className="queue-empty-sub">
+                  {queue.length === 0
+                    ? "Click 'Next' or 'Check In' on Queue Control to issue an OPD ticket."
+                    : "Try adjusting your search query or status filter."}
+                </p>
+              </div>
+            )}
           </div>
         </div>
 
@@ -1343,7 +1423,7 @@ export function LiveQueueView() {
               </div>
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
-                  <span style={{ fontSize: 15, fontWeight: 900, color: "#ffffff", letterSpacing: "0.01em" }}>
+                  <span style={{ fontSize: 16, fontWeight: 900, color: "#ffffff", letterSpacing: "0.01em" }}>
                     Next
                   </span>
                   <span
@@ -1362,9 +1442,6 @@ export function LiveQueueView() {
                     Primary
                   </span>
                 </div>
-                <p style={{ margin: "3px 0 0", fontSize: 10.5, color: "#f3c87a", lineHeight: 1.3 }}>
-                  Complete running patient &amp; call next into chamber
-                </p>
               </div>
               <ChevronRight size={16} color="#f5c270" className="queue-control-chevron" />
             </button>
@@ -1379,10 +1456,7 @@ export function LiveQueueView() {
                 <SkipForward size={20} color="#38bdf8" />
               </div>
               <div style={{ flex: 1, minWidth: 0 }}>
-                <span style={{ fontSize: 15, fontWeight: 900, color: "#ffffff" }}>Skip</span>
-                <p style={{ margin: "3px 0 0", fontSize: 10.5, color: "#94a3b8", lineHeight: 1.3 }}>
-                  Skip absent patient &amp; call next into chamber
-                </p>
+                <span style={{ fontSize: 16, fontWeight: 900, color: "#ffffff" }}>Skip</span>
               </div>
               <ChevronRight size={16} color="#38bdf8" className="queue-control-chevron" />
             </button>

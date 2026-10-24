@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+
 :root {
   --navy-950: #07131f;
   --navy-900: #0b1b2a;
@@ -58,8 +60,17 @@ button, a { -webkit-tap-highlight-color: transparent; }
 .eyebrow-light { color: var(--gold-light); }
 .eyebrow-light span { width: 28px; height: 1px; display: inline-block; margin-right: 10px; background: currentColor; vertical-align: middle; }
 h1, h2, h3, p { margin-top: 0; }
-h1, h2 { font-family: Georgia, "Times New Roman", serif; font-weight: 400; letter-spacing: -.035em; }
-h1 em, h2 em { color: var(--gold-light); font-weight: 400; }
+.home-hero h1, .home-hero h2, .home-editorial h1, .home-editorial h2 { font-family: Georgia, "Times New Roman", serif; font-weight: 400; letter-spacing: -.035em; }
+.home-hero h1 em, .home-hero h2 em { color: var(--gold-light); font-weight: 400; }
+
+/* Enforce modern typography everywhere in portal, modals, and displays */
+.portal-layout-container,
+.portal-layout-container *,
+.tv-display-overlay,
+.tv-display-overlay *,
+.portal-main * {
+  font-family: 'Inter', ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
+}
 
 .home-hero { min-height: 720px; position: relative; overflow: hidden; display: flex; align-items: center; padding: 92px 0 96px; background: radial-gradient(circle at 76% 30%, #173d52 0, transparent 32%), linear-gradient(135deg, var(--navy-950), var(--navy-800)); color: var(--white); }
 .home-hero::before { content: ""; position: absolute; inset: 0; opacity: .14; background-image: linear-gradient(rgba(255,255,255,.08) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.08) 1px, transparent 1px); background-size: 80px 80px; mask-image: linear-gradient(to right, transparent, black); }
