@@ -3957,6 +3957,32 @@
   height: 100% !important;
 }
 
+.tv-station-kpi-card {
+  height: 100% !important;
+  box-sizing: border-box !important;
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: space-between !important;
+  align-items: stretch !important;
+  padding: 18px 20px !important;
+}
+
+.tv-station-card-body {
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: space-between !important;
+  height: 100% !important;
+  width: 100% !important;
+}
+
+.tv-kpi-top-row {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 6px;
+  margin-bottom: 4px;
+}
+
 .tv-station-card.equal-box {
   background: linear-gradient(145deg, #0b1426 0%, #070d19 100%);
   border: 1.5px solid rgba(229, 184, 105, 0.35);
@@ -8256,15 +8282,16 @@
 @media (max-width: 900px) {
   .queue-kpi-grid {
     grid-template-columns: repeat(2, 1fr) !important;
-    gap: 8px !important;
+    gap: 10px !important;
     width: 100% !important;
     box-sizing: border-box !important;
   }
   .queue-kpi-card {
-    padding: 10px 8px !important;
-    gap: 7px !important;
+    padding: 14px 10px !important;
+    min-height: 90px !important;
+    gap: 8px !important;
     min-width: 0 !important;
-    border-radius: 14px !important;
+    border-radius: 16px !important;
     box-sizing: border-box !important;
     overflow: hidden !important;
   }
@@ -9148,67 +9175,81 @@
     font-size: 11px !important;
   }
 
-  /* 2x2 Clean Grid for 4 TV stages on mobile */
+  /* 2x2 Clean Grid for 4 TV stages on mobile - Taller elongated boxes */
   .tv-stations-grid.four-boxes-grid {
     display: grid !important;
     grid-template-columns: 1fr 1fr !important;
     grid-template-rows: auto auto !important;
-    gap: 8px !important;
+    gap: 10px !important;
     flex: none !important;
     height: auto !important;
-  }
-
-  .tv-station-card.equal-box {
-    padding: 10px 10px !important;
-    min-height: 125px !important;
-    height: auto !important;
+    width: 100% !important;
     box-sizing: border-box !important;
   }
 
-  .tv-station-card.equal-box .tv-station-header {
+  .tv-station-kpi-card {
+    padding: 16px 14px !important;
+    gap: 6px !important;
+    min-height: 140px !important;
+    border-radius: 16px !important;
+    min-width: 0 !important;
+    box-sizing: border-box !important;
+    overflow: hidden !important;
     display: flex !important;
     flex-direction: column !important;
-    align-items: flex-start !important;
-    gap: 4px !important;
+    justify-content: space-between !important;
+    align-items: stretch !important;
   }
 
-  .tv-station-card.equal-box .tv-station-name {
-    font-size: 10.5px !important;
+  .tv-station-card-body {
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: space-between !important;
+    height: 100% !important;
+    width: 100% !important;
+    min-width: 0 !important;
+  }
+
+  .tv-kpi-top-row {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: flex-start !important;
+    margin-bottom: 2px !important;
+  }
+
+  .tv-station-kpi-card .queue-kpi-card-label {
+    font-size: 11px !important;
     font-weight: 800 !important;
+    letter-spacing: 0.04em !important;
+    text-transform: uppercase !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
     line-height: 1.2 !important;
   }
 
-  .tv-stage-badge {
-    font-size: 9px !important;
-    padding: 2px 6px !important;
+  .tv-station-kpi-card .tv-stage-badge {
+    display: none !important;
   }
 
-  .tv-station-card.equal-box .tv-ticket-number {
-    font-size: 26px !important;
-    margin: 4px 0 !important;
+  .tv-station-kpi-card .tv-kpi-value {
+    font-size: 32px !important;
+    font-weight: 900 !important;
+    line-height: 1.1 !important;
+    margin: 6px 0 !important;
   }
 
-  .tv-station-card.equal-box .tv-ticket-client {
+  .tv-station-kpi-card .tv-kpi-sub {
     font-size: 11px !important;
-    max-width: 100% !important;
+    line-height: 1.3 !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    color: #94a3b8 !important;
   }
 
-  .tv-station-card.equal-box .tv-ticket-sub {
-    font-size: 9px !important;
-    max-width: 100% !important;
-  }
-
-  .tv-station-card.equal-box .tv-station-footer {
-    margin-top: 6px !important;
-    padding-top: 4px !important;
-  }
-
-  .tv-station-card.equal-box .tv-doctor-name {
-    font-size: 9.5px !important;
-  }
-
-  .tv-station-card.equal-box .tv-doctor-role {
-    font-size: 8.5px !important;
+  .tv-station-kpi-card .queue-kpi-card-chevron {
+    display: none !important;
   }
 
   .tv-upcoming-item {

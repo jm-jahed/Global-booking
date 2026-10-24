@@ -126,14 +126,14 @@ export function LiveDisplayModal({
   const fourthPatient = waitingLine[2];
 
   // 4 Sequential Stages requested for Personal Doctor Practice:
-  // 1st Box: Doctor consultation
-  // 2nd Box: Next number
-  // 3rd Box: 3rd in queue
-  // 4th Box: 4th in queue
+  // With Doctor
+  // NEXT NUMBER
+  // WAITING LOUNGE
+  // WAITING LOUNGE
   const stages = [
     {
       id: "box-1-serving",
-      stageTag: "1. NOW IN CONSULTATION",
+      stageTag: "WITH DOCTOR",
       badgeText: "With Doctor",
       badgeClass: "badge-serving",
       kpiCardClass: "queue-kpi-card-serving",
@@ -142,13 +142,13 @@ export function LiveDisplayModal({
       icon: <Crown size={22} />,
       ticket: currentServing?.ticketNumber || "—",
       patientName: currentServing?.clientName || (queue.length > 0 ? "Chamber Available" : "No patient serving"),
-      subtitle: currentServing?.service || `${activeSpecialty} Review`,
+      subtitle: currentServing?.service || "",
       footerLeft: activeDoctorName,
       footerRight: activeChamber,
     },
     {
       id: "box-2-next",
-      stageTag: "2. NEXT NUMBER",
+      stageTag: "NEXT NUMBER",
       badgeText: "Stand By Door",
       badgeClass: "badge-next",
       kpiCardClass: "queue-kpi-card-next",
@@ -157,13 +157,13 @@ export function LiveDisplayModal({
       icon: <Clock size={22} />,
       ticket: nextPatient?.ticketNumber || "—",
       patientName: nextPatient?.clientName || (waitingLine.length === 0 ? "No patient waiting" : "Ready for next"),
-      subtitle: nextPatient ? `Est. Wait: ~${nextPatient.estWaitMinutes} min • ${nextPatient.service}` : "Please be ready at door",
+      subtitle: nextPatient ? (nextPatient.service || "") : "",
       footerLeft: activeDoctorName,
       footerRight: "Chamber Entrance",
     },
     {
       id: "box-3-third",
-      stageTag: "3. 3RD IN QUEUE",
+      stageTag: "WAITING LOUNGE",
       badgeText: "Waiting Lounge",
       badgeClass: "badge-waiting",
       kpiCardClass: "queue-kpi-card-waiting",
@@ -172,22 +172,22 @@ export function LiveDisplayModal({
       icon: <Users size={22} />,
       ticket: thirdPatient?.ticketNumber || "—",
       patientName: thirdPatient?.clientName || "Lounge Available",
-      subtitle: thirdPatient ? `Est. Wait: ~${thirdPatient.estWaitMinutes} min • ${thirdPatient.service}` : "Waiting lounge seating",
+      subtitle: thirdPatient ? (thirdPatient.service || "") : "",
       footerLeft: activeDoctorName,
       footerRight: "Waiting Lounge",
     },
     {
       id: "box-4-fourth",
-      stageTag: "4. 4TH IN QUEUE",
+      stageTag: "WAITING LOUNGE",
       badgeText: "Waiting Lounge",
       badgeClass: "badge-completed",
       kpiCardClass: "queue-kpi-card-completed",
       kpiIconClass: "queue-kpi-icon-completed",
       accentColor: "#14b8a6",
-      icon: <CheckCircle2 size={22} />,
+      icon: <Users size={22} />,
       ticket: fourthPatient?.ticketNumber || "—",
       patientName: fourthPatient?.clientName || "Lounge Available",
-      subtitle: fourthPatient ? `Est. Wait: ~${fourthPatient.estWaitMinutes} min • ${fourthPatient.service}` : "Waiting lounge seating",
+      subtitle: fourthPatient ? (fourthPatient.service || "") : "",
       footerLeft: activeDoctorName,
       footerRight: "Waiting Lounge",
     },
@@ -273,24 +273,13 @@ export function LiveDisplayModal({
         <main className="tv-display-main-grid">
           {/* Left: 4 EQUAL BOXES (Consultation + Queue Progression styled like KPI Cards) */}
           <section className="tv-serving-section">
-            <div className="tv-section-heading-row">
-              <h2 className="tv-section-heading">CONSULTATION & QUEUE PROGRESSION</h2>
-              <span className="tv-station-count">{activeChamber}</span>
-            </div>
-
             <div className="tv-stations-grid four-boxes-grid">
               {stages.map((st) => (
                 <article key={st.id} className={`queue-kpi-card tv-station-kpi-card ${st.kpiCardClass}`}>
-                  <div className={`queue-kpi-card-icon ${st.kpiIconClass}`}>
-                    {st.icon}
-                  </div>
-                  <div className="queue-kpi-card-body">
+                  <div className="queue-kpi-card-body tv-station-card-body">
                     <div className="tv-kpi-top-row">
                       <span className="queue-kpi-card-label" style={{ color: st.accentColor }}>
                         {st.stageTag}
-                      </span>
-                      <span className={`tv-stage-badge ${st.badgeClass}`}>
-                        {st.badgeText}
                       </span>
                     </div>
                     <div className="queue-kpi-card-value tv-kpi-value">
@@ -301,7 +290,6 @@ export function LiveDisplayModal({
                       {st.subtitle && <span className="tv-kpi-patient-desc"> • {st.subtitle}</span>}
                     </div>
                   </div>
-                  <ChevronRight size={18} color={st.accentColor} className="queue-kpi-card-chevron" />
                 </article>
               ))}
             </div>
