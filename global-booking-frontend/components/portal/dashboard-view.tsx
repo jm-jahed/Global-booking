@@ -20,6 +20,8 @@ import {
   Check,
   ChevronRight,
   Ticket,
+  Users,
+  Calendar,
 } from "lucide-react";
 import { ROUTES } from "@/config/routes";
 import {
@@ -547,320 +549,116 @@ export function DashboardView() {
         </div>
       </section>
 
-      {/* 2. REAL-TIME 4-CARD KPI METRICS GRID */}
-      <section
-        style={{
-          display: "grid",
-          gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))",
-          gap: 18,
-        }}
-        aria-label="Real-time Clinical Indicators"
-      >
-        {/* Metric 1: Live OPD Queue */}
-        <div
-          style={{
-            background: "linear-gradient(135deg, #0b1325 0%, #070c17 100%)",
-            border: "1px solid rgba(229, 184, 105, 0.3)",
-            borderRadius: 16,
-            padding: "20px 22px",
-            boxShadow: "0 6px 20px rgba(0, 0, 0, 0.3)",
-            display: "flex",
-            flexDirection: "column",
-            gap: 12,
-          }}
-        >
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-            <div
-              style={{
-                width: 38,
-                height: 38,
-                borderRadius: 10,
-                background: "rgba(229, 184, 105, 0.12)",
-                border: "1px solid rgba(229, 184, 105, 0.3)",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                color: "#e5b869",
-              }}
-            >
-              <Tv size={18} />
+      {/* 2. REAL-TIME 4-CARD KPI METRICS GRID (Exact match to reference luxury design) */}
+      <section className="queue-kpi-grid" aria-label="Clinical KPI Metrics">
+        {/* Card 1: LIVE OPD (Gold Glowing Card) */}
+        <Link href="/live-queue" style={{ textDecoration: "none", color: "inherit", display: "block" }}>
+          <article className="queue-kpi-card queue-kpi-card-serving" style={{ cursor: "pointer" }}>
+            <div className="queue-kpi-card-icon queue-kpi-icon-serving">
+              <Stethoscope size={20} />
             </div>
-            <Link
-              href="/live-queue"
-              style={{
-                fontSize: 11,
-                color: "#e5b869",
-                fontWeight: 700,
-                textDecoration: "none",
-                display: "inline-flex",
-                alignItems: "center",
-                gap: 4,
-              }}
-            >
-              Live OPD &rarr;
-            </Link>
-          </div>
+            <div className="queue-kpi-card-body">
+              <span className="queue-kpi-card-label" style={{ color: "#e5b869" }}>
+                LIVE OPD
+              </span>
+              <div className="queue-kpi-card-value">
+                {(waitingTickets.length || (servingTicket ? 1 : 0)).toString().padStart(2, "0")}
+              </div>
+              <div className="queue-kpi-card-sub">
+                {servingTicket ? "Currently serving" : "Chamber idle"}
+              </div>
+            </div>
+            {/* Mini wave chart + chevron */}
+            <div style={{ display: "flex", alignItems: "center", gap: 6, flexShrink: 0 }}>
+              <svg width="42" height="22" viewBox="0 0 42 22" fill="none">
+                <path d="M2 13L8 13L13 5L19 18L25 8L31 14L40 14" stroke="#e5b869" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+              <ChevronRight size={16} color="#e5b869" className="queue-kpi-card-chevron" />
+            </div>
+          </article>
+        </Link>
 
-          <div>
-            <div style={{ fontSize: 13, color: "#8e9fb5", fontWeight: 600 }}>Currently Serving</div>
-            <div
-              style={{
-                fontSize: 28,
-                fontWeight: 800,
-                color: servingTicket ? "#e5b869" : "#ffffff",
-                letterSpacing: "-0.02em",
-                margin: "4px 0 2px",
-              }}
-            >
-              {servingTicket ? servingTicket.ticketNumber : "Station Idle"}
-            </div>
-            <div style={{ fontSize: 12, color: "#64748b" }}>
-              {servingTicket ? servingTicket.patientName : "No patient currently in consultation"}
-            </div>
+        {/* Card 2: COMPLETED TODAY (Blue Card) */}
+        <article className="queue-kpi-card queue-kpi-card-next">
+          <div className="queue-kpi-card-icon queue-kpi-icon-next">
+            <Clock size={20} />
           </div>
-
-          <div
-            style={{
-              paddingTop: 10,
-              borderTop: "1px solid rgba(255, 255, 255, 0.06)",
-              display: "flex",
-              justifyContent: "space-between",
-              fontSize: 12,
-            }}
-          >
-            <span style={{ color: "#8e9fb5" }}>Waiting in Queue:</span>
-            <span style={{ color: "#38bdf8", fontWeight: 700 }}>{waitingTickets.length} patients</span>
-          </div>
-        </div>
-
-        {/* Metric 2: Today's Consultations */}
-        <div
-          style={{
-            background: "linear-gradient(135deg, #0b1325 0%, #070c17 100%)",
-            border: "1px solid rgba(16, 185, 129, 0.3)",
-            borderRadius: 16,
-            padding: "20px 22px",
-            boxShadow: "0 6px 20px rgba(0, 0, 0, 0.3)",
-            display: "flex",
-            flexDirection: "column",
-            gap: 12,
-          }}
-        >
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-            <div
-              style={{
-                width: 38,
-                height: 38,
-                borderRadius: 10,
-                background: "rgba(16, 185, 129, 0.12)",
-                border: "1px solid rgba(16, 185, 129, 0.3)",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                color: "#10b981",
-              }}
-            >
-              <CheckCircle2 size={18} />
-            </div>
-            <span
-              style={{
-                fontSize: 11,
-                color: "#10b981",
-                fontWeight: 700,
-                background: "rgba(16, 185, 129, 0.1)",
-                padding: "2px 8px",
-                borderRadius: 12,
-              }}
-            >
-              {completionRate}% Attended
+          <div className="queue-kpi-card-body">
+            <span className="queue-kpi-card-label" style={{ color: "#38bdf8" }}>
+              COMPLETED TODAY
             </span>
-          </div>
-
-          <div>
-            <div style={{ fontSize: 13, color: "#8e9fb5", fontWeight: 600 }}>Completed Consultations</div>
-            <div
-              style={{
-                fontSize: 28,
-                fontWeight: 800,
-                color: "#10b981",
-                letterSpacing: "-0.02em",
-                margin: "4px 0 2px",
-              }}
-            >
-              {completedTickets.length}
+            <div className="queue-kpi-card-value">
+              {completedTickets.length.toString().padStart(2, "0")}
             </div>
-            <div style={{ fontSize: 12, color: "#64748b" }}>
-              out of {totalTokensToday} total visits today
+            <div className="queue-kpi-card-sub">
+              Patients completed
             </div>
           </div>
-
-          <div
-            style={{
-              paddingTop: 10,
-              borderTop: "1px solid rgba(255, 255, 255, 0.06)",
-              display: "flex",
-              justifyContent: "space-between",
-              fontSize: 12,
-            }}
-          >
-            <span style={{ color: "#8e9fb5" }}>Skipped / No-show:</span>
-            <span style={{ color: "#ef4444", fontWeight: 700 }}>{skippedTickets.length}</span>
+          <div style={{ flexShrink: 0 }}>
+            <svg width="28" height="20" viewBox="0 0 28 20" fill="none">
+              <rect x="2" y="12" width="4" height="8" rx="1" fill="#38bdf8" opacity="0.4" />
+              <rect x="9" y="8" width="4" height="12" rx="1" fill="#38bdf8" opacity="0.6" />
+              <rect x="16" y="4" width="4" height="16" rx="1" fill="#38bdf8" opacity="0.8" />
+              <rect x="23" y="0" width="4" height="20" rx="1" fill="#38bdf8" />
+            </svg>
           </div>
-        </div>
+        </article>
 
-        {/* Metric 3: Patient Registry */}
-        <div
-          style={{
-            background: "linear-gradient(135deg, #0b1325 0%, #070c17 100%)",
-            border: "1px solid rgba(56, 189, 248, 0.3)",
-            borderRadius: 16,
-            padding: "20px 22px",
-            boxShadow: "0 6px 20px rgba(0, 0, 0, 0.3)",
-            display: "flex",
-            flexDirection: "column",
-            gap: 12,
-          }}
-        >
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-            <div
-              style={{
-                width: 38,
-                height: 38,
-                borderRadius: 10,
-                background: "rgba(56, 189, 248, 0.12)",
-                border: "1px solid rgba(56, 189, 248, 0.3)",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                color: "#38bdf8",
-              }}
-            >
-              <Users2 size={18} />
+        {/* Card 3: TOTAL REGISTERED (Teal/Emerald Card) */}
+        <Link href={ROUTES.patients} style={{ textDecoration: "none", color: "inherit", display: "block" }}>
+          <article className="queue-kpi-card queue-kpi-card-waiting" style={{ cursor: "pointer" }}>
+            <div className="queue-kpi-card-icon queue-kpi-icon-waiting">
+              <Users size={20} />
             </div>
-            <Link
-              href={ROUTES.patients}
-              style={{
-                fontSize: 11,
-                color: "#38bdf8",
-                fontWeight: 700,
-                textDecoration: "none",
-                display: "inline-flex",
-                alignItems: "center",
-                gap: 4,
-              }}
-            >
-              Registry &rarr;
-            </Link>
-          </div>
-
-          <div>
-            <div style={{ fontSize: 13, color: "#8e9fb5", fontWeight: 600 }}>Total Registered Patients</div>
-            <div
-              style={{
-                fontSize: 28,
-                fontWeight: 800,
-                color: "#ffffff",
-                letterSpacing: "-0.02em",
-                margin: "4px 0 2px",
-              }}
-            >
-              {totalPatientsCount}
+            <div className="queue-kpi-card-body">
+              <span className="queue-kpi-card-label" style={{ color: "#10b981" }}>
+                TOTAL REGISTERED
+              </span>
+              <div className="queue-kpi-card-value">
+                {totalPatientsCount.toString().padStart(2, "0")}
+              </div>
+              <div className="queue-kpi-card-sub">
+                Patients in system
+              </div>
             </div>
-            <div style={{ fontSize: 12, color: "#64748b" }}>
-              Persistent records isolated to your clinic
+            <div style={{ flexShrink: 0 }}>
+              <svg width="28" height="20" viewBox="0 0 28 20" fill="none">
+                <rect x="2" y="12" width="4" height="8" rx="1" fill="#10b981" opacity="0.4" />
+                <rect x="9" y="8" width="4" height="12" rx="1" fill="#10b981" opacity="0.6" />
+                <rect x="16" y="4" width="4" height="16" rx="1" fill="#10b981" opacity="0.8" />
+                <rect x="23" y="0" width="4" height="20" rx="1" fill="#10b981" />
+              </svg>
             </div>
-          </div>
+          </article>
+        </Link>
 
-          <div
-            style={{
-              paddingTop: 10,
-              borderTop: "1px solid rgba(255, 255, 255, 0.06)",
-              display: "flex",
-              justifyContent: "space-between",
-              fontSize: 12,
-            }}
-          >
-            <span style={{ color: "#8e9fb5" }}>Active Treatment:</span>
-            <span style={{ color: "#10b981", fontWeight: 700 }}>{activePatientsCount} active</span>
-          </div>
-        </div>
-
-        {/* Metric 4: Appointments Today */}
-        <div
-          style={{
-            background: "linear-gradient(135deg, #0b1325 0%, #070c17 100%)",
-            border: "1px solid rgba(129, 140, 248, 0.3)",
-            borderRadius: 16,
-            padding: "20px 22px",
-            boxShadow: "0 6px 20px rgba(0, 0, 0, 0.3)",
-            display: "flex",
-            flexDirection: "column",
-            gap: 12,
-          }}
-        >
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-            <div
-              style={{
-                width: 38,
-                height: 38,
-                borderRadius: 10,
-                background: "rgba(129, 140, 248, 0.12)",
-                border: "1px solid rgba(129, 140, 248, 0.3)",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                color: "#818cf8",
-              }}
-            >
-              <CalendarDays size={18} />
+        {/* Card 4: SCHEDULED APPOINTMENTS (Purple Card) */}
+        <Link href={ROUTES.appointments} style={{ textDecoration: "none", color: "inherit", display: "block" }}>
+          <article className="queue-kpi-card queue-kpi-card-scheduled" style={{ cursor: "pointer" }}>
+            <div className="queue-kpi-card-icon queue-kpi-icon-scheduled">
+              <Calendar size={20} />
             </div>
-            <Link
-              href={ROUTES.appointments}
-              style={{
-                fontSize: 11,
-                color: "#818cf8",
-                fontWeight: 700,
-                textDecoration: "none",
-                display: "inline-flex",
-                alignItems: "center",
-                gap: 4,
-              }}
-            >
-              Schedule &rarr;
-            </Link>
-          </div>
-
-          <div>
-            <div style={{ fontSize: 13, color: "#8e9fb5", fontWeight: 600 }}>Scheduled Appointments</div>
-            <div
-              style={{
-                fontSize: 28,
-                fontWeight: 800,
-                color: "#ffffff",
-                letterSpacing: "-0.02em",
-                margin: "4px 0 2px",
-              }}
-            >
-              {appointments.length}
+            <div className="queue-kpi-card-body">
+              <span className="queue-kpi-card-label" style={{ color: "#c084fc" }}>
+                SCHEDULED APPOINTMENTS
+              </span>
+              <div className="queue-kpi-card-value">
+                {appointments.length.toString().padStart(2, "0")}
+              </div>
+              <div className="queue-kpi-card-sub">
+                Online & phone bookings
+              </div>
             </div>
-            <div style={{ fontSize: 12, color: "#64748b" }}>
-              online web bookings & phone calls
+            <div style={{ flexShrink: 0 }}>
+              <svg width="28" height="20" viewBox="0 0 28 20" fill="none">
+                <rect x="2" y="12" width="4" height="8" rx="1" fill="#c084fc" opacity="0.4" />
+                <rect x="9" y="8" width="4" height="12" rx="1" fill="#c084fc" opacity="0.6" />
+                <rect x="16" y="4" width="4" height="16" rx="1" fill="#c084fc" opacity="0.8" />
+                <rect x="23" y="0" width="4" height="20" rx="1" fill="#c084fc" />
+              </svg>
             </div>
-          </div>
-
-          <div
-            style={{
-              paddingTop: 10,
-              borderTop: "1px solid rgba(255, 255, 255, 0.06)",
-              display: "flex",
-              justifyContent: "space-between",
-              fontSize: 12,
-            }}
-          >
-            <span style={{ color: "#8e9fb5" }}>Confirmed:</span>
-            <span style={{ color: "#818cf8", fontWeight: 700 }}>{confirmedAppointments.length} confirmed</span>
-          </div>
-        </div>
+          </article>
+        </Link>
       </section>
 
       {/* 3. MAIN DASHBOARD CONTENT: 2-COLUMN OPERATIONAL LAYOUT */}

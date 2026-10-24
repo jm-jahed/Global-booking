@@ -8241,6 +8241,11 @@
   box-shadow: 0 0 20px rgba(20, 184, 166, 0.12), inset 0 1px 0 rgba(20, 184, 166, 0.35);
 }
 
+.queue-kpi-card-scheduled {
+  border: 1px solid rgba(168, 85, 247, 0.45);
+  box-shadow: 0 0 20px rgba(168, 85, 247, 0.12), inset 0 1px 0 rgba(168, 85, 247, 0.35);
+}
+
 .queue-kpi-card-icon {
   width: 44px;
   height: 44px;
@@ -8278,6 +8283,13 @@
   border: 1.5px solid rgba(20, 184, 166, 0.55);
   color: #14b8a6;
   box-shadow: 0 0 15px rgba(20, 184, 166, 0.25);
+}
+
+.queue-kpi-icon-scheduled {
+  background: rgba(168, 85, 247, 0.15);
+  border: 1.5px solid rgba(168, 85, 247, 0.55);
+  color: #c084fc;
+  box-shadow: 0 0 15px rgba(168, 85, 247, 0.25);
 }
 
 .queue-kpi-card-body {
