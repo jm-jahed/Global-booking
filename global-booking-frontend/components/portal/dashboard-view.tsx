@@ -53,7 +53,13 @@ import {
   getChamberLocalHour,
   getChamberBusinessDate,
   formatIsoToDDMMYYYY,
+  shiftDateIso,
 } from "@/lib/utils/timezone";
+import {
+  getStoredPortalDate,
+  setStoredPortalDate,
+  formatPortalDateInfo,
+} from "@/lib/utils/portal-date";
 import { NewTicketModal } from "./queue/new-ticket-modal";
 import { NewPatientModal } from "./patients/new-patient-modal";
 import type { QueueItem } from "@/types/queue";
@@ -120,7 +126,28 @@ export function DashboardView() {
     setTimeout(() => setToastMessage(null), 3500);
   };
 
-  // Load all authentic live clinical data from backend
+  // Authoritative Chamber-Local Today date key (YYYY-MM-DD)
+  const chamberTodayDateKey = useMemo(() => {
+    return getChamberBusinessDate(chamberTimezone, new Date());
+  }, [chamberTimezone]);
+
+  // Selected date key (YYYY-MM-DD) synced with topbar and url
+  const [selectedDateKey, setSelectedDateKey] = useState<string>(() => {
+    return getStoredPortalDate(chamberTimezone);
+  });
+
+  // Listen to date changes triggered from topbar or other components
+  useEffect(() => {
+    const handlePortalDateChange = (e: any) => {
+      if (e?.detail && typeof e.detail === "string" && e.detail !== selectedDateKey) {
+        setSelectedDateKey(e.detail);
+      }
+    };
+    window.addEventListener("portal_date_change", handlePortalDateChange);
+    return () => window.removeEventListener("portal_date_change", handlePortalDateChange);
+  }, [selectedDateKey]);
+
+  // Load all authentic live clinical data from backend for selected date
   const loadDashboardData = useCallback(async (isSilent = false) => {
     if (!isSilent) setLoading(true);
     else setRefreshing(true);
@@ -130,9 +157,9 @@ export function DashboardView() {
 
       const [profileRes, queueRes, patientsRes, aptsRes] = await Promise.allSettled([
         getDoctorProfile().catch(() => null),
-        fetchDoctorQueue().catch(() => null),
+        fetchDoctorQueue({ dateKey: selectedDateKey }).catch(() => null),
         fetchDoctorPatients({ limit: 12 }).catch(() => null),
-        fetchDoctorPortalAppointments().catch(() => null),
+        fetchDoctorPortalAppointments({ appointmentDate: selectedDateKey }).catch(() => null),
       ]);
 
       if (profileRes.status === "fulfilled" && profileRes.value?.doctor) {
@@ -185,40 +212,60 @@ export function DashboardView() {
       setLoading(false);
       setRefreshing(false);
     }
-  }, []);
+  }, [selectedDateKey]);
 
   useEffect(() => {
     loadDashboardData();
   }, [loadDashboardData]);
 
-  // Derived real KPI statistics (Zero fake data)
+  // Date-scoped tickets matching selectedDateKey
+  const dayTickets = useMemo(() => {
+    return queueTickets.filter((t) => {
+      if (t.dateKey) return t.dateKey === selectedDateKey;
+      if (t.createdAt) {
+        const tDateKey = getChamberBusinessDate(chamberTimezone, new Date(t.createdAt));
+        return tDateKey === selectedDateKey;
+      }
+      return true;
+    });
+  }, [queueTickets, selectedDateKey, chamberTimezone]);
+
+  // Date-scoped appointments matching selectedDateKey
+  const dayAppointments = useMemo(() => {
+    return appointments.filter((a) => {
+      if (a.appointmentDate) return a.appointmentDate === selectedDateKey;
+      return true;
+    });
+  }, [appointments, selectedDateKey]);
+
+  // Derived real KPI statistics for the selected business date
   const waitingTickets = useMemo(
-    () => queueTickets.filter((t) => t.status === "WAITING"),
-    [queueTickets],
+    () => dayTickets.filter((t) => t.status === "WAITING"),
+    [dayTickets],
   );
 
   const servingTicket = useMemo(
-    () => queueTickets.find((t) => t.status === "CALLED" || t.status === "IN_CONSULTATION") || null,
-    [queueTickets],
+    () => dayTickets.find((t) => t.status === "CALLED" || t.status === "IN_CONSULTATION") || null,
+    [dayTickets],
   );
 
   const completedTickets = useMemo(
-    () => queueTickets.filter((t) => t.status === "COMPLETED"),
-    [queueTickets],
+    () => dayTickets.filter((t) => t.status === "COMPLETED"),
+    [dayTickets],
   );
 
   const skippedTickets = useMemo(
     () =>
-      queueTickets.filter(
+      dayTickets.filter(
         (t) =>
           t.status === "SKIPPED" ||
           t.status === "CANCELLED" ||
           (t.status as string) === "NO_SHOW",
       ),
-    [queueTickets],
+    [dayTickets],
   );
 
-  const totalTokensToday = queueTickets.length;
+  const totalTokensToday = dayTickets.length;
   const completionRate =
     totalTokensToday > 0
       ? Math.round((completedTickets.length / totalTokensToday) * 100)
@@ -230,29 +277,21 @@ export function DashboardView() {
   );
 
   const confirmedAppointments = useMemo(
-    () => appointments.filter((a) => a.status === "CONFIRMED"),
-    [appointments],
+    () => dayAppointments.filter((a) => a.status === "CONFIRMED"),
+    [dayAppointments],
   );
 
   // Real hourly distribution computed strictly in chamber-local hours from authentic ticket timestamps
-  const chamberTodayDateKey = useMemo(() => {
-    return getChamberBusinessDate(chamberTimezone, new Date());
-  }, [chamberTimezone]);
-
   const hourlyData = useMemo(() => {
     return [8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19].map((hour) => {
       const label = hour === 12 ? "12 PM" : hour > 12 ? `${hour - 12} PM` : `${hour} AM`;
-      const count = queueTickets.filter((t) => {
-        // Enforce chamber's local business date boundary
-        if (t.dateKey && t.dateKey !== chamberTodayDateKey) {
-          return false;
-        }
+      const count = dayTickets.filter((t) => {
         const ticketLocalHour = getChamberLocalHour(t.createdAt, chamberTimezone);
         return ticketLocalHour === hour;
       }).length;
       return { hour: label, count };
     });
-  }, [queueTickets, chamberTimezone, chamberTodayDateKey]);
+  }, [dayTickets, chamberTimezone]);
 
   const maxHourlyCount = useMemo(
     () => Math.max(...hourlyData.map((h) => h.count), 5),
@@ -305,30 +344,30 @@ export function DashboardView() {
     }
   };
 
-  // Search filtering
+  // Search filtering (scoped to selected date)
   const filteredQueue = useMemo(() => {
-    if (!searchQuery.trim()) return queueTickets;
+    if (!searchQuery.trim()) return dayTickets;
     const q = searchQuery.toLowerCase();
-    return queueTickets.filter(
+    return dayTickets.filter(
       (t) =>
         t.patientName?.toLowerCase().includes(q) ||
         t.ticketNumber?.toLowerCase().includes(q) ||
         t.service?.toLowerCase().includes(q) ||
         t.patientPhone?.includes(q),
     );
-  }, [queueTickets, searchQuery]);
+  }, [dayTickets, searchQuery]);
 
   const filteredAppointments = useMemo(() => {
-    if (!searchQuery.trim()) return appointments;
+    if (!searchQuery.trim()) return dayAppointments;
     const q = searchQuery.toLowerCase();
-    return appointments.filter(
+    return dayAppointments.filter(
       (a) =>
         a.patientName?.toLowerCase().includes(q) ||
         a.bookingNumberDisplay?.toLowerCase().includes(q) ||
         a.service?.toLowerCase().includes(q) ||
         a.patientPhone?.includes(q),
     );
-  }, [appointments, searchQuery]);
+  }, [dayAppointments, searchQuery]);
 
   const filteredPatients = useMemo(() => {
     if (!searchQuery.trim()) return patients;
@@ -575,11 +614,25 @@ export function DashboardView() {
               </div>
             </div>
             {/* Mini wave chart + chevron */}
-            <div style={{ display: "flex", alignItems: "center", gap: 6, flexShrink: 0 }}>
-              <svg width="42" height="22" viewBox="0 0 42 22" fill="none">
-                <path d="M2 13L8 13L13 5L19 18L25 8L31 14L40 14" stroke="#e5b869" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+            <div style={{ display: "flex", alignItems: "center", gap: 8, flexShrink: 0 }}>
+              <svg width="54" height="26" viewBox="0 0 54 26" fill="none">
+                <path d="M2 16C8 16 12 6 18 10C24 14 28 22 34 14C40 6 46 12 52 12" stroke="#e5b869" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
-              <ChevronRight size={16} color="#e5b869" className="queue-kpi-card-chevron" />
+              <div
+                style={{
+                  width: 22,
+                  height: 22,
+                  borderRadius: "50%",
+                  background: "rgba(229, 184, 105, 0.15)",
+                  border: "1px solid rgba(229, 184, 105, 0.5)",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  flexShrink: 0,
+                }}
+              >
+                <ChevronRight size={13} color="#e5b869" />
+              </div>
             </div>
           </article>
         </Link>
@@ -591,7 +644,7 @@ export function DashboardView() {
           </div>
           <div className="queue-kpi-card-body">
             <span className="queue-kpi-card-label" style={{ color: "#38bdf8" }}>
-              COMPLETED TODAY
+              {selectedDateKey === chamberTodayDateKey ? "COMPLETED TODAY" : "COMPLETED"}
             </span>
             <div className="queue-kpi-card-value">
               {completedTickets.length.toString().padStart(2, "0")}
@@ -601,11 +654,11 @@ export function DashboardView() {
             </div>
           </div>
           <div style={{ flexShrink: 0 }}>
-            <svg width="28" height="20" viewBox="0 0 28 20" fill="none">
-              <rect x="2" y="12" width="4" height="8" rx="1" fill="#38bdf8" opacity="0.4" />
-              <rect x="9" y="8" width="4" height="12" rx="1" fill="#38bdf8" opacity="0.6" />
-              <rect x="16" y="4" width="4" height="16" rx="1" fill="#38bdf8" opacity="0.8" />
-              <rect x="23" y="0" width="4" height="20" rx="1" fill="#38bdf8" />
+            <svg width="34" height="28" viewBox="0 0 34 28" fill="none">
+              <rect x="2" y="16" width="5" height="12" rx="1.5" fill="#38bdf8" opacity="0.45" />
+              <rect x="11" y="11" width="5" height="17" rx="1.5" fill="#38bdf8" opacity="0.65" />
+              <rect x="20" y="5" width="5" height="23" rx="1.5" fill="#38bdf8" opacity="0.85" />
+              <rect x="29" y="0" width="5" height="28" rx="1.5" fill="#38bdf8" />
             </svg>
           </div>
         </article>
@@ -628,11 +681,11 @@ export function DashboardView() {
               </div>
             </div>
             <div style={{ flexShrink: 0 }}>
-              <svg width="28" height="20" viewBox="0 0 28 20" fill="none">
-                <rect x="2" y="12" width="4" height="8" rx="1" fill="#10b981" opacity="0.4" />
-                <rect x="9" y="8" width="4" height="12" rx="1" fill="#10b981" opacity="0.6" />
-                <rect x="16" y="4" width="4" height="16" rx="1" fill="#10b981" opacity="0.8" />
-                <rect x="23" y="0" width="4" height="20" rx="1" fill="#10b981" />
+              <svg width="34" height="28" viewBox="0 0 34 28" fill="none">
+                <rect x="2" y="16" width="5" height="12" rx="1.5" fill="#10b981" opacity="0.45" />
+                <rect x="11" y="11" width="5" height="17" rx="1.5" fill="#10b981" opacity="0.65" />
+                <rect x="20" y="5" width="5" height="23" rx="1.5" fill="#10b981" opacity="0.85" />
+                <rect x="29" y="0" width="5" height="28" rx="1.5" fill="#10b981" />
               </svg>
             </div>
           </article>
@@ -649,18 +702,18 @@ export function DashboardView() {
                 SCHEDULED APPOINTMENTS
               </span>
               <div className="queue-kpi-card-value">
-                {appointments.length.toString().padStart(2, "0")}
+                {dayAppointments.length.toString().padStart(2, "0")}
               </div>
               <div className="queue-kpi-card-sub">
                 Online & phone bookings
               </div>
             </div>
             <div style={{ flexShrink: 0 }}>
-              <svg width="28" height="20" viewBox="0 0 28 20" fill="none">
-                <rect x="2" y="12" width="4" height="8" rx="1" fill="#c084fc" opacity="0.4" />
-                <rect x="9" y="8" width="4" height="12" rx="1" fill="#c084fc" opacity="0.6" />
-                <rect x="16" y="4" width="4" height="16" rx="1" fill="#c084fc" opacity="0.8" />
-                <rect x="23" y="0" width="4" height="20" rx="1" fill="#c084fc" />
+              <svg width="34" height="28" viewBox="0 0 34 28" fill="none">
+                <rect x="2" y="16" width="5" height="12" rx="1.5" fill="#c084fc" opacity="0.45" />
+                <rect x="11" y="11" width="5" height="17" rx="1.5" fill="#c084fc" opacity="0.65" />
+                <rect x="20" y="5" width="5" height="23" rx="1.5" fill="#c084fc" opacity="0.85" />
+                <rect x="29" y="0" width="5" height="28" rx="1.5" fill="#c084fc" />
               </svg>
             </div>
           </article>
@@ -742,7 +795,7 @@ export function DashboardView() {
 
               <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
                 <span style={{ fontSize: 13, color: "#94a3b8" }}>
-                  Total Patients: <strong style={{ color: "#e5b869", fontSize: 14 }}>{queueTickets.length}</strong>
+                  Total Patients: <strong style={{ color: "#e5b869", fontSize: 14 }}>{dayTickets.length}</strong>
                 </span>
                 <Link
                   href="/settings"
@@ -768,13 +821,13 @@ export function DashboardView() {
 
             {/* Row 2: Date Navigator, Search Bar, Service Filter */}
             <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
-              {/* Date Navigator Pill */}
+              {/* Date Navigator Pill with Interactive Prev / Next / Today */}
               <div
                 style={{
                   display: "inline-flex",
                   alignItems: "center",
-                  gap: 8,
-                  padding: "6px 12px",
+                  gap: 6,
+                  padding: "5px 12px",
                   borderRadius: 10,
                   background: "rgba(255, 255, 255, 0.04)",
                   border: "1px solid rgba(255, 255, 255, 0.1)",
@@ -783,8 +836,74 @@ export function DashboardView() {
                   color: "#ffffff",
                 }}
               >
-                <Calendar size={14} color="#e5b869" />
-                <span>&gt; {formatIsoToDDMMYYYY(getChamberBusinessDate(chamberTimezone))} &gt;</span>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const prev = shiftDateIso(selectedDateKey, -1);
+                    setSelectedDateKey(prev);
+                    setStoredPortalDate(prev);
+                  }}
+                  title="Previous Day"
+                  style={{
+                    background: "none",
+                    border: "none",
+                    color: "#e5b869",
+                    cursor: "pointer",
+                    padding: "2px 5px",
+                    fontWeight: 800,
+                    fontSize: 14,
+                    display: "flex",
+                    alignItems: "center",
+                  }}
+                >
+                  &lt;
+                </button>
+                <Calendar size={13} color="#e5b869" />
+                <span style={{ letterSpacing: "0.02em" }}>{formatIsoToDDMMYYYY(selectedDateKey)}</span>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const next = shiftDateIso(selectedDateKey, 1);
+                    setSelectedDateKey(next);
+                    setStoredPortalDate(next);
+                  }}
+                  title="Next Day"
+                  style={{
+                    background: "none",
+                    border: "none",
+                    color: "#e5b869",
+                    cursor: "pointer",
+                    padding: "2px 5px",
+                    fontWeight: 800,
+                    fontSize: 14,
+                    display: "flex",
+                    alignItems: "center",
+                  }}
+                >
+                  &gt;
+                </button>
+                {selectedDateKey !== chamberTodayDateKey && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSelectedDateKey(chamberTodayDateKey);
+                      setStoredPortalDate(chamberTodayDateKey);
+                    }}
+                    style={{
+                      marginLeft: 4,
+                      padding: "2px 7px",
+                      borderRadius: 6,
+                      background: "rgba(229, 184, 105, 0.15)",
+                      border: "1px solid rgba(229, 184, 105, 0.4)",
+                      color: "#e5b869",
+                      fontSize: 10.5,
+                      fontWeight: 700,
+                      cursor: "pointer",
+                    }}
+                  >
+                    Today
+                  </button>
+                )}
               </div>
 
               {/* Search Bar */}

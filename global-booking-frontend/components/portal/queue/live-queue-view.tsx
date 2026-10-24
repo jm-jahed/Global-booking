@@ -72,6 +72,7 @@ import {
   parseDDMMYYYYToIso,
   shiftDateIso,
 } from "@/lib/utils/timezone";
+import { getStoredPortalDate, setStoredPortalDate } from "@/lib/utils/portal-date";
 
 function mapBackendTicketToQueueItem(
   t: BackendQueueTicket,
@@ -203,16 +204,28 @@ export function LiveQueueView() {
   }, [resolvedChamberTimezone]);
 
   const [selectedDateKey, setSelectedDateKey] = useState<string>(() => {
-    return getChamberBusinessDate(DEFAULT_CHAMBER_TIMEZONE);
+    return getStoredPortalDate(DEFAULT_CHAMBER_TIMEZONE);
   });
   const [hasUserManuallySelectedDate, setHasUserManuallySelectedDate] = useState(false);
+
+  useEffect(() => {
+    const onDateChange = (e: any) => {
+      if (e?.detail && typeof e.detail === "string" && e.detail !== selectedDateKey) {
+        setHasUserManuallySelectedDate(true);
+        setSelectedDateKey(e.detail);
+      }
+    };
+    window.addEventListener("portal_date_change", onDateChange);
+    return () => window.removeEventListener("portal_date_change", onDateChange);
+  }, [selectedDateKey]);
 
   // Sync to chamber's authoritative local date when timezone resolves (unless user navigated away)
   useEffect(() => {
     if (!hasUserManuallySelectedDate) {
-      setSelectedDateKey(chamberTodayDateKey);
+      const stored = getStoredPortalDate(resolvedChamberTimezone);
+      setSelectedDateKey(stored || chamberTodayDateKey);
     }
-  }, [chamberTodayDateKey, hasUserManuallySelectedDate]);
+  }, [chamberTodayDateKey, resolvedChamberTimezone, hasUserManuallySelectedDate]);
 
   const selectedDateDisplay = useMemo(() => {
     return formatIsoToDDMMYYYY(selectedDateKey);
@@ -229,21 +242,27 @@ export function LiveQueueView() {
     if (!isoDate) return;
     setHasUserManuallySelectedDate(true);
     setSelectedDateKey(isoDate);
+    setStoredPortalDate(isoDate);
   };
 
   const handlePrevDay = () => {
     setHasUserManuallySelectedDate(true);
-    setSelectedDateKey((prev) => shiftDateIso(prev, -1));
+    const prev = shiftDateIso(selectedDateKey, -1);
+    setSelectedDateKey(prev);
+    setStoredPortalDate(prev);
   };
 
   const handleNextDay = () => {
     setHasUserManuallySelectedDate(true);
-    setSelectedDateKey((prev) => shiftDateIso(prev, 1));
+    const next = shiftDateIso(selectedDateKey, 1);
+    setSelectedDateKey(next);
+    setStoredPortalDate(next);
   };
 
   const handleResetToToday = () => {
     setHasUserManuallySelectedDate(false);
     setSelectedDateKey(chamberTodayDateKey);
+    setStoredPortalDate(chamberTodayDateKey);
   };
 
   const handleDisplayInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
