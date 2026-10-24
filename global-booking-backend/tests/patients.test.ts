@@ -1621,7 +1621,7 @@ test("Live Queue -> Patients Auto-Sync & Day-End Cleanup Comprehensive 12-Scenar
   function shiftDateIso(isoDate: string, days: number): string {
     const d = new Date(isoDate + "T12:00:00Z");
     d.setUTCDate(d.getUTCDate() + days);
-    return d.toISOString().split("T")[0];
+    return d.toISOString().slice(0, 10);
   }
   const chamberTz = "Asia/Dubai";
   const now = new Date();

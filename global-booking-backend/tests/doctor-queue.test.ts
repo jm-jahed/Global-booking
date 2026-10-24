@@ -663,7 +663,7 @@ test("GET /api/v1/portal/doctor/queue dateKey filtering guarantees strict date b
   function shiftDateIso(isoDate: string, days: number): string {
     const d = new Date(isoDate + "T12:00:00Z");
     d.setUTCDate(d.getUTCDate() + days);
-    return d.toISOString().split("T")[0];
+    return d.toISOString().slice(0, 10);
   }
 
   // Seed 3 existing tickets across 3 distinct dates: Yesterday, Today, Tomorrow
