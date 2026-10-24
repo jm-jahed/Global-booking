@@ -7547,3 +7547,264 @@
   background: rgba(255, 255, 255, 0.08);
 }
 
+/* ==========================================================================
+   LUXURY PREMIUM LIVE QUEUE HEADER BANNER
+   ========================================================================== */
+.live-queue-header-deck {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+  gap: 18px;
+  padding: 18px 24px;
+  border-radius: 18px;
+  background: linear-gradient(135deg, rgba(11, 19, 35, 0.88) 0%, rgba(7, 12, 22, 0.96) 100%);
+  border: 1px solid rgba(229, 184, 105, 0.22);
+  box-shadow:
+    0 14px 36px -10px rgba(0, 0, 0, 0.65),
+    0 0 24px rgba(229, 184, 105, 0.06),
+    inset 0 1px 0 rgba(255, 255, 255, 0.12);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  position: relative;
+  overflow: hidden;
+}
+
+.live-queue-header-deck::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent 0%, rgba(229, 184, 105, 0.65) 30%, rgba(243, 200, 122, 0.9) 50%, rgba(229, 184, 105, 0.65) 70%, transparent 100%);
+}
+
+.live-queue-header-deck::after {
+  content: "";
+  position: absolute;
+  top: -40px;
+  left: 30px;
+  width: 160px;
+  height: 80px;
+  background: radial-gradient(circle, rgba(229, 184, 105, 0.18) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+.live-queue-brand-group {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  position: relative;
+  z-index: 1;
+}
+
+.live-queue-beacon-wrapper {
+  position: relative;
+  width: 48px;
+  height: 48px;
+  border-radius: 14px;
+  background: linear-gradient(135deg, rgba(229, 184, 105, 0.24) 0%, rgba(184, 134, 40, 0.12) 100%);
+  border: 1px solid rgba(229, 184, 105, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #e5b869;
+  box-shadow:
+    0 0 24px rgba(229, 184, 105, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  flex-shrink: 0;
+}
+
+.live-queue-live-dot {
+  position: absolute;
+  top: -2px;
+  right: -2px;
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+  background: #10b981;
+  border: 2px solid #070c17;
+  box-shadow: 0 0 10px #10b981;
+  animation: liveBeaconPulse 2s infinite ease-in-out;
+}
+
+@keyframes liveBeaconPulse {
+  0%, 100% {
+    transform: scale(1);
+    box-shadow: 0 0 6px #10b981;
+  }
+  50% {
+    transform: scale(1.22);
+    box-shadow: 0 0 14px #34d399;
+  }
+}
+
+.live-queue-title-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.live-queue-title-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.live-queue-title-text {
+  margin: 0;
+  font-size: 21px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: #ffffff;
+  font-family: inherit;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.live-queue-status-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 10px;
+  font-weight: 750;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #34d399;
+  background: rgba(16, 185, 129, 0.12);
+  border: 1px solid rgba(16, 185, 129, 0.35);
+  padding: 3px 9px;
+  border-radius: 9999px;
+  box-shadow: 0 0 12px rgba(16, 185, 129, 0.15);
+}
+
+.live-queue-subtitle-text {
+  margin: 0;
+  font-size: 13px;
+  color: #94a3b8;
+  font-weight: 500;
+  letter-spacing: 0.01em;
+}
+
+.live-queue-actions-deck {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  position: relative;
+  z-index: 1;
+}
+
+.btn-luxury-sync {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 18px;
+  border-radius: 11px;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.06) 0%, rgba(255, 255, 255, 0.02) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  color: #e2e8f0;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.btn-luxury-sync:hover {
+  background: linear-gradient(135deg, rgba(229, 184, 105, 0.12) 0%, rgba(255, 255, 255, 0.05) 100%);
+  border-color: rgba(229, 184, 105, 0.4);
+  color: #ffffff;
+  transform: translateY(-1.5px);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.35), 0 0 16px rgba(229, 184, 105, 0.2);
+}
+
+.btn-luxury-tv {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 18px;
+  border-radius: 11px;
+  background: linear-gradient(135deg, rgba(56, 189, 248, 0.09) 0%, rgba(14, 165, 233, 0.03) 100%);
+  border: 1px solid rgba(56, 189, 248, 0.28);
+  color: #f0f9ff;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25), 0 0 16px rgba(56, 189, 248, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.btn-luxury-tv:hover {
+  background: linear-gradient(135deg, rgba(56, 189, 248, 0.18) 0%, rgba(14, 165, 233, 0.08) 100%);
+  border-color: rgba(56, 189, 248, 0.55);
+  color: #ffffff;
+  transform: translateY(-1.5px);
+  box-shadow: 0 6px 22px rgba(0, 0, 0, 0.35), 0 0 24px rgba(56, 189, 248, 0.25);
+}
+
+.btn-luxury-new-ticket {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  padding: 10px 22px;
+  border-radius: 11px;
+  background: linear-gradient(135deg, #fce09c 0%, #e5b869 45%, #b88628 100%);
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  color: #070d18;
+  font-size: 13.5px;
+  font-weight: 750;
+  letter-spacing: -0.01em;
+  cursor: pointer;
+  box-shadow:
+    0 6px 20px rgba(229, 184, 105, 0.35),
+    0 0 28px rgba(229, 184, 105, 0.18),
+    inset 0 1px 1px rgba(255, 255, 255, 0.6);
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  position: relative;
+  overflow: hidden;
+}
+
+.btn-luxury-new-ticket::after {
+  content: "";
+  position: absolute;
+  top: -50%;
+  left: -60%;
+  width: 40%;
+  height: 200%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+  transform: rotate(25deg);
+  transition: all 0.6s ease;
+}
+
+.btn-luxury-new-ticket:hover {
+  transform: translateY(-2px);
+  box-shadow:
+    0 8px 26px rgba(229, 184, 105, 0.5),
+    0 0 36px rgba(229, 184, 105, 0.3),
+    inset 0 1px 1px rgba(255, 255, 255, 0.8);
+  filter: brightness(1.04);
+}
+
+.btn-luxury-new-ticket:hover::after {
+  left: 130%;
+}
+
+@media (max-width: 640px) {
+  .live-queue-header-deck {
+    padding: 14px 16px;
+    gap: 14px;
+  }
+  .live-queue-actions-deck {
+    width: 100%;
+    flex-wrap: wrap;
+  }
+  .btn-luxury-sync,
+  .btn-luxury-tv,
+  .btn-luxury-new-ticket {
+    flex: 1 1 auto;
+    justify-content: center;
+  }
+}

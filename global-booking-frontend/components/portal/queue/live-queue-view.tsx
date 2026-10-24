@@ -630,66 +630,58 @@ export function LiveQueueView() {
         </div>
       )}
 
-      {/* TOP HEADER: Live Queue Management */}
-      <section style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 20, flexWrap: "wrap", gap: 16 }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
-          {/* Glowing radio wave broadcast icon */}
-          <div style={{ width: 42, height: 42, borderRadius: 12, background: "rgba(229, 184, 105, 0.12)", border: "1px solid rgba(229, 184, 105, 0.35)", display: "flex", alignItems: "center", justifyContent: "center", color: "#e5b869", boxShadow: "0 0 20px rgba(229, 184, 105, 0.2)" }}>
-            <Radio size={22} className="text-gold" />
+      {/* TOP HEADER: Luxury Premium Live Queue Deck */}
+      <section className="live-queue-header-deck" aria-label="Live Queue Header">
+        <div className="live-queue-brand-group">
+          {/* Glowing radio wave live beacon icon */}
+          <div className="live-queue-beacon-wrapper">
+            <Radio size={24} style={{ color: "#e5b869", filter: "drop-shadow(0 0 8px rgba(229, 184, 105, 0.4))" }} />
+            <span className="live-queue-live-dot" title="Real-time synchronized" />
           </div>
-          <div>
-            <h1 style={{ margin: 0, fontSize: 20, fontWeight: 800, letterSpacing: "-0.01em", color: "#ffffff" }}>
-              Live Queue Management
-            </h1>
-            <p style={{ margin: "3px 0 0", fontSize: 12.5, color: "#94a3b8" }}>
-              Real-time queue & serial number management • <span style={{ color: "#e5b869", fontWeight: 700 }}>{selectedDateDisplay}</span> ({resolvedChamberTimezone})
+          <div className="live-queue-title-wrap">
+            <div className="live-queue-title-row">
+              <h1 className="live-queue-title-text">
+                Live Queue Management
+              </h1>
+              <span className="live-queue-status-tag">
+                <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#10b981", boxShadow: "0 0 8px #10b981" }} />
+                Active Roster
+              </span>
+            </div>
+            <p className="live-queue-subtitle-text">
+              Real-time patient queue, live token call & serial tracking
             </p>
           </div>
         </div>
 
-        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+        <div className="live-queue-actions-deck">
           <button
             type="button"
-            className="btn-glass-action"
+            className="btn-luxury-sync"
             onClick={handleManualSync}
             title="Sync live queue with latest database records"
-            style={{ display: "inline-flex", alignItems: "center", gap: 7, padding: "8px 16px", borderRadius: 8, background: "rgba(255, 255, 255, 0.04)", border: "1px solid rgba(255, 255, 255, 0.12)", color: "#ffffff", fontSize: 12.5, fontWeight: 600, cursor: "pointer" }}
           >
-            <RefreshCw size={13} className={isSyncing ? "spin-animation" : ""} />
+            <RefreshCw size={14} className={isSyncing ? "spin-animation" : ""} style={{ color: "#e5b869" }} />
             <span>Sync Queue</span>
           </button>
 
           <button
             type="button"
-            className="btn-glass-action"
-            onClick={handleDayEndCleanup}
-            disabled={isDayEnding}
-            title="Archive today's queue tickets at day-end without deleting records"
-            style={{ display: "inline-flex", alignItems: "center", gap: 7, padding: "8px 16px", borderRadius: 8, background: "rgba(239, 68, 68, 0.08)", border: "1px solid rgba(239, 68, 68, 0.25)", color: "#fca5a5", fontSize: 12.5, fontWeight: 600, cursor: "pointer" }}
-          >
-            <CheckCircle2 size={13} className={isDayEnding ? "spin-animation" : ""} />
-            <span>{isDayEnding ? "Ending Day..." : "End Day's Queue"}</span>
-          </button>
-
-          <button
-            type="button"
-            className="btn-glass-action"
+            className="btn-luxury-tv"
             onClick={() => setIsTvDisplayOpen(true)}
             title="Open Waiting Room Live TV Display"
-            style={{ display: "inline-flex", alignItems: "center", gap: 7, padding: "8px 16px", borderRadius: 8, background: "rgba(255, 255, 255, 0.04)", border: "1px solid rgba(255, 255, 255, 0.12)", color: "#ffffff", fontSize: 12.5, fontWeight: 600, cursor: "pointer" }}
           >
-            <Tv size={14} />
+            <Tv size={15} style={{ color: "#38bdf8" }} />
             <span>Open TV Waiting Display ↗</span>
           </button>
 
           <button
             type="button"
-            className="btn-gold-ticket"
+            className="btn-luxury-new-ticket"
             onClick={() => setIsNewTicketOpen(true)}
             title="New Patient Appointment"
-            style={{ display: "inline-flex", alignItems: "center", gap: 7, padding: "9px 18px", borderRadius: 8, background: "linear-gradient(135deg, #e5b869 0%, #b88628 100%)", border: "none", color: "#070d18", fontSize: 13, fontWeight: 700, cursor: "pointer", boxShadow: "0 4px 15px rgba(229, 184, 105, 0.3)" }}
           >
-            <Ticket size={15} strokeWidth={2.4} />
+            <Ticket size={16} strokeWidth={2.4} />
             <span>New Patient Appointment</span>
           </button>
         </div>
