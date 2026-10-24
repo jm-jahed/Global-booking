@@ -217,6 +217,12 @@ export function LiveDisplayModal({
           <div className="tv-header-center">
             <span className="tv-live-pill">
               <span className="live-pulsing-dot" />
+              <span className="live-equalizer-bars">
+                <span></span>
+                <span></span>
+                <span></span>
+                <span></span>
+              </span>
               LIVE QUEUE SYSTEM
             </span>
           </div>

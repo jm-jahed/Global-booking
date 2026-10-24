@@ -643,9 +643,15 @@ export function LiveQueueView() {
               <h1 className="live-queue-title-text">
                 Live Queue Management
               </h1>
-              <span className="live-queue-status-tag">
-                <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#10b981", boxShadow: "0 0 8px #10b981" }} />
-                Active Roster
+              <span className="live-queue-system-pill">
+                <span className="live-pulsing-dot" />
+                <span className="live-equalizer-bars">
+                  <span></span>
+                  <span></span>
+                  <span></span>
+                  <span></span>
+                </span>
+                LIVE QUEUE SYSTEM
               </span>
             </div>
             <p className="live-queue-subtitle-text">
