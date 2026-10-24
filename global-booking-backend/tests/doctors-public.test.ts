@@ -43,6 +43,7 @@ test("Public Doctor API (GET /api/v1/public/doctors/:slug) - Security, Publishin
         roomNumber: "Room 402 - Private Suite", // PRIVATE FIELD: must be stripped
         visitingSchedule: "Mon - Thu: 5:00 PM - 9:00 PM",
         contactPhone: "+971 4 435 9999", // PRIVATE FIELD: must be stripped
+        timezone: "Asia/Dubai",
       },
     ],
     passwordHash: "$2b$12$super_secret_hash_value_never_expose",
@@ -297,6 +298,7 @@ test("Public Doctor API (GET /api/v1/public/doctors/:slug) - Security, Publishin
 
       return matched ? { ...matched } : null;
     },
+    updateOne: async () => ({ acknowledged: true, modifiedCount: 1 }),
   });
 
   try {
@@ -525,6 +527,75 @@ test("Public Doctor API (GET /api/v1/public/doctors/:slug) - Security, Publishin
       url: "/api/v1/public/doctors/INVALID_CAPS_AND_SPACES!",
     });
     assert.equal(invalidRes.statusCode, 404);
+
+    // 12. POST /api/v1/public/doctors/:slug/book validates inputs
+    const badBookRes = await app.inject({
+      method: "POST",
+      url: "/api/v1/public/doctors/dr-sarah-khan/book",
+      payload: {
+        patientName: "",
+        patientPhone: "",
+      },
+    });
+    assert.equal(badBookRes.statusCode, 400);
+
+    // 13. POST /api/v1/public/doctors/:slug/book: Successfully issues real queue ticket
+    const originalGetQueueTicketCol = mongoAdapter.getQueueTicketCollection.bind(mongoAdapter);
+    const originalGetQueueCounterCol = mongoAdapter.getQueueCounterCollection.bind(mongoAdapter);
+    const mockTickets: any[] = [];
+    let counterVal = 0;
+
+    (mongoAdapter as any).getQueueTicketCollection = () => ({
+      findOne: async (q: any) => mockTickets.find((t) => t.idempotencyKey && t.idempotencyKey === q.idempotencyKey) || null,
+      insertOne: async (doc: any) => {
+        mockTickets.push(doc);
+        return { acknowledged: true, insertedId: doc.id };
+      },
+      find: (q: any) => ({
+        sort: () => ({
+          toArray: async () => mockTickets.filter((t) => !q.status || t.status === q.status),
+        }),
+      }),
+    });
+
+    (mongoAdapter as any).getQueueCounterCollection = () => ({
+      findOneAndUpdate: async () => {
+        counterVal++;
+        return { lastSerial: counterVal };
+      },
+    });
+
+    try {
+      const bookRes = await app.inject({
+        method: "POST",
+        url: "/api/v1/public/doctors/dr-sarah-khan/book",
+        payload: {
+          patientName: "Tariq Mansoor",
+          patientPhone: "+971501112233",
+          service: "Cardiology Consultation",
+        },
+      });
+      assert.equal(bookRes.statusCode, 201);
+      const bookJson = JSON.parse(bookRes.payload);
+      assert.equal(bookJson.success, true);
+      assert.ok(bookJson.ticket.ticketNumber.startsWith("#"));
+      assert.equal(bookJson.ticket.patientName, "Tariq Mansoor");
+      assert.equal(bookJson.ticket.channel, "ONLINE_WEB");
+
+      // 14. GET /api/v1/public/doctors/:slug/queue-status: Returns live status
+      const statusRes = await app.inject({
+        method: "GET",
+        url: "/api/v1/public/doctors/dr-sarah-khan/queue-status",
+      });
+      assert.equal(statusRes.statusCode, 200);
+      const statusJson = JSON.parse(statusRes.payload);
+      assert.equal(statusJson.totalWaiting, 1);
+      assert.equal(statusJson.tickets.length, 1);
+      assert.equal(statusJson.tickets[0].patientName, "Tariq Mansoor");
+    } finally {
+      mongoAdapter.getQueueTicketCollection = originalGetQueueTicketCol;
+      mongoAdapter.getQueueCounterCollection = originalGetQueueCounterCol;
+    }
 
   } finally {
     mongoAdapter.isConnected = originalIsConnected;

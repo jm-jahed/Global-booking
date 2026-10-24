@@ -1,304 +1,377 @@
 "use client";
 
 import { useState } from "react";
-import { X, User, Mail, Phone, Calendar, HeartPulse, Shield, AlertTriangle, FileText } from "lucide-react";
-import { Patient, BloodGroup, PatientStatus } from "@/types/patient";
+import { X, User, Mail, Phone, Calendar, HeartPulse, FileText, Loader2 } from "lucide-react";
+import { createDoctorPatient, PersistentPatient } from "@/lib/api/doctor-patients-client";
 
 interface NewPatientModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onAddPatient: (patient: Patient) => void;
+  onPatientCreated: (patient: PersistentPatient) => void;
 }
 
-const DOCTORS = [
-  { name: "Dr. Sarah Khan", department: "General Medicine / Cardiology" },
-  { name: "Dr. James Wilson", department: "Dental & Oral Surgery" },
-  { name: "Dr. Emily Davis", department: "Dermatology & Aesthetics" },
-  { name: "Dr. Michael Brown", department: "Orthopedics & Spine" },
-];
-
-export function NewPatientModal({ isOpen, onClose, onAddPatient }: NewPatientModalProps) {
+export function NewPatientModal({ isOpen, onClose, onPatientCreated }: NewPatientModalProps) {
   const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
-  const [dob, setDob] = useState("1995-05-15");
-  const [gender, setGender] = useState<"Male" | "Female" | "Other">("Female");
-  const [bloodGroup, setBloodGroup] = useState<BloodGroup>("O+");
-  const [selectedDoctor, setSelectedDoctor] = useState(DOCTORS[0].name);
-  const [insurance, setInsurance] = useState("Daman National Health");
-  const [emergencyName, setEmergencyName] = useState("");
-  const [emergencyPhone, setEmergencyPhone] = useState("");
-  const [emergencyRelation, setEmergencyRelation] = useState("Spouse");
-  const [allergies, setAllergies] = useState("");
+  const [email, setEmail] = useState("");
+  const [dob, setDob] = useState("");
+  const [gender, setGender] = useState<"Male" | "Female" | "Other">("Male");
+  const [bloodGroup, setBloodGroup] = useState("O+");
   const [notes, setNotes] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
   if (!isOpen) return null;
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!name.trim()) return;
+    if (!name.trim()) {
+      setErrorMsg("Patient name is required.");
+      return;
+    }
 
-    const doctorObj = DOCTORS.find((d) => d.name === selectedDoctor) || DOCTORS[0];
-    const randNum = Math.floor(1013 + Math.random() * 500);
-    const birthYear = parseInt(dob.split("-")[0], 10) || 1995;
-    const currentYear = new Date().getFullYear();
-    const calculatedAge = Math.max(1, currentYear - birthYear);
+    setIsSubmitting(true);
+    setErrorMsg(null);
 
-    const newPatient: Patient = {
-      id: `PT-${randNum}`,
-      mrn: `GB-MRN-${randNum}`,
-      name: name.trim(),
-      avatar: "/avatars/alex-johnson.jpg",
-      email: email.trim() || `${name.toLowerCase().replace(/\s+/g, ".")}@example.com`,
-      phone: phone.trim() || "+971 50 000 1234",
-      dob,
-      age: calculatedAge,
-      gender,
-      bloodGroup,
-      primaryDoctor: doctorObj.name,
-      department: doctorObj.department,
-      lastVisit: "Today (Registered)",
-      nextAppointment: "Pending Schedule",
-      status: "New" as PatientStatus,
-      insuranceProvider: insurance || "Self-Pay / Private",
-      emergencyContact: {
-        name: emergencyName || "Not Provided",
-        phone: emergencyPhone || phone || "+971 50 000 0000",
-        relation: emergencyRelation,
-      },
-      allergies: allergies ? allergies.split(",").map((a) => a.trim()).filter(Boolean) : [],
-      chronicConditions: [],
-      vitals: {
-        bloodPressure: "120/80 mmHg",
-        heartRate: 72,
-        temperature: "36.7 °C",
-        bloodSugar: "95 mg/dL",
-        weightKg: 65,
-      },
-      notes: notes || "Newly onboarded patient in directory.",
-      totalAppointments: 1,
-      registeredDate: new Date().toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" }),
-    };
+    try {
+      const res = await createDoctorPatient({
+        name: name.trim(),
+        phone: phone.trim() || undefined,
+        email: email.trim() || undefined,
+        dob: dob || undefined,
+        gender,
+        bloodGroup,
+        status: "New",
+        notes: notes.trim() || undefined,
+      });
 
-    onAddPatient(newPatient);
-    onClose();
+      onPatientCreated(res.patient);
+      onClose();
+    } catch (err: any) {
+      setErrorMsg(err.message || "Failed to register patient.");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
     <div className="modal-backdrop-overlay" onClick={onClose} role="dialog" aria-modal="true">
-      <div className="modal-dialog-card" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 640, maxHeight: "92vh", overflowY: "auto" }}>
+      <div
+        className="modal-dialog-card"
+        onClick={(e) => e.stopPropagation()}
+        style={{
+          maxWidth: 580,
+          maxHeight: "92vh",
+          overflowY: "auto",
+          background: "#0a1120",
+          border: "1px solid rgba(229, 184, 105, 0.3)",
+          boxShadow: "0 25px 60px rgba(0,0,0,0.85)",
+          borderRadius: 16,
+          color: "#ffffff",
+        }}
+      >
         {/* Header */}
-        <div className="modal-header">
-          <div className="modal-title-group">
-            <div className="modal-icon-badge">
-              <User size={18} className="text-gold" />
+        <div
+          className="modal-header"
+          style={{
+            padding: "18px 22px",
+            borderBottom: "1px solid rgba(255,255,255,0.08)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+          }}
+        >
+          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+            <div
+              style={{
+                width: 38,
+                height: 38,
+                borderRadius: 10,
+                background: "rgba(229,184,105,0.15)",
+                border: "1px solid rgba(229,184,105,0.3)",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                color: "#e5b869",
+              }}
+            >
+              <User size={18} />
             </div>
             <div>
-              <h2 className="modal-heading">Register New Patient</h2>
-              <p className="modal-subheading">Create patient clinical file & record identity</p>
+              <h2 style={{ margin: 0, fontSize: 17, fontWeight: 800, color: "#ffffff" }}>
+                Register New Patient
+              </h2>
+              <p style={{ margin: "3px 0 0", fontSize: 12, color: "#94a3b8" }}>
+                Create permanent patient record in clinic directory
+              </p>
             </div>
           </div>
-          <button type="button" className="modal-close-button" onClick={onClose} aria-label="Close modal">
-            <X size={18} />
+          <button
+            type="button"
+            className="modal-close-button"
+            onClick={onClose}
+            aria-label="Close modal"
+            style={{
+              background: "rgba(255,255,255,0.05)",
+              border: "1px solid rgba(255,255,255,0.1)",
+              borderRadius: 8,
+              padding: 6,
+              color: "#94a3b8",
+              cursor: "pointer",
+            }}
+          >
+            <X size={16} />
           </button>
         </div>
 
-        {/* Form */}
-        <form onSubmit={handleSubmit} className="modal-form-content">
-          {/* Row 1: Name & Gender */}
-          <div className="modal-grid-two">
-            <div className="modal-field">
-              <label className="modal-label">Patient Full Name *</label>
-              <div className="modal-input-wrap">
-                <User size={15} className="modal-input-icon" />
-                <input
-                  type="text"
-                  required
-                  placeholder="e.g. Layla Al-Rashid"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  className="modal-input"
-                  autoFocus
-                />
-              </div>
+        {/* Form Body */}
+        <form onSubmit={handleSubmit} style={{ padding: "20px 22px" }}>
+          {errorMsg && (
+            <div
+              style={{
+                padding: "10px 14px",
+                background: "rgba(239,68,68,0.12)",
+                border: "1px solid rgba(239,68,68,0.3)",
+                borderRadius: 8,
+                color: "#f87171",
+                fontSize: 12.5,
+                marginBottom: 16,
+              }}
+            >
+              {errorMsg}
+            </div>
+          )}
+
+          <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+            {/* Full Name */}
+            <div>
+              <label style={{ display: "block", fontSize: 12, fontWeight: 700, color: "#e2e8f0", marginBottom: 6 }}>
+                Patient Full Name *
+              </label>
+              <input
+                type="text"
+                required
+                placeholder="e.g. Mohammad Ali"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                style={{
+                  width: "100%",
+                  padding: "10px 12px",
+                  background: "#050913",
+                  border: "1px solid rgba(255, 255, 255, 0.12)",
+                  borderRadius: 8,
+                  color: "#ffffff",
+                  fontSize: 13,
+                  outline: "none",
+                  boxSizing: "border-box",
+                }}
+              />
             </div>
 
-            <div className="modal-field">
-              <label className="modal-label">Gender</label>
-              <select
-                value={gender}
-                onChange={(e) => setGender(e.target.value as any)}
-                className="modal-select modal-input-plain"
-              >
-                <option value="Female">Female</option>
-                <option value="Male">Male</option>
-                <option value="Other">Other</option>
-              </select>
-            </div>
-          </div>
-
-          {/* Row 2: Email & Phone */}
-          <div className="modal-grid-two">
-            <div className="modal-field">
-              <label className="modal-label">Email Address</label>
-              <div className="modal-input-wrap">
-                <Mail size={15} className="modal-input-icon" />
-                <input
-                  type="email"
-                  placeholder="layla.rashid@example.com"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="modal-input"
-                />
-              </div>
-            </div>
-
-            <div className="modal-field">
-              <label className="modal-label">Mobile Phone (UAE / Int)</label>
-              <div className="modal-input-wrap">
-                <Phone size={15} className="modal-input-icon" />
+            {/* Contact Phone & Email */}
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+              <div>
+                <label style={{ display: "block", fontSize: 12, fontWeight: 700, color: "#e2e8f0", marginBottom: 6 }}>
+                  Contact Phone Number
+                </label>
                 <input
                   type="tel"
-                  placeholder="+971 50 123 4567"
+                  placeholder="e.g. +971 50 123 4567 or 017..."
                   value={phone}
                   onChange={(e) => setPhone(e.target.value)}
-                  className="modal-input"
+                  style={{
+                    width: "100%",
+                    padding: "10px 12px",
+                    background: "#050913",
+                    border: "1px solid rgba(255, 255, 255, 0.12)",
+                    borderRadius: 8,
+                    color: "#ffffff",
+                    fontSize: 13,
+                    outline: "none",
+                    boxSizing: "border-box",
+                  }}
+                />
+              </div>
+
+              <div>
+                <label style={{ display: "block", fontSize: 12, fontWeight: 700, color: "#e2e8f0", marginBottom: 6 }}>
+                  Email Address
+                </label>
+                <input
+                  type="email"
+                  placeholder="patient@example.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  style={{
+                    width: "100%",
+                    padding: "10px 12px",
+                    background: "#050913",
+                    border: "1px solid rgba(255, 255, 255, 0.12)",
+                    borderRadius: 8,
+                    color: "#ffffff",
+                    fontSize: 13,
+                    outline: "none",
+                    boxSizing: "border-box",
+                  }}
                 />
               </div>
             </div>
-          </div>
 
-          {/* Row 3: DOB & Blood Group */}
-          <div className="modal-grid-two">
-            <div className="modal-field">
-              <label className="modal-label">Date of Birth</label>
-              <div className="modal-input-wrap">
-                <Calendar size={15} className="modal-input-icon" />
+            {/* Gender, Blood Group & DOB */}
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 10 }}>
+              <div>
+                <label style={{ display: "block", fontSize: 12, fontWeight: 700, color: "#e2e8f0", marginBottom: 6 }}>
+                  Gender
+                </label>
+                <select
+                  value={gender}
+                  onChange={(e) => setGender(e.target.value as any)}
+                  style={{
+                    width: "100%",
+                    padding: "10px 10px",
+                    background: "#050913",
+                    border: "1px solid rgba(255, 255, 255, 0.12)",
+                    borderRadius: 8,
+                    color: "#ffffff",
+                    fontSize: 12.5,
+                    outline: "none",
+                    boxSizing: "border-box",
+                  }}
+                >
+                  <option value="Male">Male</option>
+                  <option value="Female">Female</option>
+                  <option value="Other">Other</option>
+                </select>
+              </div>
+
+              <div>
+                <label style={{ display: "block", fontSize: 12, fontWeight: 700, color: "#e2e8f0", marginBottom: 6 }}>
+                  Blood Group
+                </label>
+                <select
+                  value={bloodGroup}
+                  onChange={(e) => setBloodGroup(e.target.value)}
+                  style={{
+                    width: "100%",
+                    padding: "10px 10px",
+                    background: "#050913",
+                    border: "1px solid rgba(255, 255, 255, 0.12)",
+                    borderRadius: 8,
+                    color: "#ffffff",
+                    fontSize: 12.5,
+                    outline: "none",
+                    boxSizing: "border-box",
+                  }}
+                >
+                  <option value="O+">O+</option>
+                  <option value="O-">O-</option>
+                  <option value="A+">A+</option>
+                  <option value="A-">A-</option>
+                  <option value="B+">B+</option>
+                  <option value="B-">B-</option>
+                  <option value="AB+">AB+</option>
+                  <option value="AB-">AB-</option>
+                </select>
+              </div>
+
+              <div>
+                <label style={{ display: "block", fontSize: 12, fontWeight: 700, color: "#e2e8f0", marginBottom: 6 }}>
+                  Date of Birth
+                </label>
                 <input
                   type="date"
                   value={dob}
                   onChange={(e) => setDob(e.target.value)}
-                  className="modal-input"
+                  style={{
+                    width: "100%",
+                    padding: "9px 10px",
+                    background: "#050913",
+                    border: "1px solid rgba(255, 255, 255, 0.12)",
+                    borderRadius: 8,
+                    color: "#ffffff",
+                    fontSize: 12,
+                    outline: "none",
+                    boxSizing: "border-box",
+                  }}
                 />
               </div>
             </div>
 
-            <div className="modal-field">
-              <label className="modal-label">Blood Group</label>
-              <select
-                value={bloodGroup}
-                onChange={(e) => setBloodGroup(e.target.value as BloodGroup)}
-                className="modal-select modal-input-plain"
-              >
-                <option value="O+">O Positive (O+)</option>
-                <option value="A+">A Positive (A+)</option>
-                <option value="B+">B Positive (B+)</option>
-                <option value="AB+">AB Positive (AB+)</option>
-                <option value="O-">O Negative (O-)</option>
-                <option value="A-">A Negative (A-)</option>
-                <option value="B-">B Negative (B-)</option>
-                <option value="AB-">AB Negative (AB-)</option>
-              </select>
-            </div>
-          </div>
-
-          {/* Row 4: Primary Doctor & Insurance */}
-          <div className="modal-grid-two">
-            <div className="modal-field">
-              <label className="modal-label">Assigned Specialist / Doctor</label>
-              <div className="modal-input-wrap">
-                <HeartPulse size={15} className="modal-input-icon" />
-                <select
-                  value={selectedDoctor}
-                  onChange={(e) => setSelectedDoctor(e.target.value)}
-                  className="modal-select"
-                >
-                  {DOCTORS.map((doc) => (
-                    <option key={doc.name} value={doc.name}>
-                      {doc.name} ({doc.department})
-                    </option>
-                  ))}
-                </select>
-              </div>
-            </div>
-
-            <div className="modal-field">
-              <label className="modal-label">Insurance Provider</label>
-              <div className="modal-input-wrap">
-                <Shield size={15} className="modal-input-icon" />
-                <input
-                  type="text"
-                  placeholder="e.g. Daman / AXA / Self-Pay"
-                  value={insurance}
-                  onChange={(e) => setInsurance(e.target.value)}
-                  className="modal-input"
-                />
-              </div>
-            </div>
-          </div>
-
-          {/* Row 5: Emergency Contact */}
-          <div className="modal-grid-two">
-            <div className="modal-field">
-              <label className="modal-label">Emergency Contact Name</label>
-              <input
-                type="text"
-                placeholder="Contact person name"
-                value={emergencyName}
-                onChange={(e) => setEmergencyName(e.target.value)}
-                className="modal-input modal-input-plain"
-              />
-            </div>
-            <div className="modal-field">
-              <label className="modal-label">Relationship</label>
-              <input
-                type="text"
-                placeholder="e.g. Spouse / Parent"
-                value={emergencyRelation}
-                onChange={(e) => setEmergencyRelation(e.target.value)}
-                className="modal-input modal-input-plain"
-              />
-            </div>
-          </div>
-
-          {/* Row 6: Allergies / Known Conditions */}
-          <div className="modal-field">
-            <label className="modal-label">Known Allergies (comma separated)</label>
-            <div className="modal-input-wrap">
-              <AlertTriangle size={15} className="modal-input-icon text-gold" />
-              <input
-                type="text"
-                placeholder="e.g. Penicillin, Latex, Sulfa (Leave empty if none)"
-                value={allergies}
-                onChange={(e) => setAllergies(e.target.value)}
-                className="modal-input"
-              />
-            </div>
-          </div>
-
-          {/* Row 7: Clinical Notes */}
-          <div className="modal-field">
-            <label className="modal-label">Clinical Notes / Intake Remarks</label>
-            <div className="modal-input-wrap">
-              <FileText size={15} className="modal-input-icon" style={{ top: 12 }} />
+            {/* Clinical Notes */}
+            <div>
+              <label style={{ display: "block", fontSize: 12, fontWeight: 700, color: "#e2e8f0", marginBottom: 6 }}>
+                Initial Clinical Notes / Medical History
+              </label>
               <textarea
-                rows={2}
-                placeholder="Any special medical conditions, intake observations, or treatment goals..."
+                rows={3}
+                placeholder="Past medical history, drug allergies, presenting complaints..."
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
-                className="modal-textarea"
-                style={{ paddingLeft: 34 }}
+                style={{
+                  width: "100%",
+                  padding: "10px 12px",
+                  background: "#050913",
+                  border: "1px solid rgba(255, 255, 255, 0.12)",
+                  borderRadius: 8,
+                  color: "#ffffff",
+                  fontSize: 12.5,
+                  outline: "none",
+                  boxSizing: "border-box",
+                  resize: "vertical",
+                }}
               />
             </div>
           </div>
 
-          {/* Action Footer */}
-          <div className="modal-actions-footer">
-            <button type="button" className="secondary-action-button" onClick={onClose}>
+          {/* Footer Actions */}
+          <div
+            style={{
+              marginTop: 22,
+              paddingTop: 16,
+              borderTop: "1px solid rgba(255,255,255,0.08)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "flex-end",
+              gap: 10,
+            }}
+          >
+            <button
+              type="button"
+              onClick={onClose}
+              disabled={isSubmitting}
+              style={{
+                padding: "8px 16px",
+                borderRadius: 8,
+                border: "1px solid rgba(255,255,255,0.15)",
+                background: "transparent",
+                color: "#cbd5e1",
+                fontSize: 13,
+                fontWeight: 600,
+                cursor: "pointer",
+              }}
+            >
               Cancel
             </button>
-            <button type="submit" className="primary-gold-button">
-              <span>Save & Register Patient</span>
+            <button
+              type="submit"
+              disabled={isSubmitting}
+              style={{
+                padding: "8px 22px",
+                borderRadius: 8,
+                border: "none",
+                background: "linear-gradient(135deg, #e5b869 0%, #b88628 100%)",
+                color: "#070d18",
+                fontSize: 13,
+                fontWeight: 700,
+                cursor: isSubmitting ? "not-allowed" : "pointer",
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 8,
+                boxShadow: "0 2px 10px rgba(229,184,105,0.3)",
+              }}
+            >
+              {isSubmitting && <Loader2 size={14} className="spin-animation" />}
+              <span>{isSubmitting ? "Registering..." : "Save Patient Record"}</span>
             </button>
           </div>
         </form>

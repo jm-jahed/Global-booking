@@ -1,7 +1,9 @@
 import type { FastifyInstance, FastifyRequest, FastifyReply } from "fastify";
 import { mongoAdapter } from "../../infrastructure/database/mongo.adapter.js";
 import { isValidDoctorSlug, generateSafeDoctorSlug } from "../portal/doctor-portal.routes.js";
-import type { MoneyAmount } from "../admin/admin.types.js";
+import type { MoneyAmount, DoctorChamberDetail } from "../admin/admin.types.js";
+import { createQueueTicket, getDoctorQueueTickets, QueueServiceError } from "../queue/queue.service.js";
+import { getChamberBusinessDate } from "../queue/queue.timezone.js";
 
 export interface PublicChamberInfo {
   readonly id: string;
@@ -78,6 +80,16 @@ export interface PublicDocumentInfo {
   readonly title: string;
   readonly documentType: string;
   readonly url: string;
+}
+
+export interface PublicBookDoctorBody {
+  readonly patientName: string;
+  readonly patientPhone: string;
+  readonly chamberId?: string;
+  readonly service?: string;
+  readonly date?: string;
+  readonly time?: string;
+  readonly notes?: string;
 }
 
 export interface PublicDoctorProfile {
@@ -173,49 +185,57 @@ export async function registerDoctorPublicRoutes(app: FastifyInstance): Promise<
             if (d.slug && d.slug.toLowerCase() === normalizedSlug) return true;
             const gen = generateSafeDoctorSlug(d.fullName || "", d.doctorId || d.id || "");
             return gen === normalizedSlug;
+          }) || candidateDocs?.find((d) => {
+            if (d.isPublished === false) return false;
+            if (d.slug && (d.slug.toLowerCase().startsWith(normalizedSlug + "-") || normalizedSlug.startsWith(d.slug.toLowerCase() + "-"))) {
+              return true;
+            }
+            return false;
           });
 
-          if (match && typeof docCol.updateOne === "function") {
+          if (match) {
             doctor = match;
-            // Auto-persist slug & isPublished: true so future lookups are indexed immediately
-            await docCol.updateOne(
-              { id: match.id },
-              {
-              $set: {
-                slug: normalizedSlug,
-                isPublished: true,
-                ...(match.chambers && match.chambers.length > 0
-                  ? {}
-                  : {
-                      chambers: [
-                        {
-                          id: "CHAMBER-1",
-                          facilityName: match.chamberLocationsSummary || "Main Consultation Chamber",
-                          city: "Dubai",
-                          visitingSchedule: "Daily 05:00 PM – 09:00 PM",
-                        },
-                      ],
-                    }),
-                ...(match.services && match.services.length > 0
-                  ? {}
-                  : {
-                      services: [
-                        {
-                          id: "SRV-1",
-                          title: `${match.specialty || "Specialist"} Consultation`,
-                          category: match.specialty || "General",
-                          description: "Comprehensive clinical diagnostic evaluation and patient consultation.",
-                        },
-                      ],
-                    }),
-              },
+            if (!match.slug && typeof docCol.updateOne === "function") {
+              // Auto-persist slug & isPublished: true so future lookups are indexed immediately
+              await docCol.updateOne(
+                { id: match.id },
+                {
+                  $set: {
+                    slug: normalizedSlug,
+                    isPublished: true,
+                    ...(match.chambers && match.chambers.length > 0
+                      ? {}
+                      : {
+                          chambers: [
+                            {
+                              id: "CHAMBER-1",
+                              facilityName: match.chamberLocationsSummary || "Main Consultation Chamber",
+                              city: "Dubai",
+                              visitingSchedule: "Daily 05:00 PM – 09:00 PM",
+                            },
+                          ],
+                        }),
+                    ...(match.services && match.services.length > 0
+                      ? {}
+                      : {
+                          services: [
+                            {
+                              id: "SRV-1",
+                              title: `${match.specialty || "Specialist"} Consultation`,
+                              category: match.specialty || "General",
+                              description: "Comprehensive clinical diagnostic evaluation and patient consultation.",
+                            },
+                          ],
+                        }),
+                  },
+                }
+              );
+              doctor.slug = normalizedSlug;
+              doctor.isPublished = true;
             }
-          );
-          doctor.slug = normalizedSlug;
-          doctor.isPublished = true;
-        }
-      } catch {}
-    }
+          }
+        } catch {}
+      }
 
       // Strict verification: reject if doctor not found or isPublished is not explicitly true
       if (!doctor || doctor.isPublished !== true) {
@@ -410,6 +430,316 @@ export async function registerDoctorPublicRoutes(app: FastifyInstance): Promise<
       return reply.status(200).send({
         statusCode: 200,
         doctor: publicProfile,
+      });
+    },
+  );
+
+  /**
+   * POST /api/v1/public/doctors/:slug/book
+   * Public patient booking endpoint.
+   * Atomically issues a genuine queue ticket and serial number in MongoDB for the doctor's live queue.
+   */
+  app.post<{ Params: { slug: string }; Body: PublicBookDoctorBody }>(
+    "/api/v1/public/doctors/:slug/book",
+    async (
+      request: FastifyRequest<{ Params: { slug: string }; Body: PublicBookDoctorBody }>,
+      reply: FastifyReply,
+    ) => {
+      const { slug } = request.params;
+      const normalizedSlug = (slug || "").trim().toLowerCase();
+
+      if (!isValidDoctorSlug(normalizedSlug)) {
+        return reply.status(400).send({
+          statusCode: 400,
+          error: "Bad Request",
+          message: "Invalid doctor slug format.",
+        });
+      }
+
+      if (!mongoAdapter.isConnected()) {
+        return reply.status(503).send({
+          statusCode: 503,
+          error: "Service Unavailable",
+          message: "Database persistence is currently unavailable.",
+        });
+      }
+
+      const body = request.body || ({} as PublicBookDoctorBody);
+      const patientName = String(body.patientName || "").trim();
+      const patientPhone = String(body.patientPhone || "").trim();
+
+      if (!patientName || patientName.length < 2 || patientName.length > 100) {
+        return reply.status(400).send({
+          statusCode: 400,
+          error: "Bad Request",
+          message: "patientName is required and must be between 2 and 100 characters.",
+        });
+      }
+
+      if (!patientPhone || patientPhone.length < 5) {
+        return reply.status(400).send({
+          statusCode: 400,
+          error: "Bad Request",
+          message: "patientPhone is required and must be at least 5 digits.",
+        });
+      }
+
+      const docCol = mongoAdapter.getDoctorCollection();
+      let doctor = await docCol.findOne({
+        slug: normalizedSlug,
+        accountStatus: "ACTIVE",
+        isPublished: true,
+      });
+
+      if (!doctor && typeof docCol.find === "function") {
+        try {
+          const candidateDocs = await docCol
+            .find({ accountStatus: "ACTIVE", isPublished: true })
+            .toArray();
+          const match = candidateDocs?.find((d) => {
+            if (d.slug && d.slug.toLowerCase() === normalizedSlug) return true;
+            if (d.slug && (d.slug.toLowerCase().startsWith(normalizedSlug + "-") || normalizedSlug.startsWith(d.slug.toLowerCase() + "-"))) {
+              return true;
+            }
+            return false;
+          });
+          if (match) doctor = match;
+        } catch {}
+      }
+
+      if (!doctor) {
+        return reply.status(404).send({
+          statusCode: 404,
+          error: "Not Found",
+          message: "Doctor profile not found or unavailable for online booking.",
+        });
+      }
+
+      // Resolve chamber
+      const requestedChamberId = body.chamberId ? String(body.chamberId).trim() : "";
+      let chamber: DoctorChamberDetail | undefined;
+
+      if (requestedChamberId && Array.isArray(doctor.chambers)) {
+        chamber = doctor.chambers.find((c) => c.id === requestedChamberId);
+      }
+
+      if (!chamber) {
+        chamber = doctor.chambers?.[0] || {
+          id: "chamber-primary",
+          facilityName: doctor.chamberLocationsSummary || "Primary Consultation Chamber",
+          city: "Dubai",
+          timezone: "Asia/Dubai",
+        };
+      }
+
+      const chamberWithTz: DoctorChamberDetail = {
+        ...chamber,
+        timezone: chamber.timezone || "Asia/Dubai",
+      };
+
+      try {
+        const result = await createQueueTicket(
+          doctor,
+          chamberWithTz,
+          {
+            chamberId: chamberWithTz.id,
+            patientName,
+            patientPhone,
+            service: body.service ? String(body.service).trim() : `${doctor.specialty} Consultation`,
+            channel: "ONLINE_WEB",
+            priority: "STANDARD",
+            chamberTimezone: chamberWithTz.timezone,
+            notes: body.notes
+              ? String(body.notes).trim()
+              : `Booked online via public portal for ${body.date || "Today"}`.trim(),
+            idempotencyKey: (body as any).idempotencyKey
+              ? String((body as any).idempotencyKey).trim()
+              : `PUB-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`,
+          },
+          "online-patient",
+        );
+
+        return reply.status(201).send({
+          statusCode: 201,
+          success: true,
+          ticket: result.ticket,
+          isReplay: result.isReplay,
+        });
+      } catch (err: any) {
+        if (err instanceof QueueServiceError) {
+          return reply.status(err.statusCode).send({
+            statusCode: err.statusCode,
+            error: err.code,
+            message: err.message,
+          });
+        }
+        throw err;
+      }
+    },
+  );
+
+  /**
+   * GET /api/v1/public/doctors/:slug/queue-status
+   * Live queue tracker for public patient view.
+   * Returns current now-serving ticket, waiting count, and sanitized queue items from MongoDB.
+   */
+  app.get<{ Params: { slug: string }; Querystring: { chamberId?: string } }>(
+    "/api/v1/public/doctors/:slug/queue-status",
+    async (
+      request: FastifyRequest<{ Params: { slug: string }; Querystring: { chamberId?: string } }>,
+      reply: FastifyReply,
+    ) => {
+      const { slug } = request.params;
+      const normalizedSlug = (slug || "").trim().toLowerCase();
+
+      if (!isValidDoctorSlug(normalizedSlug)) {
+        return reply.status(400).send({
+          statusCode: 400,
+          error: "Bad Request",
+          message: "Invalid doctor slug format.",
+        });
+      }
+
+      if (!mongoAdapter.isConnected()) {
+        return reply.status(503).send({
+          statusCode: 503,
+          error: "Service Unavailable",
+          message: "Database persistence is currently unavailable.",
+        });
+      }
+
+      const docCol = mongoAdapter.getDoctorCollection();
+      let doctor = await docCol.findOne({
+        slug: normalizedSlug,
+        accountStatus: "ACTIVE",
+        isPublished: true,
+      });
+
+      if (!doctor && typeof docCol.find === "function") {
+        try {
+          const candidateDocs = await docCol
+            .find({ accountStatus: "ACTIVE", isPublished: true })
+            .toArray();
+          const match = candidateDocs?.find((d) => {
+            if (d.slug && d.slug.toLowerCase() === normalizedSlug) return true;
+            if (d.slug && (d.slug.toLowerCase().startsWith(normalizedSlug + "-") || normalizedSlug.startsWith(d.slug.toLowerCase() + "-"))) {
+              return true;
+            }
+            return false;
+          });
+          if (match) doctor = match;
+        } catch {}
+      }
+
+      if (!doctor) {
+        return reply.status(404).send({
+          statusCode: 404,
+          error: "Not Found",
+          message: "Doctor profile not found.",
+        });
+      }
+
+      const requestedChamberId = request.query?.chamberId ? String(request.query.chamberId).trim() : "";
+      const chamber = (requestedChamberId && Array.isArray(doctor.chambers))
+        ? doctor.chambers.find((c) => c.id === requestedChamberId) || doctor.chambers[0]
+        : doctor.chambers?.[0];
+
+      const timezone = chamber?.timezone || "Asia/Dubai";
+      const dateKey = getChamberBusinessDate(timezone, new Date());
+
+      let tickets: any[] = [];
+      try {
+        tickets = await getDoctorQueueTickets(doctor.doctorId, {
+          chamberId: chamber?.id,
+          dateKey,
+        });
+        if (tickets.length === 0) {
+          tickets = await getDoctorQueueTickets(doctor.doctorId, {
+            chamberId: chamber?.id,
+          });
+        }
+      } catch {
+        const ticketCol = mongoAdapter.getQueueTicketCollection();
+        tickets = await ticketCol.find({ doctorId: doctor.doctorId }).sort({ serialIndex: 1 }).toArray();
+      }
+
+      let serving = tickets.find((t) => t.status === "CALLED" || t.status === "IN_CONSULTATION");
+      let waiting = tickets.filter((t) => t.status === "WAITING");
+
+      // Check appointments collection if serving ticket is not found in queue_tickets
+      if (!serving) {
+        try {
+          const aptCol = mongoAdapter.getAppointmentCollection();
+          const runningApt = await aptCol.findOne({
+            doctorId: doctor.doctorId,
+            status: "IN_CONSULTATION",
+          });
+          if (runningApt) {
+            serving = {
+              ticketNumber: runningApt.bookingNumberDisplay || `#${String(runningApt.bookingNumber || 1).padStart(2, "0")}`,
+              patientName: runningApt.patientName,
+              service: runningApt.service,
+            } as any;
+          }
+        } catch {}
+      }
+
+      let nextTicket = waiting[0] || null;
+
+      // Check appointments collection if next waiting ticket is not found in queue_tickets
+      if (!nextTicket) {
+        try {
+          const aptCol = mongoAdapter.getAppointmentCollection();
+          const waitingApt = await aptCol.findOne({
+            doctorId: doctor.doctorId,
+            status: "CONFIRMED",
+          });
+          if (waitingApt) {
+            nextTicket = {
+              ticketNumber: waitingApt.bookingNumberDisplay || `#${String(waitingApt.bookingNumber || 1).padStart(2, "0")}`,
+              patientName: waitingApt.patientName,
+              service: waitingApt.service,
+            } as any;
+          }
+        } catch {}
+      }
+
+      const completed = tickets.filter((t) => t.status === "COMPLETED");
+
+      // Privacy-safe sanitized list
+      const sanitizedTickets = tickets.map((t) => ({
+        id: t.id,
+        ticketNumber: t.ticketNumber,
+        serialIndex: t.serialIndex,
+        patientName: t.patientName,
+        status: t.status,
+        service: t.service,
+        checkInTime: t.checkInTime,
+        channel: t.channel,
+      }));
+
+      return reply.status(200).send({
+        statusCode: 200,
+        chamberName: chamber?.facilityName || doctor.chamberLocationsSummary || "Main Consultation Chamber",
+        chamberTimezone: timezone,
+        dateKey,
+        servingTicket: serving
+          ? {
+              ticketNumber: serving.ticketNumber,
+              patientName: serving.patientName,
+              service: serving.service,
+            }
+          : null,
+        nextTicket: nextTicket
+          ? {
+              ticketNumber: nextTicket.ticketNumber,
+              patientName: nextTicket.patientName,
+              service: nextTicket.service,
+            }
+          : null,
+        totalWaiting: waiting.length,
+        totalServed: completed.length,
+        tickets: sanitizedTickets,
       });
     },
   );

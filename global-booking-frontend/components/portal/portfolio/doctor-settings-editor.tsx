@@ -46,11 +46,15 @@ import {
   type DoctorPortfolioSections,
   type DoctorPublicDocumentRef,
 } from "@/lib/api/admin-client";
+import { generateSafeDoctorSlug, isSafeSlug } from "@/lib/validation/route-params";
+
+type LoadStatus = "loading" | "loaded" | "error";
 
 export function DoctorSettingsEditor() {
-  const [loading, setLoading] = useState(true);
+  const [loadStatus, setLoadStatus] = useState<LoadStatus>("loading");
   const [saving, setSaving] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [saveError, setSaveError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
   // Profile Form States
@@ -117,57 +121,67 @@ export function DoctorSettingsEditor() {
 
   // Fetch real profile from MongoDB
   const fetchProfile = async () => {
-    setLoading(true);
-    setError(null);
+    setLoadStatus("loading");
+    setLoadError(null);
+    setSaveError(null);
     try {
       const res = await getDoctorProfile();
-      if (res?.doctor) {
-        const doc = res.doctor;
-        setProfile(doc);
-        setFullName(doc.fullName || "");
-        setSpecialty(doc.specialty || "");
-        setCustomTitle(doc.customTitle || "");
-        setAvatar(doc.avatar || "");
-        setBio(doc.bio || "");
-        setYearsOfExperience(doc.yearsOfExperience || 0);
-        setMedicalDegrees(doc.medicalDegrees || ["MBBS"]);
-        setLanguages(doc.languages || ["English", "Arabic"]);
-
-        // Fee & Chambers
-        setConsultationFeeAed(
-          doc.consultationFee?.amountInFils ? doc.consultationFee.amountInFils / 100 : 500
-        );
-        setChamberSummary(doc.chamberLocationsSummary || "");
-        setChambers(doc.chambers || []);
-
-        // Rich Sections
-        setServices(doc.services || []);
-        setEducation(doc.education || []);
-        setExperience(doc.experience || []);
-        setAwards(doc.awards || []);
-        setPublications(doc.publications || []);
-        setMemberships(doc.memberships || []);
-        setPublicDocuments(doc.publicDocuments || []);
-
-        // Public Contact
-        if (doc.publicContact) {
-          setClinicPhone(doc.publicContact.clinicPhone || "");
-          setInquiryWhatsApp(doc.publicContact.inquiryWhatsApp || "");
-          setPublicEmail(doc.publicContact.publicEmail || "");
-        }
-
-        // Section Settings
-        if (doc.portfolioSections && Object.keys(doc.portfolioSections).length > 0) {
-          setSections((prev) => ({ ...prev, ...doc.portfolioSections }));
-        }
-
-        setSlug(doc.slug || "");
-        setIsPublished(doc.isPublished !== false);
+      if (!res || !res.doctor || typeof res.doctor !== "object" || !res.doctor.id) {
+        throw new Error("Received an invalid or malformed profile response from server.");
       }
+      const doc = res.doctor;
+      setProfile(doc);
+      setFullName(doc.fullName || "");
+      setSpecialty(doc.specialty || "");
+      setCustomTitle(doc.customTitle || "");
+      setAvatar(doc.avatar || "");
+      setBio(doc.bio || "");
+      setYearsOfExperience(typeof doc.yearsOfExperience === "number" ? doc.yearsOfExperience : 0);
+      setMedicalDegrees(Array.isArray(doc.medicalDegrees) && doc.medicalDegrees.length > 0 ? doc.medicalDegrees : ["MBBS"]);
+      setLanguages(Array.isArray(doc.languages) && doc.languages.length > 0 ? doc.languages : ["English", "Arabic"]);
+
+      // Fee: Distinguish a missing fee from a valid numeric zero
+      const feeInFils = doc.consultationFee?.amountInFils;
+      if (typeof feeInFils === "number" && !Number.isNaN(feeInFils)) {
+        setConsultationFeeAed(feeInFils / 100);
+      } else {
+        setConsultationFeeAed(500);
+      }
+      setChamberSummary(doc.chamberLocationsSummary || "");
+      setChambers(Array.isArray(doc.chambers) ? doc.chambers : []);
+
+      // Rich Sections
+      setServices(Array.isArray(doc.services) ? doc.services : []);
+      setEducation(Array.isArray(doc.education) ? doc.education : []);
+      setExperience(Array.isArray(doc.experience) ? doc.experience : []);
+      setAwards(Array.isArray(doc.awards) ? doc.awards : []);
+      setPublications(Array.isArray(doc.publications) ? doc.publications : []);
+      setMemberships(Array.isArray(doc.memberships) ? doc.memberships : []);
+      setPublicDocuments(Array.isArray(doc.publicDocuments) ? doc.publicDocuments : []);
+
+      // Public Contact
+      if (doc.publicContact) {
+        setClinicPhone(doc.publicContact.clinicPhone || "");
+        setInquiryWhatsApp(doc.publicContact.inquiryWhatsApp || "");
+        setPublicEmail(doc.publicContact.publicEmail || "");
+      } else {
+        setClinicPhone("");
+        setInquiryWhatsApp("");
+        setPublicEmail("");
+      }
+
+      // Section Settings
+      if (doc.portfolioSections && Object.keys(doc.portfolioSections).length > 0) {
+        setSections((prev) => ({ ...prev, ...doc.portfolioSections }));
+      }
+
+      setSlug(doc.slug || "");
+      setIsPublished(doc.isPublished !== false);
+      setLoadStatus("loaded");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to load doctor profile.");
-    } finally {
-      setLoading(false);
+      setProfile(null);
+      setLoadStatus("error");
+      setLoadError(err instanceof Error ? err.message : "Failed to load doctor profile.");
     }
   };
 
@@ -351,6 +365,11 @@ export function DoctorSettingsEditor() {
 
   // Chamber Management
   const handleAddChamber = () => {
+    const existingTz = chambers.find((c) => c.timezone?.trim())?.timezone;
+    const defaultTimezone =
+      existingTz ||
+      (typeof Intl !== "undefined" ? Intl.DateTimeFormat().resolvedOptions().timeZone : "Asia/Dubai");
+
     setChambers([
       ...chambers,
       {
@@ -360,6 +379,7 @@ export function DoctorSettingsEditor() {
         visitingSchedule: "Mon - Thu: 5:00 PM - 9:00 PM",
         roomNumber: "",
         contactPhone: "",
+        timezone: defaultTimezone,
       },
     ]);
   };
@@ -422,11 +442,28 @@ export function DoctorSettingsEditor() {
   // Form submission
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (loadStatus !== "loaded" || !profile) {
+      setSaveError("Cannot save profile because the profile has not finished loading. Please reload.");
+      return;
+    }
+
     setSaving(true);
-    setError(null);
+    setSaveError(null);
     setSuccessMessage(null);
 
     try {
+      let targetSlug = slug.trim().toLowerCase();
+      if (!targetSlug) {
+        targetSlug = generateSafeDoctorSlug(fullName, profile.doctorId || profile.id);
+      }
+
+      if (!targetSlug || !isSafeSlug(targetSlug)) {
+        setSaveError("A valid doctor URL slug is required (e.g. 'dr-sarah-khan').");
+        setSaving(false);
+        return;
+      }
+
       const publicContactPayload: DoctorPublicContact = {
         clinicPhone: clinicPhone.trim() || undefined,
         inquiryWhatsApp: inquiryWhatsApp.trim() || undefined,
@@ -441,12 +478,17 @@ export function DoctorSettingsEditor() {
         bio: bio.trim(),
         yearsOfExperience: Number(yearsOfExperience) || 0,
         medicalDegrees: medicalDegrees.filter((d) => d.trim().length > 0),
-        consultationFeeAed: Number(consultationFeeAed) || 0,
+        consultationFeeAed: typeof consultationFeeAed === "number" ? consultationFeeAed : Number(consultationFeeAed) || 0,
         chamberLocationsSummary: chamberSummary.trim(),
         languages: languages.filter((l) => l.trim().length > 0),
-        slug: slug.trim().toLowerCase(),
+        slug: targetSlug,
         isPublished,
-        chambers: chambers.filter((ch) => ch.facilityName.trim().length > 0),
+        chambers: chambers
+          .filter((ch) => ch.facilityName.trim().length > 0)
+          .map((ch) => ({
+            ...ch,
+            timezone: ch.timezone?.trim() || undefined,
+          })),
         services: services.filter((s) => s.title.trim().length > 0),
         education: education.filter((e) => e.degree.trim().length > 0),
         experience: experience.filter((exp) => exp.role.trim().length > 0),
@@ -460,6 +502,7 @@ export function DoctorSettingsEditor() {
 
       if (res?.success && res.doctor) {
         setProfile(res.doctor);
+        setSlug(res.doctor.slug || targetSlug);
         if (typeof window !== "undefined") {
           try {
             const currentStored = JSON.parse(localStorage.getItem("gb_portal_user") || "{}");
@@ -477,13 +520,13 @@ export function DoctorSettingsEditor() {
         setTimeout(() => setSuccessMessage(null), 6000);
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to save profile changes.");
+      setSaveError(err instanceof Error ? err.message : "Failed to save profile changes.");
     } finally {
       setSaving(false);
     }
   };
 
-  if (loading) {
+  if (loadStatus === "loading") {
     return (
       <div
         style={{
@@ -507,6 +550,72 @@ export function DoctorSettingsEditor() {
           }}
         />
         <p style={{ margin: 0, fontSize: 14 }}>Loading doctor profile and portfolio settings from database...</p>
+      </div>
+    );
+  }
+
+  if (loadStatus === "error") {
+    return (
+      <div style={{ maxWidth: 800, margin: "60px auto", padding: "0 20px" }}>
+        <div
+          role="alert"
+          style={{
+            background: "rgba(239,68,68,0.12)",
+            border: "1px solid rgba(239,68,68,0.4)",
+            borderRadius: 16,
+            padding: "32px 28px",
+            textAlign: "center",
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            gap: 16,
+          }}
+        >
+          <div
+            style={{
+              width: 52,
+              height: 52,
+              borderRadius: "50%",
+              background: "rgba(239,68,68,0.2)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              color: "#f87171",
+            }}
+          >
+            <AlertCircle size={28} />
+          </div>
+          <div>
+            <h2 style={{ fontSize: 18, fontWeight: 700, color: "#fff", margin: "0 0 8px" }}>
+              Unable to Load Doctor Profile
+            </h2>
+            <p style={{ margin: 0, fontSize: 14, color: "#cbd5e1", maxWidth: 520, lineHeight: 1.5 }}>
+              {loadError || "An error occurred while loading your profile data from the database. Save actions have been blocked to protect your profile from accidental data loss."}
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={() => void fetchProfile()}
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: 8,
+              background: "linear-gradient(135deg, #e5b869 0%, #c49a45 100%)",
+              color: "#07131f",
+              padding: "10px 22px",
+              borderRadius: 8,
+              fontSize: 14,
+              fontWeight: 700,
+              border: "none",
+              cursor: "pointer",
+              marginTop: 8,
+              boxShadow: "0 4px 12px rgba(229,184,105,0.25)",
+            }}
+          >
+            <RotateCw size={15} />
+            <span>Retry Loading Profile</span>
+          </button>
+        </div>
       </div>
     );
   }
@@ -635,7 +744,7 @@ export function DoctorSettingsEditor() {
       </div>
 
       {/* Notifications */}
-      {error && (
+      {saveError && (
         <div
           role="alert"
           style={{
@@ -652,7 +761,7 @@ export function DoctorSettingsEditor() {
           }}
         >
           <AlertCircle size={18} style={{ flexShrink: 0 }} />
-          <span>{error}</span>
+          <span>{saveError}</span>
         </div>
       )}
 
@@ -2076,7 +2185,15 @@ export function DoctorSettingsEditor() {
                     min="0"
                     step="10"
                     value={consultationFeeAed}
-                    onChange={(e) => setConsultationFeeAed(Number(e.target.value))}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      if (val === "") {
+                        setConsultationFeeAed(0);
+                      } else {
+                        const num = Number(val);
+                        setConsultationFeeAed(Number.isNaN(num) ? 0 : num);
+                      }
+                    }}
                     style={{
                       width: "100%",
                       background: "rgba(255,255,255,0.04)",
@@ -2281,6 +2398,27 @@ export function DoctorSettingsEditor() {
                             value={ch.contactPhone || ""}
                             onChange={(e) => handleUpdateChamber(idx, "contactPhone", e.target.value)}
                             placeholder="e.g. +971 4 435 9999"
+                            style={{
+                              width: "100%",
+                              background: "rgba(255,255,255,0.04)",
+                              border: "1px solid rgba(255,255,255,0.1)",
+                              borderRadius: 6,
+                              padding: "7px 10px",
+                              color: "#fff",
+                              fontSize: 12,
+                            }}
+                          />
+                        </div>
+
+                        <div>
+                          <label style={{ display: "block", fontSize: 11, color: "#94a3b8", marginBottom: 4 }}>
+                            Chamber Timezone (IANA)
+                          </label>
+                          <input
+                            type="text"
+                            value={ch.timezone || ""}
+                            onChange={(e) => handleUpdateChamber(idx, "timezone", e.target.value)}
+                            placeholder="e.g. Asia/Dubai or Asia/Dhaka"
                             style={{
                               width: "100%",
                               background: "rgba(255,255,255,0.04)",
@@ -2786,7 +2924,7 @@ export function DoctorSettingsEditor() {
           >
             <button
               type="submit"
-              disabled={saving}
+              disabled={saving || loadStatus !== "loaded"}
               style={{
                 display: "inline-flex",
                 alignItems: "center",
@@ -2798,9 +2936,9 @@ export function DoctorSettingsEditor() {
                 padding: "14px 34px",
                 borderRadius: 12,
                 border: "none",
-                cursor: saving ? "not-allowed" : "pointer",
+                cursor: saving || loadStatus !== "loaded" ? "not-allowed" : "pointer",
                 boxShadow: "0 6px 18px rgba(229,184,105,0.3)",
-                opacity: saving ? 0.7 : 1,
+                opacity: saving || loadStatus !== "loaded" ? 0.6 : 1,
               }}
             >
               <Save size={18} />

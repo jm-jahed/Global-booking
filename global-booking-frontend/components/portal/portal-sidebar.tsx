@@ -115,7 +115,7 @@ export const DOCTOR_NAV_ITEMS: readonly PortalNavItem[] = [
   {
     id: "reports",
     label: "Reports",
-    href: "/dashboard#reports",
+    href: "/reports",
     icon: BarChart3,
     activeMatch: (path) => path.startsWith("/reports"),
     staffAccessible: true,
@@ -257,7 +257,7 @@ export const HOSPITAL_NAV_ITEMS: readonly PortalNavItem[] = [
   {
     id: "reports",
     label: "Reports",
-    href: "/dashboard#reports",
+    href: "/reports",
     icon: BarChart3,
     activeMatch: (path) => path.startsWith("/reports"),
     staffAccessible: true,

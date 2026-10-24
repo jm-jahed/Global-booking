@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useState, useMemo, useEffect, useCallback } from "react";
+import { useState, useMemo, useEffect, useCallback, useRef } from "react";
 import {
   Users2,
   Clock,
@@ -14,6 +14,8 @@ import {
   Volume2,
   Monitor,
   ChevronDown,
+  ChevronLeft,
+  ChevronRight,
   User,
   ArrowRight,
   Sparkles,
@@ -38,11 +40,21 @@ import {
   CreditCard,
   Phone,
   Ticket,
+  Sliders,
+  SkipForward,
+  RotateCcw,
+  UserCheck,
+  XCircle,
+  Radio,
+  Crown,
 } from "lucide-react";
 import {
   fetchDoctorQueue,
   callQueuePatient,
   finishQueuePatient,
+  skipQueuePatient,
+  noShowQueuePatient,
+  triggerDoctorQueueDayEnd,
   type BackendQueueTicket,
 } from "@/lib/api/doctor-queue-client";
 import { DOCTOR_CHAMBER_COUNTERS } from "@/lib/services/doctor-queue-service";
@@ -50,6 +62,15 @@ import { QueueItem, CounterStation, QueueStatus, PriorityLevel, CheckInChannel }
 import { NewTicketModal } from "./new-ticket-modal";
 import { LiveDisplayModal } from "./live-display-modal";
 import { getStoredPortalUser } from "@/lib/api/admin-client";
+import { fetchDoctorPortalAppointments } from "@/lib/api/doctor-appointments-client";
+import {
+  DEFAULT_CHAMBER_TIMEZONE,
+  resolveChamberTimezone,
+  getChamberBusinessDate,
+  formatIsoToDDMMYYYY,
+  parseDDMMYYYYToIso,
+  shiftDateIso,
+} from "@/lib/utils/timezone";
 
 function mapBackendTicketToQueueItem(
   t: BackendQueueTicket,
@@ -60,6 +81,8 @@ function mapBackendTicketToQueueItem(
     mappedStatus = "Serving";
   } else if (t.status === "COMPLETED") {
     mappedStatus = "Completed";
+  } else if (t.status === "SKIPPED" || t.status === "CANCELLED" || (t.status as string) === "NO_SHOW") {
+    mappedStatus = "Skipped";
   } else {
     mappedStatus = "Waiting";
   }
@@ -72,16 +95,24 @@ function mapBackendTicketToQueueItem(
   if (t.channel === "WALK_IN") mappedChannel = "QR Walk-In";
   else if (t.channel === "ONLINE_WEB") mappedChannel = "Online Booking";
 
+  // Calculate waiting duration from check-in time
+  let waitDurationText = "—";
+  if (t.createdAt) {
+    const diffMs = Math.max(0, Date.now() - new Date(t.createdAt).getTime());
+    const mins = Math.floor(diffMs / 60000);
+    waitDurationText = mins > 0 ? `${mins} min` : "Just now";
+  }
+
   return {
     id: t.id,
     ticketNumber: t.ticketNumber,
     clientName: t.patientName,
     clientAvatar: "",
-    service: t.service || "Chamber Consultation",
+    service: t.service || "General Consultation",
     specialist: specialistName,
     counterName: t.chamberName || "Main Chamber",
     checkInTime: t.checkInTime || (t.createdAt ? new Date(t.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) : "—"),
-    estWaitMinutes: 0,
+    estWaitMinutes: waitDurationText === "—" ? 0 : parseInt(waitDurationText, 10) || 5,
     status: mappedStatus,
     priority: mappedPriority,
     channel: mappedChannel,
@@ -96,9 +127,7 @@ export function LiveQueueView() {
   const [counters, setCounters] = useState<CounterStation[]>(DOCTOR_CHAMBER_COUNTERS);
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("All Status");
-  const [priorityFilter, setPriorityFilter] = useState("All Priority");
   const [selectedChamberId, setSelectedChamberId] = useState("");
-  const [activeTab, setActiveTab] = useState<"queue" | "dispatch" | "lobby" | "schedule" | "reports">("queue");
 
   const [isNewTicketOpen, setIsNewTicketOpen] = useState(false);
   const [isTvDisplayOpen, setIsTvDisplayOpen] = useState(false);
@@ -106,6 +135,8 @@ export function LiveQueueView() {
   const [isSyncing, setIsSyncing] = useState(false);
   const [apiError, setApiError] = useState<string | null>(null);
   const [currentUser, setCurrentUser] = useState<any>(null);
+
+  const dateInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     const stored = getStoredPortalUser();
@@ -133,12 +164,13 @@ export function LiveQueueView() {
     }
   }, []);
 
-  const doctorName = currentUser?.fullName || currentUser?.name || "Doctor Practice";
+  const doctorName = currentUser?.fullName || currentUser?.name || "Dr Jahedul Islam";
   const chamberLocation =
     currentUser?.chamberLocationsSummary ||
     (Array.isArray(currentUser?.chambers) && currentUser?.chambers[0]?.facilityName) ||
     "Main Consultation Chamber";
-  const doctorSpecialty = currentUser?.specialty || "Specialist Physician";
+  const doctorSpecialty = currentUser?.specialty || "Cardiology";
+
   const chambers: any[] = useMemo(() => {
     if (Array.isArray(currentUser?.chambers) && currentUser.chambers.length > 0) {
       return currentUser.chambers;
@@ -148,38 +180,147 @@ export function LiveQueueView() {
         id: "main-chamber",
         facilityName: chamberLocation,
         roomNumber: "Chamber 302",
-        timezone: "Asia/Dhaka",
+        timezone: DEFAULT_CHAMBER_TIMEZONE,
       },
     ];
   }, [currentUser, chamberLocation]);
 
-  // Load live queue items directly from backend API (MongoDB)
+  const activeChamber = useMemo(() => {
+    if (selectedChamberId) {
+      return chambers.find((c: any) => c.id === selectedChamberId) || chambers[0];
+    }
+    return chambers[0];
+  }, [chambers, selectedChamberId]);
+
+  const resolvedChamberTimezone = useMemo(() => {
+    return resolveChamberTimezone(activeChamber?.timezone || currentUser?.timezone);
+  }, [activeChamber, currentUser]);
+
+  // Chamber-local today's business date (YYYY-MM-DD)
+  const chamberTodayDateKey = useMemo(() => {
+    return getChamberBusinessDate(resolvedChamberTimezone);
+  }, [resolvedChamberTimezone]);
+
+  const [selectedDateKey, setSelectedDateKey] = useState<string>(() => {
+    return getChamberBusinessDate(DEFAULT_CHAMBER_TIMEZONE);
+  });
+  const [hasUserManuallySelectedDate, setHasUserManuallySelectedDate] = useState(false);
+
+  // Sync to chamber's authoritative local date when timezone resolves (unless user navigated away)
+  useEffect(() => {
+    if (!hasUserManuallySelectedDate) {
+      setSelectedDateKey(chamberTodayDateKey);
+    }
+  }, [chamberTodayDateKey, hasUserManuallySelectedDate]);
+
+  const selectedDateDisplay = useMemo(() => {
+    return formatIsoToDDMMYYYY(selectedDateKey);
+  }, [selectedDateKey]);
+
+  const isSelectedDateToday = selectedDateKey === chamberTodayDateKey;
+
+  const [displayInputVal, setDisplayInputVal] = useState(() => formatIsoToDDMMYYYY(selectedDateKey));
+  useEffect(() => {
+    setDisplayInputVal(formatIsoToDDMMYYYY(selectedDateKey));
+  }, [selectedDateKey]);
+
+  const handleDateSelect = (isoDate: string) => {
+    if (!isoDate) return;
+    setHasUserManuallySelectedDate(true);
+    setSelectedDateKey(isoDate);
+  };
+
+  const handlePrevDay = () => {
+    setHasUserManuallySelectedDate(true);
+    setSelectedDateKey((prev) => shiftDateIso(prev, -1));
+  };
+
+  const handleNextDay = () => {
+    setHasUserManuallySelectedDate(true);
+    setSelectedDateKey((prev) => shiftDateIso(prev, 1));
+  };
+
+  const handleResetToToday = () => {
+    setHasUserManuallySelectedDate(false);
+    setSelectedDateKey(chamberTodayDateKey);
+  };
+
+  const handleDisplayInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const val = e.target.value;
+    setDisplayInputVal(val);
+    const parsed = parseDDMMYYYYToIso(val);
+    if (parsed) {
+      setHasUserManuallySelectedDate(true);
+      setSelectedDateKey(parsed);
+    }
+  };
+
+  // Load live queue items directly from MongoDB backend API
   const loadQueue = useCallback(
-    async (chamberId?: string, isSilent = false) => {
+    async (chamberId?: string, isSilent = false, dateKeyOverride?: string) => {
       if (!isSilent) setIsSyncing(true);
       try {
         const activeChamberId = chamberId !== undefined ? chamberId : selectedChamberId;
-        const res = await fetchDoctorQueue(activeChamberId ? { chamberId: activeChamberId } : undefined);
-        if (res && Array.isArray(res.items)) {
-          const mapped = res.items.map((item) =>
-            mapBackendTicketToQueueItem(item, doctorName)
-          );
-          setQueue(mapped);
-          setApiError(null);
+        const targetDateKey = dateKeyOverride !== undefined ? dateKeyOverride : selectedDateKey;
 
-          // Sync station counter tickets with currently serving patient
-          setCounters((prevCounters) =>
-            prevCounters.map((c) => {
-              const servingItem = mapped.find((q) => q.status === "Serving");
-              const servedCount = mapped.filter((q) => q.status === "Completed").length;
-              return {
-                ...c,
-                currentTicket: servingItem?.ticketNumber,
-                totalServedToday: servedCount,
-              };
-            })
-          );
-        }
+        const [res, aptRes] = await Promise.all([
+          fetchDoctorQueue(activeChamberId ? { chamberId: activeChamberId, dateKey: targetDateKey } : { dateKey: targetDateKey }).catch(() => null),
+          fetchDoctorPortalAppointments(activeChamberId ? { chamberId: activeChamberId, appointmentDate: targetDateKey } : { appointmentDate: targetDateKey }).catch(() => null),
+        ]);
+
+        const ticketItems = res && Array.isArray(res.items)
+          ? res.items.map((item) => mapBackendTicketToQueueItem(item, doctorName))
+          : [];
+
+        // Check if there are appointments that aren't already represented in ticketItems
+        const existingTicketAptIds = new Set(
+          (res?.items || []).map((t) => t.appointmentId).filter(Boolean)
+        );
+        const existingTicketNumbers = new Set(ticketItems.map((t) => t.ticketNumber));
+
+        const aptItems: QueueItem[] = (aptRes && Array.isArray(aptRes.items) ? aptRes.items : [])
+          .filter((apt) => !existingTicketAptIds.has(apt.id) && !existingTicketNumbers.has(apt.bookingNumberDisplay || ""))
+          // CRITICAL: Ensure appointments from other dates cannot leak into the selected date's queue
+          .filter((apt) => !targetDateKey || apt.appointmentDate === targetDateKey)
+          .map((apt) => ({
+            id: apt.id,
+            ticketNumber: apt.bookingNumberDisplay || `#${String(apt.bookingNumber || 1).padStart(2, "0")}`,
+            clientName: apt.patientName,
+            clientAvatar: "",
+            service: apt.service || "General Consultation",
+            specialist: doctorName,
+            counterName: apt.chamberName || "Main Chamber",
+            checkInTime: apt.appointmentTime || (apt.createdAt ? new Date(apt.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) : "—"),
+            estWaitMinutes: 5,
+            status: apt.status === "COMPLETED" ? "Completed" : (apt.status === "CANCELLED" || (apt.status as string) === "SKIPPED") ? "Skipped" : apt.status === "IN_CONSULTATION" ? "Serving" : "Waiting",
+            priority: "Standard",
+            channel: "Online Booking",
+            notes: `Online Booking Date: ${apt.appointmentDate ? formatIsoToDDMMYYYY(apt.appointmentDate) : ""}`,
+            patientPhone: apt.patientPhone,
+            patientId: apt.bookingNumberDisplay || `#APT-${apt.id.slice(-5)}`,
+          }));
+
+        const mapped = [...ticketItems, ...aptItems];
+        mapped.sort((a, b) => {
+          const numA = parseInt(a.ticketNumber.replace(/\D/g, ""), 10) || 0;
+          const numB = parseInt(b.ticketNumber.replace(/\D/g, ""), 10) || 0;
+          return numA - numB;
+        });
+        setQueue(mapped);
+        setApiError(null);
+
+        // Sync station counter tickets with currently serving patient
+        setCounters((prevCounters) =>
+          prevCounters.map((c) => {
+            const servingItem = mapped.find((q) => q.status === "Serving");
+            const servedCount = mapped.filter((q) => q.status === "Completed").length;
+            return {
+              ...c,
+              currentTicket: servingItem?.ticketNumber,
+              totalServedToday: servedCount,
+            };
+          })
+        );
       } catch (err: any) {
         if (!isSilent) {
           setApiError(err.message || "Failed to load live queue from server.");
@@ -188,14 +329,14 @@ export function LiveQueueView() {
         if (!isSilent) setIsSyncing(false);
       }
     },
-    [selectedChamberId, doctorName]
+    [selectedChamberId, selectedDateKey, doctorName]
   );
 
   useEffect(() => {
-    loadQueue(selectedChamberId, false);
+    loadQueue(selectedChamberId, false, selectedDateKey);
 
     const handleUpdate = () => {
-      loadQueue(selectedChamberId, true);
+      loadQueue(selectedChamberId, true, selectedDateKey);
     };
 
     window.addEventListener("storage", handleUpdate);
@@ -203,7 +344,7 @@ export function LiveQueueView() {
 
     // Cross-device live synchronization polling (~3.5s)
     const interval = setInterval(() => {
-      loadQueue(selectedChamberId, true);
+      loadQueue(selectedChamberId, true, selectedDateKey);
     }, 3500);
 
     return () => {
@@ -213,14 +354,14 @@ export function LiveQueueView() {
     };
   }, [selectedChamberId, loadQueue]);
 
-  const showToast = (msg: string) => {
+  const showToast = (msg = "Done") => {
     setToastMessage(msg);
-    setTimeout(() => setToastMessage(null), 3500);
+    setTimeout(() => setToastMessage(null), 1500);
   };
 
   const handleManualSync = async () => {
     await loadQueue(selectedChamberId, false);
-    showToast("Live OPD Queue synchronized with real-time backend!");
+    showToast("Live Queue synchronized with real-time database!");
   };
 
   // Next ticket calculation
@@ -232,48 +373,189 @@ export function LiveQueueView() {
     return `#${(max + 1).toString().padStart(2, "0")}`;
   }, [queue]);
 
+  // Derived patient states for KPI cards
+  const currentlyServingPatient = useMemo(() => {
+    return queue.find((q) => q.status === "Serving");
+  }, [queue]);
+
+  const nextWaitingPatient = useMemo(() => {
+    return queue.find((q) => q.status === "Waiting" || q.status === "Next");
+  }, [queue]);
+
   // Real KPIs with zero fabricated mock fallback
   const kpis = useMemo(() => {
-    const waiting = queue.filter((q) => q.status === "Waiting").length;
-    const serving = queue.filter((q) => q.status === "Serving").length;
-    const upcomingList = queue.filter((q) => q.status === "Next" || q.status === "Waiting");
-    const nextPatient1 = upcomingList[0];
-    const nextPatient2 = upcomingList[1];
-    const nextPatient3 = upcomingList[2];
+    const waiting = queue.filter((q) => q.status === "Waiting" || q.status === "Next").length;
     const completed = queue.filter((q) => q.status === "Completed").length;
 
     return {
       waiting,
-      serving,
-      next1Ticket: nextPatient1?.ticketNumber || "—",
-      next1Name: nextPatient1?.clientName || "No patient waiting",
-      next2Ticket: nextPatient2?.ticketNumber || "—",
-      next2Name: nextPatient2?.clientName || "No patient waiting",
-      next3Ticket: nextPatient3?.ticketNumber || "—",
-      next3Name: nextPatient3?.clientName || "No patient waiting",
       completed,
-      totalToday: queue.length,
+      servingToken: currentlyServingPatient?.ticketNumber || "—",
+      servingName: currentlyServingPatient?.clientName || "No patient serving",
+      servingService: currentlyServingPatient?.service || "Awaiting call",
+      nextToken: nextWaitingPatient?.ticketNumber || "—",
+      nextName: nextWaitingPatient?.clientName || "No patient waiting",
+      nextService: nextWaitingPatient?.service || "Queue empty",
     };
-  }, [queue]);
+  }, [queue, currentlyServingPatient, nextWaitingPatient]);
 
-  // Backend actions: Call Next & Finish
-  const handleCallNextTicket = async (ticketId: string) => {
+  const [isDayEnding, setIsDayEnding] = useState(false);
+
+  // Day-End Queue Cleanup: Archives completed queue tickets for today/past dates so tomorrow starts clean
+  const handleDayEndCleanup = async () => {
+    if (!window.confirm("End Day's Queue: This will archive today's completed and attended queue tickets so tomorrow starts with a clean queue. All patient records and appointment history are completely preserved. Proceed?")) {
+      return;
+    }
+    setIsDayEnding(true);
     try {
-      await callQueuePatient(ticketId);
-      showToast("Patient called to consultation chamber!");
+      const res = await triggerDoctorQueueDayEnd({
+        chamberId: selectedChamberId || undefined,
+        forceToday: true,
+      });
+      showToast(`Day-End Completed! ${res.archivedCount} tickets archived. All patient records preserved.`);
       await loadQueue(selectedChamberId, true);
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(new Event("global-booking-updated"));
+      }
     } catch (err: any) {
-      showToast(`Error: ${err.message || "Failed to call patient"}`);
+      showToast(err.message || "Day-End cleanup failed.");
+      setApiError(err.message || "Day-End cleanup encountered an error.");
+    } finally {
+      setIsDayEnding(false);
     }
   };
 
-  const handleFinishTicket = async (ticketId: string) => {
+  // 1. Next: Completes currently running patient AND calls next patient into the room
+  const handleNext = async () => {
+    const serving = queue.find((q) => q.status === "Serving");
+    const nextWaiting = queue.find((q) => q.status === "Waiting" || q.status === "Next");
+
+    if (!serving && !nextWaiting) {
+      showToast("Done");
+      return;
+    }
+
+    // Instant optimistic UI update
+    setQueue((prevQueue) => {
+      return prevQueue.map((item) => {
+        if (serving && item.id === serving.id) {
+          return { ...item, status: "Completed" as QueueStatus };
+        }
+        if (nextWaiting && item.id === nextWaiting.id) {
+          return { ...item, status: "Serving" as QueueStatus };
+        }
+        return item;
+      });
+    });
+
+    // Small clean "Done" popup
+    showToast("Done");
+
     try {
-      await finishQueuePatient(ticketId);
-      showToast("Consultation marked Completed.");
-      await loadQueue(selectedChamberId, true);
+      if (serving) {
+        await finishQueuePatient(serving.id);
+      }
+      if (nextWaiting) {
+        await callQueuePatient(nextWaiting.id);
+      }
+      showToast("Consultation Completed & Patient Synced!");
+      setApiError(null);
     } catch (err: any) {
-      showToast(`Error: ${err.message || "Failed to finish consultation"}`);
+      console.warn("Queue transition:", err);
+      const errMsg = err.message || "Failed to complete queue ticket.";
+      setApiError(errMsg);
+      showToast(`Error: ${errMsg}`);
+    } finally {
+      await loadQueue(selectedChamberId, true);
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(new Event("global-booking-updated"));
+      }
+    }
+  };
+
+  // 2. Skip: Skips running patient (if absent) AND calls next patient into the room
+  const handleSkip = async () => {
+    const serving = queue.find((q) => q.status === "Serving");
+    const waitingList = queue.filter((q) => q.status === "Waiting" || q.status === "Next");
+    const patientToSkip = serving || waitingList[0];
+
+    if (!patientToSkip) {
+      showToast("No active patient to skip.");
+      return;
+    }
+
+    const patientToCall = serving ? waitingList[0] : waitingList[1];
+
+    try {
+      await skipQueuePatient(patientToSkip.id);
+      if (patientToCall) {
+        await callQueuePatient(patientToCall.id);
+      }
+      showToast("Patient marked absent/skipped.");
+      setApiError(null);
+    } catch (err: any) {
+      console.warn("Queue skip transition:", err);
+      const errMsg = err.message || "Failed to skip queue ticket.";
+      setApiError(errMsg);
+      showToast(`Error: ${errMsg}`);
+    } finally {
+      await loadQueue(selectedChamberId, true);
+      if (typeof window !== "undefined") {
+        localStorage.setItem("global-booking-last-sync", Date.now().toString());
+        window.dispatchEvent(new Event("global-booking-updated"));
+      }
+    }
+  };
+
+  // 3. Table row action: Call specific patient
+  const handleCallSpecificTicket = async (ticketId: string) => {
+    const serving = queue.find((q) => q.status === "Serving");
+
+    try {
+      if (serving && serving.id !== ticketId) {
+        await finishQueuePatient(serving.id);
+      }
+      await callQueuePatient(ticketId);
+      showToast("Patient Called into Consultation Chamber.");
+      setApiError(null);
+    } catch (err: any) {
+      console.warn("Call specific ticket:", err);
+      const errMsg = err.message || "Failed to call ticket.";
+      setApiError(errMsg);
+      showToast(`Error: ${errMsg}`);
+    } finally {
+      await loadQueue(selectedChamberId, true);
+      if (typeof window !== "undefined") {
+        localStorage.setItem("global-booking-last-sync", Date.now().toString());
+        window.dispatchEvent(new Event("global-booking-updated"));
+      }
+    }
+  };
+
+  // 4. Table row action: Skip specific patient
+  const handleSkipSpecificTicket = async (ticketId: string) => {
+    const serving = queue.find((q) => q.status === "Serving");
+    const isServing = serving?.id === ticketId;
+    const nextWaiting = queue.find((q) => (q.status === "Waiting" || q.status === "Next") && q.id !== ticketId);
+
+    try {
+      await skipQueuePatient(ticketId);
+      if (isServing && nextWaiting) {
+        await callQueuePatient(nextWaiting.id);
+      }
+      showToast("Patient marked absent.");
+      setApiError(null);
+    } catch (err: any) {
+      console.warn("Skip specific ticket:", err);
+      const errMsg = err.message || "Failed to skip ticket.";
+      setApiError(errMsg);
+      showToast(`Error: ${errMsg}`);
+    } finally {
+      await loadQueue(selectedChamberId, true);
+      if (typeof window !== "undefined") {
+        localStorage.setItem("global-booking-last-sync", Date.now().toString());
+        window.dispatchEvent(new Event("global-booking-updated"));
+      }
     }
   };
 
@@ -294,15 +576,20 @@ export function LiveQueueView() {
 
       const matchStatus =
         statusFilter === "All Status"
-          ? item.status !== "Completed"
+          ? true
+          : statusFilter === "In Progress"
+          ? item.status === "Serving"
+          : statusFilter === "Waiting"
+          ? item.status === "Waiting" || item.status === "Next"
+          : statusFilter === "Completed"
+          ? item.status === "Completed"
+          : statusFilter === "Skipped"
+          ? item.status === "Skipped"
           : item.status === statusFilter;
 
-      const matchPriority =
-        priorityFilter === "All Priority" || item.priority === priorityFilter;
-
-      return matchSearch && matchStatus && matchPriority;
+      return matchSearch && matchStatus;
     });
-  }, [queue, searchQuery, statusFilter, priorityFilter]);
+  }, [queue, searchQuery, statusFilter]);
 
   const getAvatarGradient = (idx: number) => {
     const gradients = [
@@ -316,53 +603,72 @@ export function LiveQueueView() {
   };
 
   return (
-    <div className="queue-luxury-page-container">
-      {/* Toast Alert */}
+    <div className="queue-luxury-page-container" style={{ padding: "20px 24px", minHeight: "100vh", background: "#050b14", color: "#ffffff" }}>
+      {/* Small "Done" Luxury Toast Pill */}
       {toastMessage && (
-        <div className="portal-toast">
-          <CheckCircle2 size={16} className="text-gold" />
-          <span>{toastMessage}</span>
+        <div
+          style={{
+            position: "fixed",
+            top: 24,
+            right: 24,
+            zIndex: 99999,
+            background: "linear-gradient(135deg, rgba(16, 185, 129, 0.95) 0%, rgba(5, 150, 105, 0.95) 100%)",
+            color: "#ffffff",
+            padding: "8px 18px",
+            borderRadius: 30,
+            display: "inline-flex",
+            alignItems: "center",
+            gap: 8,
+            boxShadow: "0 6px 25px rgba(16, 185, 129, 0.35)",
+            fontWeight: 800,
+            fontSize: 13,
+            letterSpacing: "0.02em",
+          }}
+        >
+          <CheckCircle2 size={16} color="#ffffff" strokeWidth={2.8} />
+          <span>Done</span>
         </div>
       )}
 
-      {/* TOP HEADER: Live OPD Queue & Chamber Dispatch */}
-      <section className="queue-luxury-header">
-        <div className="queue-header-left">
-          {/* Pure glowing gold ECG heartbeat line */}
-          <svg
-            width="32"
-            height="24"
-            viewBox="0 0 32 24"
-            fill="none"
-            xmlns="http://www.w3.org/2000/svg"
-            className="queue-ecg-pulse-icon"
-          >
-            <path
-              d="M 1 12 L 7 12 L 9 15 L 12 4 L 16 20 L 19 8 L 21 15 L 23 12 L 31 12"
-              stroke="#f5a623"
-              strokeWidth="2.2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              filter="drop-shadow(0 0 4px rgba(245, 166, 35, 0.7))"
-            />
-          </svg>
+      {/* TOP HEADER: Live Queue Management */}
+      <section style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 20, flexWrap: "wrap", gap: 16 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
+          {/* Glowing radio wave broadcast icon */}
+          <div style={{ width: 42, height: 42, borderRadius: 12, background: "rgba(229, 184, 105, 0.12)", border: "1px solid rgba(229, 184, 105, 0.35)", display: "flex", alignItems: "center", justifyContent: "center", color: "#e5b869", boxShadow: "0 0 20px rgba(229, 184, 105, 0.2)" }}>
+            <Radio size={22} className="text-gold" />
+          </div>
           <div>
-            <h1 className="queue-header-title">Live OPD Queue & Chamber Dispatch</h1>
-            <p className="queue-header-subtitle">
-              Real-time patient triage, chamber calling, and waiting lobby monitor.
+            <h1 style={{ margin: 0, fontSize: 20, fontWeight: 800, letterSpacing: "-0.01em", color: "#ffffff" }}>
+              Live Queue Management
+            </h1>
+            <p style={{ margin: "3px 0 0", fontSize: 12.5, color: "#94a3b8" }}>
+              Real-time queue & serial number management • <span style={{ color: "#e5b869", fontWeight: 700 }}>{selectedDateDisplay}</span> ({resolvedChamberTimezone})
             </p>
           </div>
         </div>
 
-        <div className="queue-header-actions">
+        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
           <button
             type="button"
             className="btn-glass-action"
             onClick={handleManualSync}
             title="Sync live queue with latest database records"
+            style={{ display: "inline-flex", alignItems: "center", gap: 7, padding: "8px 16px", borderRadius: 8, background: "rgba(255, 255, 255, 0.04)", border: "1px solid rgba(255, 255, 255, 0.12)", color: "#ffffff", fontSize: 12.5, fontWeight: 600, cursor: "pointer" }}
           >
-            <RefreshCw size={14} className={isSyncing ? "spin-animation" : ""} />
+            <RefreshCw size={13} className={isSyncing ? "spin-animation" : ""} />
             <span>Sync Queue</span>
+          </button>
+
+          <button
+            type="button"
+            className="btn-glass-action"
+            onClick={handleDayEndCleanup}
+            disabled={isDayEnding}
+            title="Archive today's queue tickets at day-end without deleting records"
+            style={{ display: "inline-flex", alignItems: "center", gap: 7, padding: "8px 16px", borderRadius: 8, background: "rgba(239, 68, 68, 0.08)", border: "1px solid rgba(239, 68, 68, 0.25)", color: "#fca5a5", fontSize: 12.5, fontWeight: 600, cursor: "pointer" }}
+          >
+            <CheckCircle2 size={13} className={isDayEnding ? "spin-animation" : ""} />
+            <span>{isDayEnding ? "Ending Day..." : "End Day's Queue"}</span>
           </button>
 
           <button
@@ -370,8 +676,9 @@ export function LiveQueueView() {
             className="btn-glass-action"
             onClick={() => setIsTvDisplayOpen(true)}
             title="Open Waiting Room Live TV Display"
+            style={{ display: "inline-flex", alignItems: "center", gap: 7, padding: "8px 16px", borderRadius: 8, background: "rgba(255, 255, 255, 0.04)", border: "1px solid rgba(255, 255, 255, 0.12)", color: "#ffffff", fontSize: 12.5, fontWeight: 600, cursor: "pointer" }}
           >
-            <Tv size={15} />
+            <Tv size={14} />
             <span>Open TV Waiting Display ↗</span>
           </button>
 
@@ -379,10 +686,11 @@ export function LiveQueueView() {
             type="button"
             className="btn-gold-ticket"
             onClick={() => setIsNewTicketOpen(true)}
-            title="Issue Walk-in OPD Ticket"
+            title="New Patient Appointment"
+            style={{ display: "inline-flex", alignItems: "center", gap: 7, padding: "9px 18px", borderRadius: 8, background: "linear-gradient(135deg, #e5b869 0%, #b88628 100%)", border: "none", color: "#070d18", fontSize: 13, fontWeight: 700, cursor: "pointer", boxShadow: "0 4px 15px rgba(229, 184, 105, 0.3)" }}
           >
-            <Ticket size={16} strokeWidth={2.4} />
-            <span>Issue Walk-in OPD Ticket</span>
+            <Ticket size={15} strokeWidth={2.4} />
+            <span>New Patient Appointment</span>
           </button>
         </div>
       </section>
@@ -426,265 +734,832 @@ export function LiveQueueView() {
         </div>
       )}
 
-      {/* 4 LUXURY KPI METRIC CARDS */}
-      <section className="queue-luxury-kpi-grid" aria-label="Queue KPI Metrics">
-        {/* Card 1: Currently Waiting */}
-        <article className="luxury-kpi-card">
-          <svg className="kpi-chamfer-corner" viewBox="0 0 24 24" fill="none">
-            <path d="M 0 16 L 16 0" stroke="#f59e0b" strokeWidth="2.5" strokeLinecap="round" />
-          </svg>
-          <div className="kpi-icon-bubble cyan">
-            <Users2 size={22} strokeWidth={2} />
+      {/* TOP 4 LUXURY KPI METRIC CARDS (Exact match to ticked cards in reference image) */}
+      <section
+        style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))",
+          gap: 16,
+          marginBottom: 22,
+        }}
+        aria-label="Queue KPI Metrics"
+      >
+        {/* Card 1: Now Serving (Gold Glowing Card) */}
+        <article
+          style={{
+            background: "linear-gradient(145deg, rgba(229, 184, 105, 0.14) 0%, rgba(184, 134, 40, 0.05) 100%)",
+            border: "1px solid rgba(229, 184, 105, 0.4)",
+            borderRadius: 14,
+            padding: "18px 20px",
+            position: "relative",
+            boxShadow: "0 8px 25px rgba(0, 0, 0, 0.4), 0 0 20px rgba(229, 184, 105, 0.08)",
+            display: "flex",
+            alignItems: "center",
+            gap: 16,
+          }}
+        >
+          <div
+            style={{
+              width: 50,
+              height: 50,
+              borderRadius: "50%",
+              background: "linear-gradient(135deg, rgba(229, 184, 105, 0.25) 0%, rgba(184, 134, 40, 0.3) 100%)",
+              border: "1px solid rgba(229, 184, 105, 0.5)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              color: "#e5b869",
+              flexShrink: 0,
+              boxShadow: "0 0 15px rgba(229, 184, 105, 0.3)",
+            }}
+          >
+            <Crown size={22} />
           </div>
-          <div className="kpi-content-box">
-            <span className="kpi-label-text">Currently Waiting</span>
-            <span className="kpi-big-value">{kpis.waiting.toString().padStart(2, "0")}</span>
-            <div className="kpi-bottom-row">
-              <span className="kpi-sub-text cyan">In Waiting Lobby</span>
-              <div className="kpi-live-badge">
-                <span className="kpi-pulse-dot" />
-                <span>Live</span>
-              </div>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <span style={{ fontSize: 11.5, fontWeight: 700, color: "#e5b869", textTransform: "uppercase", letterSpacing: "0.05em" }}>
+              Now Serving
+            </span>
+            <div style={{ fontSize: 28, fontWeight: 900, color: "#ffffff", letterSpacing: "-0.01em", margin: "2px 0" }}>
+              {kpis.servingToken}
+            </div>
+            <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 11.5, color: "#94a3b8", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+              <User size={11} color="#64748b" />
+              <span style={{ fontWeight: 600, color: "#e2e8f0" }}>{kpis.servingName}</span>
+              <span style={{ opacity: 0.5 }}>•</span>
+              <span style={{ fontSize: 11, color: "#64748b" }}>{kpis.servingService}</span>
             </div>
           </div>
         </article>
 
-        {/* Card 2: Next Patient in Line */}
-        <article className="luxury-kpi-card">
-          <svg className="kpi-chamfer-corner" viewBox="0 0 24 24" fill="none">
-            <path d="M 0 16 L 16 0" stroke="#f59e0b" strokeWidth="2.5" strokeLinecap="round" />
-          </svg>
-          <div className="kpi-icon-bubble emerald">
-            <User size={22} strokeWidth={2} />
+        {/* Card 2: Next Serial (Blue Card) */}
+        <article
+          style={{
+            background: "linear-gradient(145deg, #091326 0%, #060c18 100%)",
+            border: "1px solid rgba(56, 189, 248, 0.3)",
+            borderRadius: 14,
+            padding: "18px 20px",
+            position: "relative",
+            boxShadow: "0 8px 25px rgba(0, 0, 0, 0.4)",
+            display: "flex",
+            alignItems: "center",
+            gap: 16,
+          }}
+        >
+          <div
+            style={{
+              width: 50,
+              height: 50,
+              borderRadius: "50%",
+              background: "rgba(56, 189, 248, 0.15)",
+              border: "1px solid rgba(56, 189, 248, 0.4)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              color: "#38bdf8",
+              flexShrink: 0,
+              boxShadow: "0 0 15px rgba(56, 189, 248, 0.25)",
+            }}
+          >
+            <Clock size={22} />
           </div>
-          <div className="kpi-content-box">
-            <span className="kpi-label-text">Next Patient in Line</span>
-            <span className="kpi-big-value">{kpis.next1Ticket}</span>
-            <div className="kpi-bottom-row">
-              <span className="kpi-sub-text slate">{kpis.next1Name}</span>
-              <div className="kpi-live-badge">
-                <span className="kpi-pulse-dot" />
-                <span>Live</span>
-              </div>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <span style={{ fontSize: 11.5, fontWeight: 700, color: "#38bdf8", textTransform: "uppercase", letterSpacing: "0.05em" }}>
+              Next Serial
+            </span>
+            <div style={{ fontSize: 28, fontWeight: 900, color: "#ffffff", letterSpacing: "-0.01em", margin: "2px 0" }}>
+              {kpis.nextToken}
+            </div>
+            <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 11.5, color: "#94a3b8", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+              <User size={11} color="#64748b" />
+              <span style={{ fontWeight: 600, color: "#e2e8f0" }}>{kpis.nextName}</span>
+              <span style={{ opacity: 0.5 }}>•</span>
+              <span style={{ fontSize: 11, color: "#64748b" }}>{kpis.nextService}</span>
             </div>
           </div>
         </article>
 
-        {/* Card 3: Next Patient in Line */}
-        <article className="luxury-kpi-card">
-          <svg className="kpi-chamfer-corner" viewBox="0 0 24 24" fill="none">
-            <path d="M 0 16 L 16 0" stroke="#f59e0b" strokeWidth="2.5" strokeLinecap="round" />
-          </svg>
-          <div className="kpi-icon-bubble blue">
-            <User size={22} strokeWidth={2} />
+        {/* Card 3: Total Waiting (Emerald/Teal Card) */}
+        <article
+          style={{
+            background: "linear-gradient(145deg, #06191c 0%, #030d10 100%)",
+            border: "1px solid rgba(20, 184, 166, 0.3)",
+            borderRadius: 14,
+            padding: "18px 20px",
+            position: "relative",
+            boxShadow: "0 8px 25px rgba(0, 0, 0, 0.4)",
+            display: "flex",
+            alignItems: "center",
+            gap: 16,
+          }}
+        >
+          <div
+            style={{
+              width: 50,
+              height: 50,
+              borderRadius: "50%",
+              background: "rgba(20, 184, 166, 0.15)",
+              border: "1px solid rgba(20, 184, 166, 0.4)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              color: "#14b8a6",
+              flexShrink: 0,
+              boxShadow: "0 0 15px rgba(20, 184, 166, 0.25)",
+            }}
+          >
+            <Users size={22} />
           </div>
-          <div className="kpi-content-box">
-            <span className="kpi-label-text">Next Patient in Line</span>
-            <span className="kpi-big-value">{kpis.next2Ticket}</span>
-            <div className="kpi-bottom-row">
-              <span className="kpi-sub-text slate">{kpis.next2Name}</span>
-              <div className="kpi-live-badge">
-                <span className="kpi-pulse-dot" />
-                <span>Live</span>
-              </div>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <span style={{ fontSize: 11.5, fontWeight: 700, color: "#14b8a6", textTransform: "uppercase", letterSpacing: "0.05em" }}>
+              Total Waiting
+            </span>
+            <div style={{ fontSize: 28, fontWeight: 900, color: "#ffffff", letterSpacing: "-0.01em", margin: "2px 0" }}>
+              {kpis.waiting.toString().padStart(2, "0")}
+            </div>
+            <div style={{ fontSize: 11.5, color: "#94a3b8" }}>
+              Patients in queue
             </div>
           </div>
         </article>
 
-        {/* Card 4: Next Patient in Line */}
-        <article className="luxury-kpi-card">
-          <svg className="kpi-chamfer-corner" viewBox="0 0 24 24" fill="none">
-            <path d="M 0 16 L 16 0" stroke="#f59e0b" strokeWidth="2.5" strokeLinecap="round" />
-          </svg>
-          <div className="kpi-icon-bubble cyan">
-            <User size={22} strokeWidth={2} />
+        {/* Card 4: Completed Today (Cyan/Green Card) */}
+        <article
+          style={{
+            background: "linear-gradient(145deg, #071620 0%, #040d14 100%)",
+            border: "1px solid rgba(16, 185, 129, 0.3)",
+            borderRadius: 14,
+            padding: "18px 20px",
+            position: "relative",
+            boxShadow: "0 8px 25px rgba(0, 0, 0, 0.4)",
+            display: "flex",
+            alignItems: "center",
+            gap: 16,
+          }}
+        >
+          <div
+            style={{
+              width: 50,
+              height: 50,
+              borderRadius: "50%",
+              background: "rgba(16, 185, 129, 0.15)",
+              border: "1px solid rgba(16, 185, 129, 0.4)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              color: "#10b981",
+              flexShrink: 0,
+              boxShadow: "0 0 15px rgba(16, 185, 129, 0.25)",
+            }}
+          >
+            <CheckCircle2 size={22} />
           </div>
-          <div className="kpi-content-box">
-            <span className="kpi-label-text">Next Patient in Line</span>
-            <span className="kpi-big-value">{kpis.next3Ticket}</span>
-            <div className="kpi-bottom-row">
-              <span className="kpi-sub-text slate">{kpis.next3Name}</span>
-              <div className="kpi-live-badge">
-                <span className="kpi-pulse-dot" />
-                <span>Live</span>
-              </div>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <span style={{ fontSize: 11.5, fontWeight: 700, color: "#10b981", textTransform: "uppercase", letterSpacing: "0.05em" }}>
+              Completed Today
+            </span>
+            <div style={{ fontSize: 28, fontWeight: 900, color: "#ffffff", letterSpacing: "-0.01em", margin: "2px 0" }}>
+              {kpis.completed.toString().padStart(2, "0")}
+            </div>
+            <div style={{ fontSize: 11.5, color: "#94a3b8" }}>
+              Services completed
             </div>
           </div>
         </article>
       </section>
 
-      {/* CONTROL FILTER BAR */}
-      <section className="queue-luxury-filter-bar">
-        <div className="filter-search-pill">
-          <Search size={14} color="#64748b" />
-          <input
-            type="text"
-            placeholder="Search ticket #, patient, chamber..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="filter-search-input"
-          />
-        </div>
+      {/* MAIN TWO-COLUMN LAYOUT: TABLE ON LEFT + QUEUE CONTROL PAD ON RIGHT */}
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 340px", gap: 20, alignItems: "start" }}>
+        
+        {/* LEFT COLUMN: LIVE QUEUE TABLE */}
+        <div style={{ background: "#080f1e", border: "1px solid rgba(255, 255, 255, 0.08)", borderRadius: 16, overflow: "hidden", boxShadow: "0 10px 40px rgba(0,0,0,0.5)" }}>
+          {/* Table Card Topbar with Search & Filters */}
+          <div style={{ padding: "16px 20px", borderBottom: "1px solid rgba(255, 255, 255, 0.06)", display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 12 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+              <h2 style={{ margin: 0, fontSize: 16, fontWeight: 700, color: "#ffffff" }}>Live Queue</h2>
+              <div style={{ display: "inline-flex", alignItems: "center", gap: 5, padding: "3px 9px", background: "rgba(16, 185, 129, 0.15)", border: "1px solid rgba(16, 185, 129, 0.3)", borderRadius: 20, color: "#10b981", fontSize: 11, fontWeight: 700 }}>
+                <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#10b981", boxShadow: "0 0 6px #10b981" }} />
+                <span>Live</span>
+              </div>
+            </div>
 
-        <div className="filter-select-pill">
-          <select
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
-            className="filter-native-select"
-          >
-            <option value="All Status">All Status</option>
-            <option value="Serving">In Consultation</option>
-            <option value="Next">Next</option>
-            <option value="Waiting">Waiting</option>
-            <option value="Completed">Completed</option>
-          </select>
-          <ChevronDown size={12} className="filter-arrow" />
-        </div>
+            <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
+              {/* Selected-Date Control (DD-MM-YYYY) */}
+              <div
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  background: "#050913",
+                  border: "1px solid rgba(229, 184, 105, 0.4)",
+                  borderRadius: 8,
+                  padding: "2px 6px",
+                  gap: 4,
+                  boxShadow: "0 0 10px rgba(229, 184, 105, 0.08)",
+                }}
+              >
+                {/* Previous Day Button */}
+                <button
+                  type="button"
+                  onClick={handlePrevDay}
+                  title="Previous Day"
+                  aria-label="Previous Day"
+                  style={{
+                    background: "transparent",
+                    border: "none",
+                    color: "#94a3b8",
+                    cursor: "pointer",
+                    padding: "4px 3px",
+                    display: "flex",
+                    alignItems: "center",
+                    borderRadius: 4,
+                  }}
+                >
+                  <ChevronLeft size={14} />
+                </button>
 
-        <div className="filter-select-pill">
-          <select
-            value={selectedChamberId}
-            onChange={(e) => setSelectedChamberId(e.target.value)}
-            className="filter-native-select"
-          >
-            <option value="">All Chambers ({chambers.length})</option>
-            {chambers.map((ch: any) => (
-              <option key={ch.id} value={ch.id}>
-                {ch.facilityName || ch.name || "Chamber"}
-              </option>
-            ))}
-          </select>
-          <ChevronDown size={12} className="filter-arrow" />
-        </div>
-
-        <div className="filter-live-pill" onClick={handleManualSync}>
-          <span className="live-spark-icon">✦</span>
-          <span>Live Updates</span>
-        </div>
-      </section>
-
-      {/* PATIENT QUEUE PIPELINE TABLE */}
-      <section className="queue-luxury-table-wrap">
-        <table className="queue-luxury-table">
-          <thead>
-            <tr>
-              <th style={{ width: "60px" }}>#</th>
-              <th>PATIENT DETAILS</th>
-              <th>ASSIGNED CHAMBER</th>
-              <th>CHECK-IN</th>
-              <th>QUEUE STATUS</th>
-              <th style={{ textAlign: "right" }}>TRIAGE ACTION</th>
-            </tr>
-          </thead>
-          <tbody>
-            {filteredQueue.length > 0 ? (
-              filteredQueue.map((item, index) => {
-                const isNowServing = item.status === "Serving";
-                return (
-                  <tr
-                    key={item.id}
-                    className={isNowServing ? "row-serving-glow" : ""}
-                  >
-                    <td>
-                      <span className={isNowServing ? "token-pill-gold" : "token-pill-dark"}>
-                        {item.ticketNumber}
-                      </span>
-                    </td>
-                    <td>
-                      <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                        <div
-                          className="patient-initials-bubble"
-                          style={{ background: getAvatarGradient(index) }}
-                        >
-                          {item.clientName.charAt(0)}
-                        </div>
-                        <div style={{ display: "flex", flexDirection: "column" }}>
-                          <span style={{ fontSize: 13, fontWeight: 700, color: "#ffffff" }}>
-                            {item.clientName}
-                          </span>
-                          <span style={{ fontSize: 10.5, color: "#64748b" }}>
-                            {item.patientId || `#OPD-${45870 + index + 2}`}
-                          </span>
-                        </div>
-                      </div>
-                    </td>
-                    <td>
-                      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                        <MapPin size={15} color="#ffffff" style={{ opacity: 0.9, flexShrink: 0 }} />
-                        <div style={{ display: "flex", flexDirection: "column", lineHeight: 1.25 }}>
-                          <span style={{ fontSize: 12.5, color: "#ffffff", fontWeight: 600 }}>
-                            {item.counterName.split("(")[0].trim() || "Main Chamber"}
-                          </span>
-                          {isNowServing && (
-                            <span style={{ color: "#2dd4bf", fontSize: 11, fontWeight: 700 }}>
-                              Active
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                    </td>
-                    <td>
-                      <span style={{ fontSize: 12, color: "#94a3b8" }}>{item.checkInTime}</span>
-                    </td>
-                    <td>
-                      <span
-                        className={
-                          isNowServing
-                            ? "badge-status-consultation"
-                            : "badge-status-waiting"
+                {/* Calendar Icon + Clickable Date Picker trigger */}
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 6,
+                    position: "relative",
+                  }}
+                >
+                  <Calendar size={13} color="#e5b869" />
+                  <input
+                    type="text"
+                    value={displayInputVal}
+                    onChange={handleDisplayInputChange}
+                    placeholder="DD-MM-YYYY"
+                    title="Queue Date (DD-MM-YYYY)"
+                    aria-label="Queue Date"
+                    style={{
+                      width: 95,
+                      background: "transparent",
+                      border: "none",
+                      color: "#ffffff",
+                      fontSize: 12,
+                      fontWeight: 700,
+                      letterSpacing: "0.03em",
+                      outline: "none",
+                      textAlign: "center",
+                      fontFamily: "monospace",
+                    }}
+                  />
+                  {/* Native Hidden Date Picker input to allow clicking calendar */}
+                  <input
+                    ref={dateInputRef}
+                    type="date"
+                    value={selectedDateKey}
+                    onChange={(e) => handleDateSelect(e.target.value)}
+                    style={{
+                      position: "absolute",
+                      opacity: 0,
+                      width: 0,
+                      height: 0,
+                      pointerEvents: "none",
+                    }}
+                    tabIndex={-1}
+                    aria-hidden="true"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (dateInputRef.current) {
+                        if (typeof (dateInputRef.current as any).showPicker === "function") {
+                          (dateInputRef.current as any).showPicker();
+                        } else {
+                          dateInputRef.current.focus();
+                          dateInputRef.current.click();
                         }
+                      }
+                    }}
+                    title="Open Calendar Picker"
+                    aria-label="Open Calendar Picker"
+                    style={{
+                      background: "rgba(229, 184, 105, 0.12)",
+                      border: "1px solid rgba(229, 184, 105, 0.25)",
+                      borderRadius: 4,
+                      color: "#e5b869",
+                      padding: "2px 5px",
+                      fontSize: 10,
+                      cursor: "pointer",
+                      fontWeight: 700,
+                    }}
+                  >
+                    📅
+                  </button>
+                </div>
+
+                {/* Next Day Button */}
+                <button
+                  type="button"
+                  onClick={handleNextDay}
+                  title="Next Day"
+                  aria-label="Next Day"
+                  style={{
+                    background: "transparent",
+                    border: "none",
+                    color: "#94a3b8",
+                    cursor: "pointer",
+                    padding: "4px 3px",
+                    display: "flex",
+                    alignItems: "center",
+                    borderRadius: 4,
+                  }}
+                >
+                  <ChevronRight size={14} />
+                </button>
+
+                {/* Jump to Today Button (when viewing another date) */}
+                {!isSelectedDateToday && (
+                  <button
+                    type="button"
+                    onClick={handleResetToToday}
+                    title={`Jump to Today (${formatIsoToDDMMYYYY(chamberTodayDateKey)})`}
+                    style={{
+                      background: "rgba(16, 185, 129, 0.15)",
+                      border: "1px solid rgba(16, 185, 129, 0.35)",
+                      borderRadius: 5,
+                      color: "#10b981",
+                      padding: "2px 7px",
+                      fontSize: 10.5,
+                      fontWeight: 700,
+                      cursor: "pointer",
+                    }}
+                  >
+                    Today
+                  </button>
+                )}
+              </div>
+
+              {/* Search */}
+              <div style={{ position: "relative", width: 200 }}>
+                <Search size={14} color="#64748b" style={{ position: "absolute", left: 10, top: "50%", transform: "translateY(-50%)" }} />
+                <input
+                  type="text"
+                  placeholder="Search token, name..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  style={{ width: "100%", padding: "7px 10px 7px 30px", background: "#050913", border: "1px solid rgba(255, 255, 255, 0.1)", borderRadius: 8, color: "#ffffff", fontSize: 12, outline: "none", boxSizing: "border-box" }}
+                />
+              </div>
+
+              {/* Chamber Filter */}
+              <select
+                value={selectedChamberId}
+                onChange={(e) => setSelectedChamberId(e.target.value)}
+                style={{ padding: "7px 10px", background: "#050913", border: "1px solid rgba(255, 255, 255, 0.1)", borderRadius: 8, color: "#ffffff", fontSize: 12, outline: "none", cursor: "pointer" }}
+              >
+                <option value="">All Services ({chambers.length})</option>
+                {chambers.map((ch: any) => (
+                  <option key={ch.id} value={ch.id}>
+                    {ch.facilityName || ch.name || "Chamber"}
+                  </option>
+                ))}
+              </select>
+
+              {/* Status Filter */}
+              <select
+                value={statusFilter}
+                onChange={(e) => setStatusFilter(e.target.value)}
+                style={{ padding: "7px 10px", background: "#050913", border: "1px solid rgba(255, 255, 255, 0.1)", borderRadius: 8, color: "#ffffff", fontSize: 12, outline: "none", cursor: "pointer" }}
+              >
+                <option value="All Status">All Status</option>
+                <option value="In Progress">In Progress</option>
+                <option value="Waiting">Waiting</option>
+                <option value="Completed">Completed</option>
+                <option value="Skipped">Skipped (Absent)</option>
+              </select>
+            </div>
+          </div>
+
+          {/* Table Element */}
+          <div style={{ overflowX: "auto" }}>
+            <table style={{ width: "100%", borderCollapse: "collapse", textAlign: "left", fontSize: 12.5 }}>
+              <thead>
+                <tr style={{ background: "rgba(255, 255, 255, 0.02)", borderBottom: "1px solid rgba(255, 255, 255, 0.06)", color: "#64748b", fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.04em" }}>
+                  <th style={{ padding: "12px 16px", width: 40 }}>#</th>
+                  <th style={{ padding: "12px 16px" }}>TOKEN NUMBER</th>
+                  <th style={{ padding: "12px 16px" }}>PATIENT NAME</th>
+                  <th style={{ padding: "12px 16px" }}>QUEUE STATUS</th>
+                  <th style={{ padding: "12px 16px", textAlign: "right" }}>ACTIONS</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filteredQueue.length > 0 ? (
+                  filteredQueue.map((item, index) => {
+                    const isNowServing = item.status === "Serving";
+                    return (
+                      <tr
+                        key={item.id}
+                        style={{
+                          borderBottom: "1px solid rgba(255, 255, 255, 0.04)",
+                          background: isNowServing ? "rgba(229, 184, 105, 0.05)" : "transparent",
+                          transition: "background 0.2s ease",
+                        }}
                       >
-                        {isNowServing ? "In Consultation" : "Waiting"}
-                      </span>
-                    </td>
-                    <td style={{ textAlign: "right" }}>
-                      <div style={{ display: "inline-flex", alignItems: "center", gap: 10 }}>
-                        {isNowServing ? (
-                          <button
-                            type="button"
-                            className="btn-row-finish"
-                            onClick={() => handleFinishTicket(item.id)}
-                            title="Finish consultation"
+                        {/* Index */}
+                        <td style={{ padding: "14px 16px", color: "#64748b" }}>
+                          {index + 1}
+                        </td>
+
+                        {/* Token Pill */}
+                        <td style={{ padding: "14px 16px" }}>
+                          <div style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "4px 10px", borderRadius: 6, background: isNowServing ? "linear-gradient(135deg, rgba(229, 184, 105, 0.2) 0%, rgba(184, 134, 40, 0.2) 100%)" : "rgba(255, 255, 255, 0.05)", border: isNowServing ? "1px solid rgba(229, 184, 105, 0.4)" : "1px solid rgba(255, 255, 255, 0.1)" }}>
+                            <span style={{ fontSize: 13, fontWeight: 800, color: isNowServing ? "#e5b869" : "#ffffff" }}>
+                              {item.ticketNumber}
+                            </span>
+                            {isNowServing && (
+                              <span style={{ fontSize: 9.5, fontWeight: 700, color: "#070d18", background: "#e5b869", padding: "1px 5px", borderRadius: 4 }}>
+                                Now Serving
+                              </span>
+                            )}
+                            {item.status === "Next" && (
+                              <span style={{ fontSize: 9.5, fontWeight: 700, color: "#ffffff", background: "#2563eb", padding: "1px 5px", borderRadius: 4 }}>
+                                Next
+                              </span>
+                            )}
+                          </div>
+                        </td>
+
+                        {/* Patient Name + Avatar */}
+                        <td style={{ padding: "14px 16px" }}>
+                          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                            <div
+                              style={{
+                                width: 32,
+                                height: 32,
+                                borderRadius: "50%",
+                                background: getAvatarGradient(index),
+                                display: "flex",
+                                alignItems: "center",
+                                justifyContent: "center",
+                                color: "#ffffff",
+                                fontWeight: 700,
+                                fontSize: 12,
+                                flexShrink: 0,
+                              }}
+                            >
+                              {item.clientName.charAt(0)}
+                            </div>
+                            <span style={{ fontWeight: 700, color: "#ffffff" }}>
+                              {item.clientName}
+                            </span>
+                          </div>
+                        </td>
+
+                        {/* Status Badge */}
+                        <td style={{ padding: "14px 16px" }}>
+                          <span
+                            style={{
+                              display: "inline-block",
+                              padding: "4px 10px",
+                              borderRadius: 20,
+                              fontSize: 11,
+                              fontWeight: 700,
+                              background: isNowServing
+                                ? "rgba(16, 185, 129, 0.2)"
+                                : item.status === "Completed"
+                                ? "rgba(16, 185, 129, 0.15)"
+                                : item.status === "Skipped"
+                                ? "rgba(239, 68, 68, 0.15)"
+                                : "rgba(37, 99, 235, 0.15)",
+                              color: isNowServing
+                                ? "#10b981"
+                                : item.status === "Completed"
+                                ? "#34d399"
+                                : item.status === "Skipped"
+                                ? "#f87171"
+                                : "#60a5fa",
+                              border: isNowServing
+                                ? "1px solid rgba(16, 185, 129, 0.45)"
+                                : item.status === "Completed"
+                                ? "1px solid rgba(16, 185, 129, 0.35)"
+                                : item.status === "Skipped"
+                                ? "1px solid rgba(239, 68, 68, 0.35)"
+                                : "1px solid rgba(37, 99, 235, 0.35)",
+                            }}
                           >
-                            Finish
-                          </button>
-                        ) : (
-                          <button
-                            type="button"
-                            className="btn-row-call"
-                            onClick={() => handleCallNextTicket(item.id)}
-                            title="Call patient into chamber"
-                          >
-                            <Phone size={13} className="text-gold" />
-                            <span>Call Next</span>
-                          </button>
-                        )}
-                        <button type="button" className="btn-row-dots" aria-label="Row menu">
-                          <MoreVertical size={16} />
-                        </button>
-                      </div>
+                            {isNowServing ? "In Progress" : item.status === "Skipped" ? "Skipped (Absent)" : item.status}
+                          </span>
+                        </td>
+
+                        {/* Actions */}
+                        <td style={{ padding: "14px 16px", textAlign: "right" }}>
+                          <div style={{ display: "inline-flex", alignItems: "center", gap: 8 }}>
+                            {item.status === "Completed" ? (
+                              <div style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
+                                <span
+                                  style={{
+                                    display: "inline-flex",
+                                    alignItems: "center",
+                                    gap: 5,
+                                    padding: "5px 12px",
+                                    borderRadius: 6,
+                                    background: "rgba(16, 185, 129, 0.1)",
+                                    border: "1px solid rgba(16, 185, 129, 0.25)",
+                                    color: "#34d399",
+                                    fontSize: 11.5,
+                                    fontWeight: 700,
+                                  }}
+                                >
+                                  <CheckCircle2 size={13} color="#34d399" />
+                                  Completed
+                                </span>
+                                <button
+                                  type="button"
+                                  onClick={() => handleCallSpecificTicket(item.id)}
+                                  title="Recall patient if required"
+                                  style={{
+                                    padding: "5px 10px",
+                                    borderRadius: 6,
+                                    border: "1px solid rgba(255, 255, 255, 0.12)",
+                                    background: "rgba(255, 255, 255, 0.04)",
+                                    color: "#94a3b8",
+                                    fontSize: 11,
+                                    fontWeight: 600,
+                                    cursor: "pointer",
+                                  }}
+                                >
+                                  Recall
+                                </button>
+                              </div>
+                            ) : item.status === "Skipped" ? (
+                              <div style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
+                                <span
+                                  style={{
+                                    display: "inline-flex",
+                                    alignItems: "center",
+                                    gap: 4,
+                                    padding: "5px 10px",
+                                    borderRadius: 6,
+                                    background: "rgba(239, 68, 68, 0.1)",
+                                    border: "1px solid rgba(239, 68, 68, 0.25)",
+                                    color: "#f87171",
+                                    fontSize: 11.5,
+                                    fontWeight: 700,
+                                  }}
+                                >
+                                  Absent
+                                </span>
+                                <button
+                                  type="button"
+                                  onClick={() => handleCallSpecificTicket(item.id)}
+                                  title="Recall absent patient back to consultation"
+                                  style={{
+                                    padding: "6px 14px",
+                                    borderRadius: 8,
+                                    border: "1px solid rgba(229, 184, 105, 0.4)",
+                                    background: "linear-gradient(135deg, rgba(229, 184, 105, 0.2) 0%, rgba(184, 134, 40, 0.2) 100%)",
+                                    color: "#e5b869",
+                                    fontSize: 12,
+                                    fontWeight: 700,
+                                    cursor: "pointer",
+                                  }}
+                                >
+                                  Recall
+                                </button>
+                              </div>
+                            ) : isNowServing ? (
+                              <>
+                                <button
+                                  type="button"
+                                  onClick={() => handleNext()}
+                                  style={{
+                                    padding: "7px 16px",
+                                    borderRadius: 8,
+                                    border: "none",
+                                    background: "linear-gradient(135deg, #e5b869 0%, #b88628 100%)",
+                                    color: "#070d18",
+                                    fontWeight: 800,
+                                    fontSize: 12,
+                                    cursor: "pointer",
+                                    boxShadow: "0 2px 10px rgba(229, 184, 105, 0.35)",
+                                  }}
+                                >
+                                  Next
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => handleSkipSpecificTicket(item.id)}
+                                  style={{
+                                    padding: "7px 14px",
+                                    borderRadius: 8,
+                                    border: "1px solid rgba(255, 255, 255, 0.15)",
+                                    background: "rgba(255, 255, 255, 0.05)",
+                                    color: "#ffffff",
+                                    fontSize: 12,
+                                    fontWeight: 700,
+                                    cursor: "pointer",
+                                  }}
+                                >
+                                  Skip
+                                </button>
+                              </>
+                            ) : (
+                              <>
+                                <button
+                                  type="button"
+                                  onClick={() => handleCallSpecificTicket(item.id)}
+                                  style={{
+                                    padding: "7px 16px",
+                                    borderRadius: 8,
+                                    border: "none",
+                                    background: "linear-gradient(135deg, #e5b869 0%, #b88628 100%)",
+                                    color: "#070d18",
+                                    fontWeight: 800,
+                                    fontSize: 12,
+                                    cursor: "pointer",
+                                  }}
+                                >
+                                  Call
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => handleSkipSpecificTicket(item.id)}
+                                  style={{
+                                    padding: "7px 14px",
+                                    borderRadius: 8,
+                                    border: "1px solid rgba(255, 255, 255, 0.15)",
+                                    background: "rgba(255, 255, 255, 0.05)",
+                                    color: "#ffffff",
+                                    fontSize: 12,
+                                    fontWeight: 700,
+                                    cursor: "pointer",
+                                  }}
+                                >
+                                  Skip
+                                </button>
+                              </>
+                            )}
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })
+                ) : (
+                  <tr>
+                    <td colSpan={5} style={{ textAlign: "center", padding: "48px 20px", color: "#94a3b8" }}>
+                      <Users2 size={32} color="#e5b869" style={{ margin: "0 auto 10px", opacity: 0.6 }} />
+                      <p style={{ margin: "0 0 4px", fontSize: 14, fontWeight: 700, color: "#ffffff" }}>
+                        {queue.length === 0 ? "No Patients in Live Queue" : "No patients matching filter."}
+                      </p>
+                      <p style={{ margin: 0, fontSize: 12, color: "#64748b" }}>
+                        {queue.length === 0
+                          ? "Click 'Next' or 'Check In' on the Queue Control panel to issue an OPD ticket."
+                          : "Try adjusting your search query or status filter."}
+                      </p>
                     </td>
                   </tr>
-                );
-              })
-            ) : (
-              <tr>
-                <td colSpan={6} style={{ textAlign: "center", padding: "48px 20px", color: "#94a3b8" }}>
-                  <Users2 size={32} color="#e5b869" style={{ margin: "0 auto 10px", opacity: 0.6 }} />
-                  <p style={{ margin: "0 0 4px", fontSize: 13.5, fontWeight: 700, color: "#ffffff" }}>
-                    {queue.length === 0 ? "No Patients in Live Queue" : "No patients matching filter."}
-                  </p>
-                  <p style={{ margin: 0, fontSize: 11.5, color: "#64748b" }}>
-                    {queue.length === 0
-                      ? "Issue a walk-in OPD ticket above to begin serving."
-                      : "Try adjusting your search query or status filter."}
-                  </p>
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
-      </section>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        {/* RIGHT COLUMN: QUEUE CONTROL PANEL (Circled in user reference image) */}
+        <aside
+          style={{
+            background: "linear-gradient(155deg, #091224 0%, #060c16 100%)",
+            border: "1px solid rgba(229, 184, 105, 0.35)",
+            borderRadius: 16,
+            padding: "20px 18px",
+            boxShadow: "0 10px 40px rgba(0,0,0,0.6), 0 0 25px rgba(229, 184, 105, 0.08)",
+          }}
+        >
+          {/* Panel Header */}
+          <div style={{ display: "flex", alignItems: "center", gap: 10, paddingBottom: 16, marginBottom: 16, borderBottom: "1px solid rgba(255, 255, 255, 0.08)" }}>
+            <Sliders size={18} color="#e5b869" />
+            <h2 style={{ margin: 0, fontSize: 16, fontWeight: 800, color: "#ffffff", letterSpacing: "-0.01em" }}>
+              Queue Control
+            </h2>
+          </div>
+          {/* Queue Control: KEEP ONLY NEXT & SKIP */}
+          <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+            {/* 1. Next (Primary Gold Luxury Card) */}
+            <button
+              type="button"
+              onClick={handleNext}
+              style={{
+                background: "linear-gradient(135deg, rgba(229, 184, 105, 0.28) 0%, rgba(184, 134, 40, 0.2) 100%)",
+                border: "1.5px solid rgba(229, 184, 105, 0.55)",
+                borderRadius: 14,
+                padding: "20px 18px",
+                display: "flex",
+                alignItems: "center",
+                gap: 16,
+                cursor: "pointer",
+                boxShadow: "0 6px 20px rgba(229, 184, 105, 0.25)",
+                transition: "all 0.2s ease",
+                textAlign: "left",
+                width: "100%",
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.transform = "translateY(-2px)";
+                e.currentTarget.style.boxShadow = "0 8px 25px rgba(229, 184, 105, 0.4)";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.transform = "none";
+                e.currentTarget.style.boxShadow = "0 6px 20px rgba(229, 184, 105, 0.25)";
+              }}
+            >
+              <div
+                style={{
+                  width: 50,
+                  height: 50,
+                  borderRadius: 12,
+                  background: "linear-gradient(135deg, rgba(229, 184, 105, 0.35) 0%, rgba(184, 134, 40, 0.45) 100%)",
+                  border: "1.5px solid rgba(229, 184, 105, 0.65)",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  flexShrink: 0,
+                  boxShadow: "0 0 15px rgba(229, 184, 105, 0.3)",
+                }}
+              >
+                <Users size={26} color="#f5c270" />
+              </div>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                  <span style={{ fontSize: 17, fontWeight: 900, color: "#ffffff", letterSpacing: "0.01em" }}>
+                    Next
+                  </span>
+                  <span
+                    style={{
+                      background: "rgba(229, 184, 105, 0.2)",
+                      border: "1px solid rgba(229, 184, 105, 0.4)",
+                      color: "#f5c270",
+                      fontSize: 10,
+                      fontWeight: 800,
+                      padding: "2px 8px",
+                      borderRadius: 10,
+                      textTransform: "uppercase",
+                    }}
+                  >
+                    Primary
+                  </span>
+                </div>
+                <p style={{ margin: "4px 0 0", fontSize: 12.5, color: "#f3c87a", lineHeight: 1.35 }}>
+                  Complete running patient &amp; call next into chamber
+                </p>
+              </div>
+            </button>
+
+            {/* 2. Skip (Secondary Luxury Card) */}
+            <button
+              type="button"
+              onClick={handleSkip}
+              style={{
+                background: "rgba(255, 255, 255, 0.04)",
+                border: "1.5px solid rgba(255, 255, 255, 0.15)",
+                borderRadius: 14,
+                padding: "20px 18px",
+                display: "flex",
+                alignItems: "center",
+                gap: 16,
+                cursor: "pointer",
+                transition: "all 0.2s ease",
+                textAlign: "left",
+                width: "100%",
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.transform = "translateY(-2px)";
+                e.currentTarget.style.borderColor = "rgba(255, 255, 255, 0.35)";
+                e.currentTarget.style.background = "rgba(255, 255, 255, 0.07)";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.transform = "none";
+                e.currentTarget.style.borderColor = "rgba(255, 255, 255, 0.15)";
+                e.currentTarget.style.background = "rgba(255, 255, 255, 0.04)";
+              }}
+            >
+              <div
+                style={{
+                  width: 50,
+                  height: 50,
+                  borderRadius: 12,
+                  background: "rgba(255, 255, 255, 0.06)",
+                  border: "1.5px solid rgba(255, 255, 255, 0.15)",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  flexShrink: 0,
+                }}
+              >
+                <SkipForward size={26} color="#94a3b8" />
+              </div>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <span style={{ fontSize: 17, fontWeight: 900, color: "#ffffff" }}>Skip</span>
+                <p style={{ margin: "4px 0 0", fontSize: 12.5, color: "#94a3b8", lineHeight: 1.35 }}>
+                  Skip absent patient &amp; call next into chamber
+                </p>
+              </div>
+            </button>
+          </div>
+        </aside>
+
+      </div>
 
       {/* NEW TICKET MODAL */}
       <NewTicketModal

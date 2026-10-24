@@ -6,6 +6,9 @@ import {
   getDoctorQueueTickets,
   callQueueTicket,
   finishQueueTicket,
+  skipQueueTicket,
+  noShowQueueTicket,
+  archiveDoctorQueueDayEnd,
   QueueServiceError,
 } from "./queue.service.js";
 import type { CreateQueueTicketBody, QueueQuery } from "./queue.types.js";
@@ -259,6 +262,123 @@ export async function registerDoctorQueueRoutes(app: FastifyInstance): Promise<v
           statusCode: 200,
           success: true,
           ticket,
+        });
+      } catch (err: any) {
+        if (err instanceof QueueServiceError) {
+          return reply.status(err.statusCode).send({
+            statusCode: err.statusCode,
+            error: err.code,
+            message: err.message,
+          });
+        }
+        throw err;
+      }
+    },
+  );
+
+  /**
+   * PATCH /api/v1/portal/doctor/queue/tickets/:id/skip
+   * Marks a ticket as skipped.
+   */
+  app.patch<{ Params: { id: string } }>(
+    "/api/v1/portal/doctor/queue/tickets/:id/skip",
+    {
+      preHandler: [authenticateAdmin],
+    },
+    async (request: FastifyRequest<{ Params: { id: string } }>, reply: FastifyReply) => {
+      const doctor = await resolveAuthenticatedDoctor(request, reply);
+      if (!doctor) return;
+
+      const { id } = request.params;
+
+      try {
+        const ticket = await skipQueueTicket(doctor.doctorId, id);
+        return reply.status(200).send({
+          statusCode: 200,
+          success: true,
+          ticket,
+        });
+      } catch (err: any) {
+        if (err instanceof QueueServiceError) {
+          return reply.status(err.statusCode).send({
+            statusCode: err.statusCode,
+            error: err.code,
+            message: err.message,
+          });
+        }
+        throw err;
+      }
+    },
+  );
+
+  /**
+   * PATCH /api/v1/portal/doctor/queue/tickets/:id/noshow
+   * Marks a ticket as no-show.
+   */
+  app.patch<{ Params: { id: string } }>(
+    "/api/v1/portal/doctor/queue/tickets/:id/noshow",
+    {
+      preHandler: [authenticateAdmin],
+    },
+    async (request: FastifyRequest<{ Params: { id: string } }>, reply: FastifyReply) => {
+      const doctor = await resolveAuthenticatedDoctor(request, reply);
+      if (!doctor) return;
+
+      const { id } = request.params;
+
+      try {
+        const ticket = await noShowQueueTicket(doctor.doctorId, id);
+        return reply.status(200).send({
+          statusCode: 200,
+          success: true,
+          ticket,
+        });
+      } catch (err: any) {
+        if (err instanceof QueueServiceError) {
+          return reply.status(err.statusCode).send({
+            statusCode: err.statusCode,
+            error: err.code,
+            message: err.message,
+          });
+        }
+        throw err;
+      }
+    },
+  );
+
+  /**
+   * POST /api/v1/portal/doctor/queue/day-end
+   * Executes idempotent day-end cleanup for the authenticated doctor.
+   * Archives tickets for past dates or specified date without deleting any records.
+   */
+  app.post<{
+    Body: { chamberId?: string; targetDateKey?: string; forceToday?: boolean };
+  }>(
+    "/api/v1/portal/doctor/queue/day-end",
+    {
+      preHandler: [authenticateAdmin],
+    },
+    async (
+      request: FastifyRequest<{
+        Body: { chamberId?: string; targetDateKey?: string; forceToday?: boolean };
+      }>,
+      reply: FastifyReply,
+    ) => {
+      const doctor = await resolveAuthenticatedDoctor(request, reply);
+      if (!doctor) return;
+
+      const body = request.body || {};
+
+      try {
+        const result = await archiveDoctorQueueDayEnd(doctor.doctorId, {
+          chamberId: body.chamberId,
+          targetDateKey: body.targetDateKey,
+          forceToday: body.forceToday,
+        });
+
+        return reply.status(200).send({
+          statusCode: 200,
+          ...result,
         });
       } catch (err: any) {
         if (err instanceof QueueServiceError) {

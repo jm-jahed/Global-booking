@@ -58,10 +58,11 @@ export function DoctorQrModal({ isOpen, onClose, initialProfile }: DoctorQrModal
   if (!isOpen) return null;
 
   // Determine correct public frontend origin dynamically from runtime browser origin
-  const origin =
+  const rawOrigin =
     typeof window !== "undefined"
       ? window.location.origin
-      : (process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000");
+      : (process.env.NEXT_PUBLIC_APP_URL || (process.env.NODE_ENV === "production" ? "https://booking.webstudioae.com" : "http://localhost:3000"));
+  const origin = rawOrigin.replace(/\/+$/, "");
 
   const storedUser = typeof window !== "undefined" ? getStoredPortalUser() : null;
   const isPublished = profile ? profile.isPublished === true : true;

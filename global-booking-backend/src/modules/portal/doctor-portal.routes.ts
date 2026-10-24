@@ -107,8 +107,19 @@ export async function registerDoctorPortalRoutes(app: FastifyInstance): Promise<
         });
       }
 
+      if (!session.adminId || typeof session.adminId !== "string" || !session.adminId.trim()) {
+        return reply.status(401).send({
+          statusCode: 401,
+          error: "Unauthorized",
+          message: "Authentication required to access doctor profile.",
+        });
+      }
+
+      const cleanAdminId = session.adminId.trim();
       const docCol = mongoAdapter.getDoctorCollection();
-      const doctor = await docCol.findOne({ id: session.adminId });
+      const doctor = await docCol.findOne({
+        $or: [{ id: cleanAdminId }, { doctorId: cleanAdminId }],
+      });
 
       if (!doctor) {
         return reply.status(404).send({
@@ -177,8 +188,19 @@ export async function registerDoctorPortalRoutes(app: FastifyInstance): Promise<
         });
       }
 
+      if (!session.adminId || typeof session.adminId !== "string" || !session.adminId.trim()) {
+        return reply.status(401).send({
+          statusCode: 401,
+          error: "Unauthorized",
+          message: "Authentication required.",
+        });
+      }
+
+      const cleanAdminId = session.adminId.trim();
       const docCol = mongoAdapter.getDoctorCollection();
-      const currentDoctor = await docCol.findOne({ id: session.adminId });
+      const currentDoctor = await docCol.findOne({
+        $or: [{ id: cleanAdminId }, { doctorId: cleanAdminId }],
+      });
 
       if (!currentDoctor) {
         return reply.status(404).send({
@@ -317,8 +339,9 @@ export async function registerDoctorPortalRoutes(app: FastifyInstance): Promise<
         }
 
         for (const ch of body.chambers) {
-          if (ch.timezone !== undefined && ch.timezone !== null && ch.timezone !== "") {
-            if (!isValidIanaTimezone(ch.timezone)) {
+          if (ch.timezone !== undefined && ch.timezone !== null && String(ch.timezone).trim() !== "") {
+            const trimmedTz = String(ch.timezone).trim();
+            if (!isValidIanaTimezone(trimmedTz)) {
               return reply.status(400).send({
                 statusCode: 400,
                 error: "Bad Request",
@@ -328,16 +351,21 @@ export async function registerDoctorPortalRoutes(app: FastifyInstance): Promise<
           }
         }
 
-        const cleanedChambers: DoctorChamberDetail[] = body.chambers.map((ch, idx) => ({
-          id: String(ch.id || `CH-${idx + 1}`).trim(),
-          facilityName: String(ch.facilityName || "").trim().slice(0, 100),
-          city: String(ch.city || "").trim().slice(0, 50),
-          address: ch.address ? String(ch.address).trim().slice(0, 200) : undefined,
-          roomNumber: ch.roomNumber ? String(ch.roomNumber).trim().slice(0, 40) : undefined,
-          visitingSchedule: ch.visitingSchedule ? String(ch.visitingSchedule).trim().slice(0, 120) : undefined,
-          contactPhone: ch.contactPhone ? String(ch.contactPhone).trim().slice(0, 30) : undefined,
-          timezone: ch.timezone ? String(ch.timezone).trim() : undefined,
-        })).filter((ch) => ch.facilityName.length > 0);
+        const cleanedChambers: DoctorChamberDetail[] = body.chambers.map((ch, idx) => {
+          const existingChamber = currentDoctor.chambers?.find((c) => c.id === ch.id);
+          const resolvedTimezone =
+            (ch.timezone && String(ch.timezone).trim()) || existingChamber?.timezone || undefined;
+          return {
+            id: String(ch.id || `CH-${idx + 1}`).trim(),
+            facilityName: String(ch.facilityName || "").trim().slice(0, 100),
+            city: String(ch.city || "").trim().slice(0, 50),
+            address: ch.address ? String(ch.address).trim().slice(0, 200) : undefined,
+            roomNumber: ch.roomNumber ? String(ch.roomNumber).trim().slice(0, 40) : undefined,
+            visitingSchedule: ch.visitingSchedule ? String(ch.visitingSchedule).trim().slice(0, 120) : undefined,
+            contactPhone: ch.contactPhone ? String(ch.contactPhone).trim().slice(0, 30) : undefined,
+            timezone: resolvedTimezone,
+          };
+        }).filter((ch) => ch.facilityName.length > 0);
 
         updates.chambers = cleanedChambers;
       }
@@ -360,29 +388,60 @@ export async function registerDoctorPortalRoutes(app: FastifyInstance): Promise<
       // 11. Slug validation & collision detection
       if (body.slug !== undefined) {
         const candidateSlug = String(body.slug).trim().toLowerCase();
-        if (!isValidDoctorSlug(candidateSlug)) {
-          return reply.status(400).send({
-            statusCode: 400,
-            error: "Bad Request",
-            message: "Doctor slug must contain only lowercase alphanumeric characters and hyphens (2-80 chars).",
+        if (candidateSlug.length > 0) {
+          if (!isValidDoctorSlug(candidateSlug)) {
+            return reply.status(400).send({
+              statusCode: 400,
+              error: "Bad Request",
+              message: "Doctor slug must contain only lowercase alphanumeric characters and hyphens (2-80 chars).",
+            });
+          }
+
+          // Check if another doctor already holds this slug
+          const collision = await docCol.findOne({
+            slug: candidateSlug,
+            id: { $ne: currentDoctor.id },
           });
-        }
 
-        // Check if another doctor already holds this slug
-        const collision = await docCol.findOne({
-          slug: candidateSlug,
-          id: { $ne: currentDoctor.id },
-        });
+          if (collision) {
+            return reply.status(409).send({
+              statusCode: 409,
+              error: "Conflict",
+              message: `Public URL slug '${candidateSlug}' is already taken by another practitioner.`,
+            });
+          }
 
-        if (collision) {
-          return reply.status(409).send({
-            statusCode: 409,
-            error: "Conflict",
-            message: `Public URL slug '${candidateSlug}' is already taken by another practitioner.`,
+          updates.slug = candidateSlug;
+        } else {
+          // If explicitly empty, generate safe default slug from full name and doctor identifier
+          const fallbackSlug = generateSafeDoctorSlug(
+            updates.fullName || currentDoctor.fullName,
+            currentDoctor.doctorId || currentDoctor.id || "",
+          );
+
+          if (!isValidDoctorSlug(fallbackSlug)) {
+            return reply.status(400).send({
+              statusCode: 400,
+              error: "Bad Request",
+              message: "Doctor slug cannot be empty and a safe fallback slug could not be generated.",
+            });
+          }
+
+          const collision = await docCol.findOne({
+            slug: fallbackSlug,
+            id: { $ne: currentDoctor.id },
           });
-        }
 
-        updates.slug = candidateSlug;
+          if (collision) {
+            return reply.status(409).send({
+              statusCode: 409,
+              error: "Conflict",
+              message: `Generated fallback slug '${fallbackSlug}' is already taken by another practitioner.`,
+            });
+          }
+
+          updates.slug = fallbackSlug;
+        }
       }
 
       // 12. Visibility toggle (isPublished)
@@ -534,7 +593,33 @@ export async function registerDoctorPortalRoutes(app: FastifyInstance): Promise<
 
       // Ensure slug is set if it was never stored before
       if (!currentDoctor.slug && !updates.slug) {
-        updates.slug = generateSafeDoctorSlug(updates.fullName || currentDoctor.fullName, currentDoctor.doctorId);
+        const generatedSlug = generateSafeDoctorSlug(
+          updates.fullName || currentDoctor.fullName,
+          currentDoctor.doctorId || currentDoctor.id || "",
+        );
+
+        if (!isValidDoctorSlug(generatedSlug)) {
+          return reply.status(400).send({
+            statusCode: 400,
+            error: "Bad Request",
+            message: "Doctor profile requires a valid URL slug, but none could be safely generated.",
+          });
+        }
+
+        const collision = await docCol.findOne({
+          slug: generatedSlug,
+          id: { $ne: currentDoctor.id },
+        });
+
+        if (collision) {
+          return reply.status(409).send({
+            statusCode: 409,
+            error: "Conflict",
+            message: `Generated default slug '${generatedSlug}' is already taken by another practitioner.`,
+          });
+        }
+
+        updates.slug = generatedSlug;
       }
 
       // Persist to MongoDB

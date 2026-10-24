@@ -123,8 +123,16 @@ test("GET and PATCH /api/v1/portal/doctor/profile enforces ownership and updates
   mongoAdapter.isConnected = () => true;
   (mongoAdapter as any).getDoctorCollection = () => ({
     findOne: async (query: any) => {
-      if (query.id === storedDoctor.id) {
+      if (query.id === storedDoctor.id || query.doctorId === storedDoctor.doctorId) {
         return { ...storedDoctor };
+      }
+      if (Array.isArray(query.$or)) {
+        const matches = query.$or.some(
+          (clause: any) =>
+            (clause.id && clause.id === storedDoctor.id) ||
+            (clause.doctorId && clause.doctorId === storedDoctor.doctorId),
+        );
+        if (matches) return { ...storedDoctor };
       }
       if (query.slug && query.slug === storedDoctor.slug && query.id?.$ne !== storedDoctor.id) {
         return { ...storedDoctor };
@@ -308,8 +316,17 @@ test("MULTI-DOCTOR SESSION ISOLATION: Doctor A and Doctor B receive strictly iso
   mongoAdapter.isConnected = () => true;
   (mongoAdapter as any).getDoctorCollection = () => ({
     findOne: async (query: any) => {
-      if (query.id === "ACC-DOC-AAA") return { ...doctorA };
-      if (query.id === "ACC-DOC-BBB") return { ...doctorB };
+      const matchDoc = (doc: DoctorRecord) => {
+        if (query.id === doc.id || query.doctorId === doc.doctorId) return true;
+        if (Array.isArray(query.$or)) {
+          return query.$or.some(
+            (c: any) => (c.id && c.id === doc.id) || (c.doctorId && c.doctorId === doc.doctorId),
+          );
+        }
+        return false;
+      };
+      if (matchDoc(doctorA)) return { ...doctorA };
+      if (matchDoc(doctorB)) return { ...doctorB };
       return null;
     },
     updateOne: async (_filter: any, _update: any) => {
@@ -397,3 +414,513 @@ test("MULTI-DOCTOR SESSION ISOLATION: Doctor A and Doctor B receive strictly iso
     mongoAdapter.getDoctorCollection = originalGetDoctorCollection;
   }
 });
+
+/* =========================================================================
+   4. DOCTOR PROFILE PERSISTENCE & DATA-LOSS PROTECTION REGRESSION TESTS
+   ========================================================================= */
+
+test("REGRESSION: Consultation fee of 0 is preserved accurately without defaulting", async () => {
+  const app = buildApp({ nodeEnv: "test" });
+  await app.ready();
+
+  let storedDoctor: DoctorRecord = {
+    id: "ACC-DOC-ZERO",
+    doctorId: "DOC-ZERO",
+    fullName: "Dr. Zero Fee",
+    email: "dr.zero@example.com",
+    phone: "+971500000000",
+    avatar: "https://example.com/avatar.jpg",
+    specialty: "General Medicine",
+    licenseNumber: "LIC-ZERO-000",
+    accountStatus: "ACTIVE",
+    approvedAt: "2026-01-01T00:00:00.000Z",
+    subscriptionId: "SUB-ZERO",
+    assignedPatientCount: 0,
+    totalBookingsCount: 0,
+    chamberLocationsSummary: "Free Clinic",
+    yearsOfExperience: 5,
+    medicalDegrees: ["MBBS"],
+    consultationFee: { amountInFils: 50000, currency: "AED", formatted: "AED 500.00" },
+    slug: "dr-zero-fee",
+    isPublished: true,
+    passwordHash: "hash",
+    isActivated: true,
+    createdAt: "2026-01-01T00:00:00.000Z",
+    updatedAt: "2026-01-01T00:00:00.000Z",
+  };
+
+  const originalIsConnected = mongoAdapter.isConnected.bind(mongoAdapter);
+  const originalGetDoctorCollection = mongoAdapter.getDoctorCollection.bind(mongoAdapter);
+
+  mongoAdapter.isConnected = () => true;
+  (mongoAdapter as any).getDoctorCollection = () => ({
+    findOne: async (query: any) => {
+      if (query.id === storedDoctor.id || query.doctorId === storedDoctor.doctorId) return { ...storedDoctor };
+      if (Array.isArray(query.$or)) {
+        const matches = query.$or.some((c: any) => c.id === storedDoctor.id || c.doctorId === storedDoctor.doctorId);
+        if (matches) return { ...storedDoctor };
+      }
+      return null;
+    },
+    updateOne: async (filter: any, update: any) => {
+      if (filter.id === storedDoctor.id) {
+        storedDoctor = { ...storedDoctor, ...update.$set };
+        return { matchedCount: 1, modifiedCount: 1 };
+      }
+      return { matchedCount: 0, modifiedCount: 0 };
+    },
+  });
+
+  try {
+    const token = app.jwt.sign({
+      adminId: "ACC-DOC-ZERO",
+      email: "dr.zero@example.com",
+      role: "DOCTOR",
+      permissions: ["VIEW_DOCTORS"],
+    });
+
+    // 1. Update consultationFeeAed to 0
+    const patchRes = await app.inject({
+      method: "PATCH",
+      url: "/api/v1/portal/doctor/profile",
+      headers: { authorization: `Bearer ${token}` },
+      payload: { consultationFeeAed: 0 },
+    });
+    assert.equal(patchRes.statusCode, 200);
+    const patchBody = JSON.parse(patchRes.body);
+    assert.equal(patchBody.doctor.consultationFee.amountInFils, 0);
+    assert.equal(patchBody.doctor.consultationFee.formatted, "AED 0.00");
+
+    // 2. Fetch profile and verify 0 remains 0
+    const getRes = await app.inject({
+      method: "GET",
+      url: "/api/v1/portal/doctor/profile",
+      headers: { authorization: `Bearer ${token}` },
+    });
+    assert.equal(getRes.statusCode, 200);
+    const getBody = JSON.parse(getRes.body);
+    assert.equal(getBody.doctor.consultationFee.amountInFils, 0);
+    assert.equal(getBody.doctor.consultationFee.formatted, "AED 0.00");
+  } finally {
+    mongoAdapter.isConnected = originalIsConnected;
+    mongoAdapter.getDoctorCollection = originalGetDoctorCollection;
+  }
+});
+
+test("REGRESSION: Chamber timezone is preserved on edits and invalid timezones are rejected", async () => {
+  const app = buildApp({ nodeEnv: "test" });
+  await app.ready();
+
+  let storedDoctor: DoctorRecord = {
+    id: "ACC-DOC-TZ",
+    doctorId: "DOC-TZ",
+    fullName: "Dr. Timezone Preserved",
+    email: "dr.tz@example.com",
+    phone: "+971501112233",
+    avatar: "https://example.com/avatar.jpg",
+    specialty: "Endocrinology",
+    licenseNumber: "LIC-TZ-100",
+    accountStatus: "ACTIVE",
+    approvedAt: "2026-01-01T00:00:00.000Z",
+    subscriptionId: "SUB-TZ",
+    assignedPatientCount: 1,
+    totalBookingsCount: 1,
+    chamberLocationsSummary: "Dhaka & Dubai clinics",
+    yearsOfExperience: 8,
+    medicalDegrees: ["MBBS"],
+    consultationFee: { amountInFils: 30000, currency: "AED", formatted: "AED 300.00" },
+    slug: "dr-timezone-preserved",
+    isPublished: true,
+    chambers: [
+      {
+        id: "CH-DHAKA",
+        facilityName: "Dhaka Specialized Hospital",
+        city: "Dhaka",
+        visitingSchedule: "Fri - Sat",
+        timezone: "Asia/Dhaka",
+      },
+      {
+        id: "CH-DUBAI",
+        facilityName: "Dubai Healthcare Center",
+        city: "Dubai",
+        visitingSchedule: "Mon - Wed",
+        timezone: "Asia/Dubai",
+      },
+    ],
+    passwordHash: "hash",
+    isActivated: true,
+    createdAt: "2026-01-01T00:00:00.000Z",
+    updatedAt: "2026-01-01T00:00:00.000Z",
+  };
+
+  const originalIsConnected = mongoAdapter.isConnected.bind(mongoAdapter);
+  const originalGetDoctorCollection = mongoAdapter.getDoctorCollection.bind(mongoAdapter);
+
+  mongoAdapter.isConnected = () => true;
+  (mongoAdapter as any).getDoctorCollection = () => ({
+    findOne: async (query: any) => {
+      if (query.id === storedDoctor.id || query.doctorId === storedDoctor.doctorId) return { ...storedDoctor };
+      if (Array.isArray(query.$or)) {
+        const matches = query.$or.some((c: any) => c.id === storedDoctor.id || c.doctorId === storedDoctor.doctorId);
+        if (matches) return { ...storedDoctor };
+      }
+      return null;
+    },
+    updateOne: async (filter: any, update: any) => {
+      if (filter.id === storedDoctor.id) {
+        storedDoctor = { ...storedDoctor, ...update.$set };
+        return { matchedCount: 1, modifiedCount: 1 };
+      }
+      return { matchedCount: 0, modifiedCount: 0 };
+    },
+  });
+
+  try {
+    const token = app.jwt.sign({
+      adminId: "ACC-DOC-TZ",
+      email: "dr.tz@example.com",
+      role: "DOCTOR",
+      permissions: ["VIEW_DOCTORS"],
+    });
+
+    // 1. Edit roomNumber and schedule WITHOUT sending timezone for CH-DHAKA
+    const patchRes = await app.inject({
+      method: "PATCH",
+      url: "/api/v1/portal/doctor/profile",
+      headers: { authorization: `Bearer ${token}` },
+      payload: {
+        chambers: [
+          {
+            id: "CH-DHAKA",
+            facilityName: "Dhaka Specialized Hospital",
+            city: "Dhaka",
+            roomNumber: "Room 501",
+            visitingSchedule: "Updated Schedule",
+            // timezone omitted intentionally
+          },
+          {
+            id: "CH-DUBAI",
+            facilityName: "Dubai Healthcare Center",
+            city: "Dubai",
+            timezone: "Asia/Dubai",
+          },
+        ],
+      },
+    });
+
+    assert.equal(patchRes.statusCode, 200);
+    const patchBody = JSON.parse(patchRes.body);
+    const dhakaChamber = patchBody.doctor.chambers.find((c: any) => c.id === "CH-DHAKA");
+    assert.equal(dhakaChamber.roomNumber, "Room 501");
+    // Verify existing chamber timezone was NOT wiped or replaced with default
+    assert.equal(dhakaChamber.timezone, "Asia/Dhaka");
+
+    // 2. Reject invalid IANA timezone
+    const invalidTzRes = await app.inject({
+      method: "PATCH",
+      url: "/api/v1/portal/doctor/profile",
+      headers: { authorization: `Bearer ${token}` },
+      payload: {
+        chambers: [
+          {
+            id: "CH-DHAKA",
+            facilityName: "Dhaka Specialized Hospital",
+            city: "Dhaka",
+            timezone: "Mars/Invalid_Timezone",
+          },
+        ],
+      },
+    });
+    assert.equal(invalidTzRes.statusCode, 400);
+    const errBody = JSON.parse(invalidTzRes.body);
+    assert.ok(errBody.message.includes("Invalid IANA timezone"));
+  } finally {
+    mongoAdapter.isConnected = originalIsConnected;
+    mongoAdapter.getDoctorCollection = originalGetDoctorCollection;
+  }
+});
+
+test("REGRESSION: Doctor identity resolves accurately with either account id or entity doctorId", async () => {
+  const app = buildApp({ nodeEnv: "test" });
+  await app.ready();
+
+  const storedDoctor: DoctorRecord = {
+    id: "ACC-DOC-DUAL",
+    doctorId: "DOC-DUAL-777",
+    fullName: "Dr. Dual Identity",
+    email: "dr.dual@example.com",
+    phone: "+971509998877",
+    avatar: "https://example.com/avatar.jpg",
+    specialty: "Dermatology",
+    licenseNumber: "LIC-DUAL-777",
+    accountStatus: "ACTIVE",
+    approvedAt: "2026-01-01T00:00:00.000Z",
+    subscriptionId: "SUB-DUAL",
+    assignedPatientCount: 3,
+    totalBookingsCount: 5,
+    chamberLocationsSummary: "Dual Clinic",
+    yearsOfExperience: 7,
+    medicalDegrees: ["MBBS", "DDV"],
+    consultationFee: { amountInFils: 40000, currency: "AED", formatted: "AED 400.00" },
+    slug: "dr-dual-identity",
+    isPublished: true,
+    passwordHash: "hash",
+    isActivated: true,
+    createdAt: "2026-01-01T00:00:00.000Z",
+    updatedAt: "2026-01-01T00:00:00.000Z",
+  };
+
+  const originalIsConnected = mongoAdapter.isConnected.bind(mongoAdapter);
+  const originalGetDoctorCollection = mongoAdapter.getDoctorCollection.bind(mongoAdapter);
+
+  mongoAdapter.isConnected = () => true;
+  (mongoAdapter as any).getDoctorCollection = () => ({
+    findOne: async (query: any) => {
+      if (query.id === storedDoctor.id || query.doctorId === storedDoctor.doctorId) return { ...storedDoctor };
+      if (Array.isArray(query.$or)) {
+        const matches = query.$or.some((c: any) => c.id === storedDoctor.id || c.doctorId === storedDoctor.doctorId);
+        if (matches) return { ...storedDoctor };
+      }
+      return null;
+    },
+    updateOne: async (filter: any, _update: any) => {
+      if (filter.id === storedDoctor.id) {
+        return { matchedCount: 1, modifiedCount: 1 };
+      }
+      return { matchedCount: 0, modifiedCount: 0 };
+    },
+  });
+
+  try {
+    // 1. Session using account id "ACC-DOC-DUAL"
+    const tokenById = app.jwt.sign({
+      adminId: "ACC-DOC-DUAL",
+      email: "dr.dual@example.com",
+      role: "DOCTOR",
+      permissions: ["VIEW_DOCTORS"],
+    });
+
+    const resById = await app.inject({
+      method: "GET",
+      url: "/api/v1/portal/doctor/profile",
+      headers: { authorization: `Bearer ${tokenById}` },
+    });
+    assert.equal(resById.statusCode, 200);
+    const bodyById = JSON.parse(resById.body);
+    assert.equal(bodyById.doctor.fullName, "Dr. Dual Identity");
+    assert.equal(bodyById.doctor.id, "ACC-DOC-DUAL");
+    assert.equal(bodyById.doctor.doctorId, "DOC-DUAL-777");
+
+    // 2. Session using entity doctorId "DOC-DUAL-777"
+    const tokenByDoctorId = app.jwt.sign({
+      adminId: "DOC-DUAL-777",
+      email: "dr.dual@example.com",
+      role: "DOCTOR",
+      permissions: ["VIEW_DOCTORS"],
+    });
+
+    const resByDocId = await app.inject({
+      method: "GET",
+      url: "/api/v1/portal/doctor/profile",
+      headers: { authorization: `Bearer ${tokenByDoctorId}` },
+    });
+    assert.equal(resByDocId.statusCode, 200);
+    const bodyByDocId = JSON.parse(resByDocId.body);
+    assert.equal(bodyByDocId.doctor.fullName, "Dr. Dual Identity");
+    assert.equal(bodyByDocId.doctor.id, "ACC-DOC-DUAL");
+    assert.equal(bodyByDocId.doctor.doctorId, "DOC-DUAL-777");
+  } finally {
+    mongoAdapter.isConnected = originalIsConnected;
+    mongoAdapter.getDoctorCollection = originalGetDoctorCollection;
+  }
+});
+
+test("REGRESSION: Safe slug fallback generation and conflict rejection", async () => {
+  const app = buildApp({ nodeEnv: "test" });
+  await app.ready();
+
+  let storedDoctor: DoctorRecord = {
+    id: "ACC-DOC-SLUG",
+    doctorId: "DOC-SLUG-99",
+    fullName: "Dr. Amina Rahman",
+    email: "dr.amina@example.com",
+    phone: "+971507778899",
+    avatar: "https://example.com/avatar.jpg",
+    specialty: "Pediatrics",
+    licenseNumber: "LIC-SLUG-99",
+    accountStatus: "ACTIVE",
+    approvedAt: "2026-01-01T00:00:00.000Z",
+    subscriptionId: "SUB-SLUG",
+    assignedPatientCount: 2,
+    totalBookingsCount: 4,
+    chamberLocationsSummary: "Pediatric Wing",
+    yearsOfExperience: 9,
+    medicalDegrees: ["MBBS", "FCPS"],
+    consultationFee: { amountInFils: 35000, currency: "AED", formatted: "AED 350.00" },
+    slug: "dr-amina-rahman",
+    isPublished: true,
+    passwordHash: "hash",
+    isActivated: true,
+    createdAt: "2026-01-01T00:00:00.000Z",
+    updatedAt: "2026-01-01T00:00:00.000Z",
+  };
+
+  const otherDoctor: DoctorRecord = {
+    ...storedDoctor,
+    id: "ACC-DOC-OTHER",
+    doctorId: "DOC-OTHER-101",
+    fullName: "Dr. Other Doctor",
+    slug: "already-taken-slug",
+  };
+
+  const originalIsConnected = mongoAdapter.isConnected.bind(mongoAdapter);
+  const originalGetDoctorCollection = mongoAdapter.getDoctorCollection.bind(mongoAdapter);
+
+  mongoAdapter.isConnected = () => true;
+  (mongoAdapter as any).getDoctorCollection = () => ({
+    findOne: async (query: any) => {
+      if (query.id === storedDoctor.id || query.doctorId === storedDoctor.doctorId) return { ...storedDoctor };
+      if (Array.isArray(query.$or)) {
+        const matches = query.$or.some((c: any) => c.id === storedDoctor.id || c.doctorId === storedDoctor.doctorId);
+        if (matches) return { ...storedDoctor };
+      }
+      if (query.slug === "already-taken-slug" && query.id?.$ne === storedDoctor.id) {
+        return { ...otherDoctor };
+      }
+      return null;
+    },
+    updateOne: async (filter: any, update: any) => {
+      if (filter.id === storedDoctor.id) {
+        storedDoctor = { ...storedDoctor, ...update.$set };
+        return { matchedCount: 1, modifiedCount: 1 };
+      }
+      return { matchedCount: 0, modifiedCount: 0 };
+    },
+  });
+
+  try {
+    const token = app.jwt.sign({
+      adminId: "ACC-DOC-SLUG",
+      email: "dr.amina@example.com",
+      role: "DOCTOR",
+      permissions: ["VIEW_DOCTORS"],
+    });
+
+    // 1. Sending an explicitly empty slug generates a safe slug from doctor name
+    const emptySlugRes = await app.inject({
+      method: "PATCH",
+      url: "/api/v1/portal/doctor/profile",
+      headers: { authorization: `Bearer ${token}` },
+      payload: { slug: "" },
+    });
+    assert.equal(emptySlugRes.statusCode, 200);
+    const emptySlugBody = JSON.parse(emptySlugRes.body);
+    assert.equal(emptySlugBody.doctor.slug, "dr-amina-rahman");
+
+    // 2. Attempting to claim an already taken slug returns 409 Conflict
+    const conflictRes = await app.inject({
+      method: "PATCH",
+      url: "/api/v1/portal/doctor/profile",
+      headers: { authorization: `Bearer ${token}` },
+      payload: { slug: "already-taken-slug" },
+    });
+    assert.equal(conflictRes.statusCode, 409);
+    const conflictBody = JSON.parse(conflictRes.body);
+    assert.equal(conflictBody.error, "Conflict");
+  } finally {
+    mongoAdapter.isConnected = originalIsConnected;
+    mongoAdapter.getDoctorCollection = originalGetDoctorCollection;
+  }
+});
+
+test("REGRESSION: Legitimate intentional field clearing succeeds after load", async () => {
+  const app = buildApp({ nodeEnv: "test" });
+  await app.ready();
+
+  let storedDoctor: DoctorRecord = {
+    id: "ACC-DOC-CLEAR",
+    doctorId: "DOC-CLEAR-01",
+    fullName: "Dr. Clear Fields",
+    email: "dr.clear@example.com",
+    phone: "+971501239876",
+    avatar: "https://example.com/avatar.jpg",
+    specialty: "Oncology",
+    customTitle: "Senior Consultant Oncologist",
+    bio: "Detailed bio before clearing.",
+    chamberLocationsSummary: "Main Hospital Wing",
+    licenseNumber: "LIC-CLEAR-01",
+    accountStatus: "ACTIVE",
+    approvedAt: "2026-01-01T00:00:00.000Z",
+    subscriptionId: "SUB-CLEAR",
+    assignedPatientCount: 0,
+    totalBookingsCount: 0,
+    yearsOfExperience: 10,
+    medicalDegrees: ["MBBS"],
+    consultationFee: { amountInFils: 50000, currency: "AED", formatted: "AED 500.00" },
+    slug: "dr-clear-fields",
+    isPublished: true,
+    services: [{ id: "SRV-1", title: "Cancer Screening" }],
+    passwordHash: "hash",
+    isActivated: true,
+    createdAt: "2026-01-01T00:00:00.000Z",
+    updatedAt: "2026-01-01T00:00:00.000Z",
+  };
+
+  const originalIsConnected = mongoAdapter.isConnected.bind(mongoAdapter);
+  const originalGetDoctorCollection = mongoAdapter.getDoctorCollection.bind(mongoAdapter);
+
+  mongoAdapter.isConnected = () => true;
+  (mongoAdapter as any).getDoctorCollection = () => ({
+    findOne: async (query: any) => {
+      if (query.id === storedDoctor.id || query.doctorId === storedDoctor.doctorId) return { ...storedDoctor };
+      if (Array.isArray(query.$or)) {
+        const matches = query.$or.some((c: any) => c.id === storedDoctor.id || c.doctorId === storedDoctor.doctorId);
+        if (matches) return { ...storedDoctor };
+      }
+      return null;
+    },
+    updateOne: async (filter: any, update: any) => {
+      if (filter.id === storedDoctor.id) {
+        storedDoctor = { ...storedDoctor, ...update.$set };
+        return { matchedCount: 1, modifiedCount: 1 };
+      }
+      return { matchedCount: 0, modifiedCount: 0 };
+    },
+  });
+
+  try {
+    const token = app.jwt.sign({
+      adminId: "ACC-DOC-CLEAR",
+      email: "dr.clear@example.com",
+      role: "DOCTOR",
+      permissions: ["VIEW_DOCTORS"],
+    });
+
+    // Intentionally clear bio, customTitle, and chamberLocationsSummary
+    const clearRes = await app.inject({
+      method: "PATCH",
+      url: "/api/v1/portal/doctor/profile",
+      headers: { authorization: `Bearer ${token}` },
+      payload: {
+        bio: "",
+        customTitle: "",
+        chamberLocationsSummary: "",
+        services: [],
+      },
+    });
+
+    assert.equal(clearRes.statusCode, 200);
+    const clearBody = JSON.parse(clearRes.body);
+    assert.equal(clearBody.doctor.bio, "");
+    assert.equal(clearBody.doctor.customTitle, "");
+    assert.equal(clearBody.doctor.chamberLocationsSummary, "");
+    assert.deepEqual(clearBody.doctor.services, []);
+    // Core identity was preserved
+    assert.equal(clearBody.doctor.fullName, "Dr. Clear Fields");
+    assert.equal(clearBody.doctor.specialty, "Oncology");
+  } finally {
+    mongoAdapter.isConnected = originalIsConnected;
+    mongoAdapter.getDoctorCollection = originalGetDoctorCollection;
+  }
+});
+

@@ -8,6 +8,17 @@ export function getApiBaseUrl(): string {
   // 1. Prioritize explicitly configured NEXT_PUBLIC_API_URL
   const configuredUrl = process.env.NEXT_PUBLIC_API_URL?.trim();
   if (configuredUrl) {
+    if (typeof window !== "undefined") {
+      try {
+        const parsed = new URL(configuredUrl);
+        const isConfigLocal = parsed.hostname === "localhost" || parsed.hostname === "127.0.0.1";
+        const isCurrentLocal = window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1";
+        if (isConfigLocal && isCurrentLocal && parsed.hostname !== window.location.hostname) {
+          parsed.hostname = window.location.hostname;
+          return parsed.origin;
+        }
+      } catch {}
+    }
     return configuredUrl.replace(/\/+$/, "");
   }
 
@@ -90,7 +101,7 @@ async function request<T>(endpoint: string, options: RequestInit = {}): Promise<
   const url = `${baseUrl}${endpoint}`;
   const headers = new Headers(options.headers || {});
 
-  if (!headers.has("Content-Type") && !(options.body instanceof FormData)) {
+  if (options.body && !headers.has("Content-Type") && !(options.body instanceof FormData)) {
     headers.set("Content-Type", "application/json");
   }
 
@@ -551,6 +562,7 @@ export interface DoctorChamberDetail {
   roomNumber?: string;
   visitingSchedule?: string;
   contactPhone?: string;
+  timezone?: string;
 }
 
 export interface DoctorServiceItem {

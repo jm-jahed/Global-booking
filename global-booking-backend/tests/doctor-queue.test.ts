@@ -541,3 +541,269 @@ test("Concurrency: 10 parallel ticket creations receive sequential serials witho
   serials.sort((a, b) => a - b);
   assert.deepEqual(serials, [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
 });
+
+/* =========================================================================
+   4. DATE BOUNDARY FILTERING, APPOINTMENT SCOPING & CROSS-DATE ISOLATION TESTS
+   ========================================================================= */
+
+test("GET /api/v1/portal/doctor/queue dateKey filtering guarantees strict date boundaries and cross-date isolation", async () => {
+  const doctor: DoctorRecord = {
+    id: "ACC-DOC-DATE-1",
+    doctorId: "DOC-DATE-1",
+    fullName: "Dr. Date Isolation",
+    email: "date.isolation@example.ae",
+    phone: "+971500000001",
+    avatar: "https://example.com/avatar.jpg",
+    specialty: "Cardiology",
+    licenseNumber: "DHA-DOC-DATE-1",
+    accountStatus: "ACTIVE",
+    approvedAt: "2026-01-01T00:00:00.000Z",
+    subscriptionId: "SUB-DATE-1",
+    assignedPatientCount: 0,
+    totalBookingsCount: 0,
+    chamberLocationsSummary: "Main Chamber",
+    yearsOfExperience: 10,
+    medicalDegrees: ["MBBS", "MD"],
+    consultationFee: { amountInFils: 25000, currency: "AED", formatted: "AED 250.00" },
+    isActivated: true,
+    createdAt: "2026-01-01T00:00:00.000Z",
+    updatedAt: "2026-01-01T00:00:00.000Z",
+    chambers: [
+      {
+        id: "CH-DATE-1",
+        facilityName: "Cardiology Wing",
+        city: "Dubai",
+        timezone: "Asia/Dubai",
+      },
+    ],
+  };
+
+  const app = buildApp({ nodeEnv: "test" });
+  await app.ready();
+
+  const token = app.jwt.sign({
+    adminId: doctor.id,
+    email: doctor.email,
+    role: "DOCTOR",
+    permissions: ["VIEW_DOCTORS"],
+  });
+
+  const ticketsStore = new Map<string, QueueTicketRecord>();
+  const appointmentsStore = new Map<string, any>();
+
+  mongoAdapter.isConnected = () => true;
+
+  (mongoAdapter as any).getDoctorCollection = () => ({
+    findOne: async (q: any) => {
+      if (q.id === doctor.id || q.doctorId === doctor.doctorId) return doctor;
+      return null;
+    },
+  });
+
+  const filterTickets = (q: any) => {
+    let list = Array.from(ticketsStore.values());
+    if (q.doctorId) list = list.filter((t) => t.doctorId === q.doctorId);
+    if (q.chamberId) list = list.filter((t) => t.chamberId === q.chamberId);
+    if (q.dateKey) list = list.filter((t) => t.dateKey === q.dateKey || t.dateKey.replace(/\D/g, "") === q.dateKey.replace(/\D/g, ""));
+    if (q.isArchived && q.isArchived.$ne === true) list = list.filter((t) => !t.isArchived);
+    return list;
+  };
+
+  (mongoAdapter as any).getQueueTicketCollection = () => ({
+    find: (q: any) => ({
+      sort: () => ({
+        toArray: async () => filterTickets(q),
+      }),
+      toArray: async () => filterTickets(q),
+    }),
+    findOne: async (q: any) => {
+      if (q.id) return ticketsStore.get(q.id) || null;
+      return null;
+    },
+    updateOne: async (q: any, u: any) => {
+      const existing = ticketsStore.get(q.id);
+      if (existing) {
+        if (u.$set) Object.assign(existing, u.$set);
+        return { acknowledged: true, modifiedCount: 1 };
+      }
+      if (u.$setOnInsert) {
+        ticketsStore.set(q.id, { ...u.$setOnInsert });
+        return { acknowledged: true, upsertedCount: 1 };
+      }
+      return { acknowledged: true, modifiedCount: 0 };
+    },
+  });
+
+  (mongoAdapter as any).getAppointmentCollection = () => ({
+    find: (q: any) => ({
+      sort: () => ({
+        toArray: async () => {
+          let list = Array.from(appointmentsStore.values());
+          if (q.doctorId) list = list.filter((a) => a.doctorId === q.doctorId);
+          if (q.chamberId) list = list.filter((a) => a.chamberId === q.chamberId);
+          if (q.appointmentDate) list = list.filter((a) => a.appointmentDate === q.appointmentDate);
+          return list;
+        },
+      }),
+      toArray: async () => {
+        let list = Array.from(appointmentsStore.values());
+        if (q.doctorId) list = list.filter((a) => a.doctorId === q.doctorId);
+        if (q.chamberId) list = list.filter((a) => a.chamberId === q.chamberId);
+        if (q.appointmentDate) list = list.filter((a) => a.appointmentDate === q.appointmentDate);
+        return list;
+      },
+    }),
+    updateOne: async (q: any, u: any) => {
+      const apt = appointmentsStore.get(q.id);
+      if (apt && u.$set) Object.assign(apt, u.$set);
+      return { acknowledged: true, modifiedCount: 1 };
+    },
+  });
+
+  // Seed 3 existing tickets across 3 distinct dates: Yesterday, Today, Tomorrow
+  const ticketYesterday: QueueTicketRecord = {
+    id: "TKT-20261023-DOC-DATE-1-CH-DATE-1-001",
+    doctorId: doctor.doctorId,
+    doctorAccountId: doctor.id,
+    chamberId: "CH-DATE-1",
+    chamberName: "Cardiology Wing",
+    chamberTimezone: "Asia/Dubai",
+    dateKey: "2026-10-23",
+    serialIndex: 1,
+    ticketNumber: "#01",
+    patientName: "Yesterday Patient",
+    service: "Followup",
+    priority: "STANDARD",
+    channel: "WALK_IN",
+    status: "COMPLETED",
+    checkInTime: "09:00 AM",
+    createdAt: "2026-10-23T05:00:00.000Z",
+    createdById: "SYSTEM",
+  };
+
+  const ticketToday: QueueTicketRecord = {
+    id: "TKT-20261024-DOC-DATE-1-CH-DATE-1-001",
+    doctorId: doctor.doctorId,
+    doctorAccountId: doctor.id,
+    chamberId: "CH-DATE-1",
+    chamberName: "Cardiology Wing",
+    chamberTimezone: "Asia/Dubai",
+    dateKey: "2026-10-24",
+    serialIndex: 1,
+    ticketNumber: "#01",
+    patientName: "Today Walkin Patient",
+    service: "General Consultation",
+    priority: "STANDARD",
+    channel: "WALK_IN",
+    status: "WAITING",
+    checkInTime: "10:00 AM",
+    createdAt: "2026-10-24T06:00:00.000Z",
+    createdById: "SYSTEM",
+  };
+
+  ticketsStore.set(ticketYesterday.id, ticketYesterday);
+  ticketsStore.set(ticketToday.id, ticketToday);
+
+  // Seed 2 appointments: one for Today (2026-10-24), one for Tomorrow (2026-10-25)
+  const aptToday = {
+    id: "APT-TODAY-001",
+    doctorId: doctor.doctorId,
+    doctorAccountId: doctor.id,
+    chamberId: "CH-DATE-1",
+    chamberName: "Cardiology Wing",
+    chamberTimezone: "Asia/Dubai",
+    appointmentDate: "2026-10-24",
+    appointmentTime: "11:30 AM",
+    patientName: "Today Online Patient",
+    patientPhone: "+971501112233",
+    voucherId: "ID-24102026",
+    bookingNumber: 2,
+    bookingNumberDisplay: "#02",
+    service: "Echocardiogram",
+    status: "CONFIRMED",
+    channel: "ONLINE_WEB",
+    createdAt: "2026-10-22T10:00:00.000Z",
+  };
+
+  const aptTomorrow = {
+    id: "APT-TOMORROW-002",
+    doctorId: doctor.doctorId,
+    doctorAccountId: doctor.id,
+    chamberId: "CH-DATE-1",
+    chamberName: "Cardiology Wing",
+    chamberTimezone: "Asia/Dubai",
+    appointmentDate: "2026-10-25",
+    appointmentTime: "02:00 PM",
+    patientName: "Tomorrow Online Patient",
+    patientPhone: "+971509998877",
+    voucherId: "ID-25102026",
+    bookingNumber: 1,
+    bookingNumberDisplay: "#01",
+    service: "Stress Test",
+    status: "CONFIRMED",
+    channel: "ONLINE_WEB",
+    createdAt: "2026-10-22T11:00:00.000Z",
+  };
+
+  appointmentsStore.set(aptToday.id, aptToday);
+  appointmentsStore.set(aptTomorrow.id, aptTomorrow);
+
+  // 1. Query strictly for TODAY: dateKey=2026-10-24
+  const resToday = await app.inject({
+    method: "GET",
+    url: "/api/v1/portal/doctor/queue?dateKey=2026-10-24",
+    headers: { authorization: `Bearer ${token}` },
+  });
+
+  assert.equal(resToday.statusCode, 200);
+  const bodyToday = JSON.parse(resToday.body);
+
+  // Must contain exactly Today's walk-in ticket AND Today's synchronized appointment
+  assert.equal(bodyToday.count, 2);
+  const todayNames = bodyToday.items.map((i: any) => i.patientName);
+  assert.ok(todayNames.includes("Today Walkin Patient"));
+  assert.ok(todayNames.includes("Today Online Patient"));
+
+  // Zero leakage: Yesterday's and Tomorrow's patients must NOT be in Today's response
+  assert.equal(todayNames.includes("Yesterday Patient"), false, "Yesterday patient must not leak into today's queue");
+  assert.equal(todayNames.includes("Tomorrow Online Patient"), false, "Tomorrow patient must not leak into today's queue");
+
+  // All returned items must strictly have dateKey = 2026-10-24
+  for (const item of bodyToday.items) {
+    assert.equal(item.dateKey, "2026-10-24");
+  }
+
+  // 2. Query strictly for TOMORROW: dateKey=2026-10-25
+  const resTomorrow = await app.inject({
+    method: "GET",
+    url: "/api/v1/portal/doctor/queue?dateKey=2026-10-25",
+    headers: { authorization: `Bearer ${token}` },
+  });
+
+  assert.equal(resTomorrow.statusCode, 200);
+  const bodyTomorrow = JSON.parse(resTomorrow.body);
+
+  // Tomorrow must return Tomorrow's synchronized appointment
+  assert.equal(bodyTomorrow.count, 1);
+  assert.equal(bodyTomorrow.items[0].patientName, "Tomorrow Online Patient");
+  assert.equal(bodyTomorrow.items[0].dateKey, "2026-10-25");
+
+  // 3. Query strictly for YESTERDAY: dateKey=2026-10-23
+  const resYesterday = await app.inject({
+    method: "GET",
+    url: "/api/v1/portal/doctor/queue?dateKey=2026-10-23",
+    headers: { authorization: `Bearer ${token}` },
+  });
+
+  assert.equal(resYesterday.statusCode, 200);
+  const bodyYesterday = JSON.parse(resYesterday.body);
+  assert.equal(bodyYesterday.count, 1);
+  assert.equal(bodyYesterday.items[0].patientName, "Yesterday Patient");
+  assert.equal(bodyYesterday.items[0].dateKey, "2026-10-23");
+
+  // 4. READ-ONLY GUARANTEE: Date filtering did not delete, cancel, or modify any records
+  assert.equal(appointmentsStore.size, 2, "Appointments count must be 100% preserved");
+  assert.equal(ticketsStore.size, 4, "All tickets (yesterday, today walkin, today online, tomorrow online) are preserved in store");
+  assert.equal(ticketYesterday.status, "COMPLETED", "Yesterday ticket status remains unchanged");
+  assert.equal(ticketToday.status, "WAITING", "Today walkin status remains WAITING");
+});

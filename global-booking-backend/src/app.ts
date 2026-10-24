@@ -15,6 +15,8 @@ import { registerPlatformSettingsRoutes } from "./modules/admin/settings.routes.
 import { registerDoctorPortalRoutes } from "./modules/portal/doctor-portal.routes.js";
 import { registerDoctorPublicRoutes } from "./modules/public/doctors-public.routes.js";
 import { registerDoctorQueueRoutes } from "./modules/queue/queue.routes.js";
+import { registerAppointmentRoutes } from "./modules/appointments/appointments.routes.js";
+import { registerPatientRoutes } from "./modules/patients/patients.routes.js";
 import { INDUSTRY_CATEGORIES } from "./shared/configuration/industry-categories.js";
 import { validateIndustryCategories } from "./shared/configuration/validate-industry-categories.js";
 
@@ -40,6 +42,21 @@ export function buildApp(customEnv?: Partial<ServerEnvironment>): FastifyInstanc
     origin: Array.from(allowedOrigins),
     credentials: true,
     methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+  });
+
+  // Support empty JSON body on PATCH / POST / PUT requests without failing
+  app.addContentTypeParser("application/json", { parseAs: "string" }, (_req, body, done) => {
+    if (!body || (typeof body === "string" && body.trim() === "")) {
+      done(null, {});
+      return;
+    }
+    try {
+      const json = JSON.parse(typeof body === "string" ? body : body.toString("utf-8"));
+      done(null, json);
+    } catch (err: any) {
+      err.statusCode = 400;
+      done(err, undefined);
+    }
   });
 
   // Server-side CSRF defense-in-depth: validate Origin header on mutating requests
@@ -117,6 +134,12 @@ export function buildApp(customEnv?: Partial<ServerEnvironment>): FastifyInstanc
 
   // 9. Register Doctor Live Queue foundation endpoints
   app.register(registerDoctorQueueRoutes);
+
+  // 10. Register Persistent Patient Appointment endpoints
+  app.register(registerAppointmentRoutes);
+
+  // 11. Register Patients Directory endpoints
+  app.register(registerPatientRoutes);
 
   return app;
 }

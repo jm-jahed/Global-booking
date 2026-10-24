@@ -48,6 +48,8 @@ export interface BackendQueueTicket {
   idempotencyKey?: string;
   createdById: string;
   notes?: string;
+  isArchived?: boolean;
+  archivedAt?: string;
 }
 
 export interface BackendQueueResponse {
@@ -83,7 +85,7 @@ async function queueRequest<T>(endpoint: string, options: RequestInit = {}): Pro
   const url = `${baseUrl}${endpoint}`;
   const headers = new Headers(options.headers || {});
 
-  if (!headers.has("Content-Type") && !(options.body instanceof FormData)) {
+  if (options.body && !headers.has("Content-Type") && !(options.body instanceof FormData)) {
     headers.set("Content-Type", "application/json");
   }
 
@@ -150,6 +152,7 @@ export async function issueWalkInTicket(
 export async function callQueuePatient(ticketId: string): Promise<BackendTicketResponse> {
   return queueRequest<BackendTicketResponse>(`/api/v1/portal/doctor/queue/tickets/${encodeURIComponent(ticketId)}/call`, {
     method: "PATCH",
+    body: JSON.stringify({}),
   });
 }
 
@@ -160,5 +163,56 @@ export async function callQueuePatient(ticketId: string): Promise<BackendTicketR
 export async function finishQueuePatient(ticketId: string): Promise<BackendTicketResponse> {
   return queueRequest<BackendTicketResponse>(`/api/v1/portal/doctor/queue/tickets/${encodeURIComponent(ticketId)}/finish`, {
     method: "PATCH",
+    body: JSON.stringify({}),
   });
 }
+
+/**
+ * PATCH /api/v1/portal/doctor/queue/tickets/:id/skip
+ * Marks patient ticket as skipped.
+ */
+export async function skipQueuePatient(ticketId: string): Promise<BackendTicketResponse> {
+  return queueRequest<BackendTicketResponse>(`/api/v1/portal/doctor/queue/tickets/${encodeURIComponent(ticketId)}/skip`, {
+    method: "PATCH",
+    body: JSON.stringify({}),
+  });
+}
+
+/**
+ * PATCH /api/v1/portal/doctor/queue/tickets/:id/noshow
+ * Marks patient ticket as no-show.
+ */
+export async function noShowQueuePatient(ticketId: string): Promise<BackendTicketResponse> {
+  return queueRequest<BackendTicketResponse>(`/api/v1/portal/doctor/queue/tickets/${encodeURIComponent(ticketId)}/noshow`, {
+    method: "PATCH",
+    body: JSON.stringify({}),
+  });
+}
+
+export interface BackendDayEndResponse {
+  statusCode: number;
+  success: boolean;
+  doctorId: string;
+  archivedCount: number;
+  patientsSyncedCount: number;
+  preservedAppointmentsCount: number;
+  preservedPatientsCount: number;
+  targetDateKey?: string;
+  message: string;
+}
+
+/**
+ * POST /api/v1/portal/doctor/queue/day-end
+ * Executes day-end cleanup for the doctor's live queue.
+ */
+export async function triggerDoctorQueueDayEnd(payload?: {
+  chamberId?: string;
+  targetDateKey?: string;
+  forceToday?: boolean;
+}): Promise<BackendDayEndResponse> {
+  return queueRequest<BackendDayEndResponse>("/api/v1/portal/doctor/queue/day-end", {
+    method: "POST",
+    body: JSON.stringify(payload || {}),
+  });
+}
+

@@ -5,8 +5,12 @@ import "./globals.css";
 import { AppShell } from "@/components/layout/app-shell";
 import { SITE } from "@/config/site";
 
+const appOrigin =
+  process.env.NEXT_PUBLIC_APP_URL?.trim() ||
+  (process.env.NODE_ENV === "production" ? "https://booking.webstudioae.com" : "http://localhost:3000");
+
 export const metadata: Metadata = {
-  metadataBase: new URL("http://localhost:3002"),
+  metadataBase: new URL(appOrigin),
   title: {
     default: `${SITE.name} — Booking, thoughtfully connected`,
     template: `%s — ${SITE.name}`,

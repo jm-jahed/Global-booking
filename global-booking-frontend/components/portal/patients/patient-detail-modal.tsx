@@ -1,13 +1,28 @@
 "use client";
 
-import { X, User, Mail, Phone, Calendar, HeartPulse, Shield, AlertTriangle, Activity, FileText, CheckCircle2, Clock, Printer } from "lucide-react";
-import Image from "next/image";
-import { Patient } from "@/types/patient";
+import {
+  X,
+  User,
+  Mail,
+  Phone,
+  Calendar,
+  HeartPulse,
+  Shield,
+  AlertTriangle,
+  Activity,
+  FileText,
+  CheckCircle2,
+  Clock,
+  Printer,
+  History,
+  Ticket,
+} from "lucide-react";
+import type { PersistentPatient } from "@/lib/api/doctor-patients-client";
 
 interface PatientDetailModalProps {
-  patient: Patient | null;
+  patient: PersistentPatient | null;
   onClose: () => void;
-  onBookAppointment: (patient: Patient) => void;
+  onBookAppointment?: (patient: PersistentPatient) => void;
 }
 
 export function PatientDetailModal({ patient, onClose, onBookAppointment }: PatientDetailModalProps) {
@@ -15,217 +30,362 @@ export function PatientDetailModal({ patient, onClose, onBookAppointment }: Pati
 
   return (
     <div className="modal-backdrop-overlay" onClick={onClose} role="dialog" aria-modal="true">
-      <div className="modal-dialog-card patient-chart-modal" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 740, maxHeight: "90vh", display: "flex", flexDirection: "column" }}>
+      <div
+        className="modal-dialog-card patient-chart-modal"
+        onClick={(e) => e.stopPropagation()}
+        style={{
+          maxWidth: 780,
+          maxHeight: "90vh",
+          display: "flex",
+          flexDirection: "column",
+          background: "#0a1120",
+          border: "1px solid rgba(229, 184, 105, 0.3)",
+          boxShadow: "0 25px 60px rgba(0,0,0,0.85)",
+          borderRadius: 16,
+          color: "#ffffff",
+        }}
+      >
         {/* Header */}
-        <div className="modal-header">
-          <div className="modal-title-group">
-            <div className="patient-detail-avatar-box">
-              <Image
-                src={patient.avatar || "/avatars/alex-johnson.jpg"}
-                alt={patient.name}
-                width={48}
-                height={48}
-                className="patient-detail-avatar-img"
-              />
-              <span className={`patient-chart-status-dot status-${patient.status.toLowerCase().replace(/\s+/g, "-")}`} />
+        <div
+          className="modal-header"
+          style={{
+            padding: "20px 24px",
+            borderBottom: "1px solid rgba(255,255,255,0.08)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+          }}
+        >
+          <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
+            <div
+              style={{
+                width: 46,
+                height: 46,
+                borderRadius: "50%",
+                background: "linear-gradient(135deg, rgba(229,184,105,0.2) 0%, rgba(184,134,40,0.3) 100%)",
+                border: "1.5px solid rgba(229,184,105,0.5)",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                color: "#e5b869",
+                fontWeight: 800,
+                fontSize: 18,
+              }}
+            >
+              {patient.name.charAt(0).toUpperCase()}
             </div>
             <div>
-              <div className="patient-chart-header-row">
-                <h2 className="modal-heading" style={{ fontSize: 19 }}>{patient.name}</h2>
-                <span className="patient-mrn-badge">{patient.mrn}</span>
-                <span className={`portal-badge badge-${patient.status.toLowerCase().replace(/\s+/g, "-")}`}>
+              <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                <h2 style={{ margin: 0, fontSize: 18, fontWeight: 800, color: "#ffffff" }}>{patient.name}</h2>
+                <span
+                  style={{
+                    padding: "2px 8px",
+                    borderRadius: 6,
+                    fontSize: 11,
+                    fontWeight: 700,
+                    background: "rgba(229,184,105,0.12)",
+                    color: "#e5b869",
+                    border: "1px solid rgba(229,184,105,0.3)",
+                    fontFamily: "monospace",
+                  }}
+                >
+                  {patient.mrn}
+                </span>
+                <span
+                  style={{
+                    padding: "2px 8px",
+                    borderRadius: 12,
+                    fontSize: 11,
+                    fontWeight: 700,
+                    background:
+                      patient.status === "Active"
+                        ? "rgba(16,185,129,0.15)"
+                        : "rgba(59,130,246,0.15)",
+                    color: patient.status === "Active" ? "#34d399" : "#60a5fa",
+                    border:
+                      patient.status === "Active"
+                        ? "1px solid rgba(16,185,129,0.3)"
+                        : "1px solid rgba(59,130,246,0.3)",
+                  }}
+                >
                   {patient.status}
                 </span>
               </div>
-              <p className="modal-subheading">
-                {patient.gender} • {patient.age} yrs • DOB: {patient.dob} • Blood: <strong className="text-gold">{patient.bloodGroup}</strong>
+              <p style={{ margin: "4px 0 0", fontSize: 12.5, color: "#94a3b8" }}>
+                Patient ID: <strong style={{ color: "#e2e8f0" }}>{patient.id}</strong> • Total Attended Visits:{" "}
+                <strong style={{ color: "#e5b869" }}>{patient.totalVisits}</strong>
               </p>
             </div>
           </div>
-          <button type="button" className="modal-close-button" onClick={onClose} aria-label="Close modal">
+          <button
+            type="button"
+            className="modal-close-button"
+            onClick={onClose}
+            aria-label="Close modal"
+            style={{
+              background: "rgba(255,255,255,0.05)",
+              border: "1px solid rgba(255,255,255,0.1)",
+              borderRadius: 8,
+              padding: 6,
+              color: "#94a3b8",
+              cursor: "pointer",
+            }}
+          >
             <X size={18} />
           </button>
         </div>
 
         {/* Content Body */}
-        <div className="patient-chart-body" style={{ maxHeight: "72vh", overflowY: "auto", padding: "18px 24px" }}>
-          {/* Vitals Summary Strip */}
-          {patient.vitals && (
-            <div className="patient-vitals-strip">
-              <div className="vital-item">
-                <div className="vital-icon-wrap">
-                  <Activity size={14} className="text-gold" />
-                </div>
-                <div className="vital-data">
-                  <span className="vital-label">Blood Pressure</span>
-                  <span className="vital-val">{patient.vitals.bloodPressure || "120/80"}</span>
-                </div>
-              </div>
-
-              <div className="vital-item">
-                <div className="vital-icon-wrap">
-                  <HeartPulse size={14} className="text-cyan" />
-                </div>
-                <div className="vital-data">
-                  <span className="vital-label">Heart Rate</span>
-                  <span className="vital-val">{patient.vitals.heartRate || 72} bpm</span>
-                </div>
-              </div>
-
-              <div className="vital-item">
-                <div className="vital-icon-wrap">
-                  <Clock size={14} className="text-green" />
-                </div>
-                <div className="vital-data">
-                  <span className="vital-label">Temperature</span>
-                  <span className="vital-val">{patient.vitals.temperature || "36.7 °C"}</span>
-                </div>
-              </div>
-
-              <div className="vital-item">
-                <div className="vital-icon-wrap">
-                  <Shield size={14} className="text-gold" />
-                </div>
-                <div className="vital-data">
-                  <span className="vital-label">Blood Sugar</span>
-                  <span className="vital-val">{patient.vitals.bloodSugar || "95 mg/dL"}</span>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Section: Contact & Primary Care Team */}
-          <div className="patient-chart-two-col">
-            {/* Left Col: Contact & Insurance */}
-            <div className="patient-chart-card">
-              <h3 className="patient-section-title">
-                <Mail size={14} className="text-gold" />
-                <span>Contact & Coverage</span>
-              </h3>
-              <div className="patient-data-list">
-                <div className="patient-data-row">
-                  <span className="data-key">Phone:</span>
-                  <span className="data-val">{patient.phone}</span>
-                </div>
-                <div className="patient-data-row">
-                  <span className="data-key">Email:</span>
-                  <span className="data-val">{patient.email}</span>
-                </div>
-                <div className="patient-data-row">
-                  <span className="data-key">Insurance:</span>
-                  <span className="data-val text-gold">{patient.insuranceProvider || "Direct Billing / None"}</span>
-                </div>
-                <div className="patient-data-row">
-                  <span className="data-key">Member Since:</span>
-                  <span className="data-val">{patient.registeredDate}</span>
-                </div>
-              </div>
+        <div style={{ maxHeight: "70vh", overflowY: "auto", padding: "20px 24px" }}>
+          {/* Quick Metrics Bar */}
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))",
+              gap: 12,
+              marginBottom: 18,
+            }}
+          >
+            <div
+              style={{
+                background: "rgba(255,255,255,0.03)",
+                border: "1px solid rgba(255,255,255,0.08)",
+                borderRadius: 10,
+                padding: "12px 14px",
+              }}
+            >
+              <span style={{ fontSize: 11, color: "#94a3b8", display: "block", textTransform: "uppercase" }}>
+                Contact Number
+              </span>
+              <strong style={{ fontSize: 13.5, color: "#ffffff", marginTop: 4, display: "block" }}>
+                {patient.phone || "Not Provided"}
+              </strong>
             </div>
 
-            {/* Right Col: Primary Care & Visits */}
-            <div className="patient-chart-card">
-              <h3 className="patient-section-title">
-                <HeartPulse size={14} className="text-gold" />
-                <span>Clinical Team & Visits</span>
-              </h3>
-              <div className="patient-data-list">
-                <div className="patient-data-row">
-                  <span className="data-key">Primary Doctor:</span>
-                  <span className="data-val font-semibold text-white">{patient.primaryDoctor}</span>
-                </div>
-                <div className="patient-data-row">
-                  <span className="data-key">Department:</span>
-                  <span className="data-val">{patient.department}</span>
-                </div>
-                <div className="patient-data-row">
-                  <span className="data-key">Last Visit:</span>
-                  <span className="data-val">{patient.lastVisit}</span>
-                </div>
-                <div className="patient-data-row">
-                  <span className="data-key">Next Booking:</span>
-                  <span className="data-val text-green font-medium">
-                    {patient.nextAppointment || "None scheduled"}
-                  </span>
-                </div>
-              </div>
+            <div
+              style={{
+                background: "rgba(255,255,255,0.03)",
+                border: "1px solid rgba(255,255,255,0.08)",
+                borderRadius: 10,
+                padding: "12px 14px",
+              }}
+            >
+              <span style={{ fontSize: 11, color: "#94a3b8", display: "block", textTransform: "uppercase" }}>
+                Last Visit Date
+              </span>
+              <strong style={{ fontSize: 13.5, color: "#e5b869", marginTop: 4, display: "block" }}>
+                {patient.lastVisit ? patient.lastVisit.split("-").reverse().join("-") : "None recorded"}
+              </strong>
+            </div>
+
+            <div
+              style={{
+                background: "rgba(255,255,255,0.03)",
+                border: "1px solid rgba(255,255,255,0.08)",
+                borderRadius: 10,
+                padding: "12px 14px",
+              }}
+            >
+              <span style={{ fontSize: 11, color: "#94a3b8", display: "block", textTransform: "uppercase" }}>
+                Upcoming Booking
+              </span>
+              <strong style={{ fontSize: 13.5, color: "#34d399", marginTop: 4, display: "block" }}>
+                {patient.nextAppointment?.date
+                  ? `${patient.nextAppointment.date.split("-").reverse().join("-")}${
+                      patient.nextAppointment.time ? ` (${patient.nextAppointment.time})` : ""
+                    }`
+                  : "None scheduled"}
+              </strong>
+            </div>
+
+            <div
+              style={{
+                background: "rgba(255,255,255,0.03)",
+                border: "1px solid rgba(255,255,255,0.08)",
+                borderRadius: 10,
+                padding: "12px 14px",
+              }}
+            >
+              <span style={{ fontSize: 11, color: "#94a3b8", display: "block", textTransform: "uppercase" }}>
+                Blood Group / Gender
+              </span>
+              <strong style={{ fontSize: 13.5, color: "#ffffff", marginTop: 4, display: "block" }}>
+                {patient.bloodGroup || "—"} • {patient.gender || "Not specified"}
+              </strong>
             </div>
           </div>
 
-          {/* Emergency Contact */}
-          <div className="patient-chart-card" style={{ marginTop: 12 }}>
-            <h3 className="patient-section-title">
-              <Shield size={14} className="text-gold" />
-              <span>Emergency Contact</span>
-            </h3>
-            <div className="emergency-contact-box">
-              <span className="font-semibold text-white">{patient.emergencyContact.name}</span>
-              <span className="text-muted">({patient.emergencyContact.relation})</span>
-              <span className="emergency-phone">{patient.emergencyContact.phone}</span>
-            </div>
-          </div>
-
-          {/* Allergies & Conditions */}
-          <div className="patient-chart-card" style={{ marginTop: 12 }}>
-            <h3 className="patient-section-title">
-              <AlertTriangle size={14} className="text-gold" />
-              <span>Allergies & Medical Alerts</span>
-            </h3>
-            <div className="allergies-pill-wrap">
-              {patient.allergies && patient.allergies.length > 0 ? (
-                patient.allergies.map((all) => (
-                  <span key={all} className="allergy-tag">
-                    ⚠️ {all}
-                  </span>
-                ))
-              ) : (
-                <span className="text-muted text-sm">No documented drug or environmental allergies.</span>
-              )}
+          {/* Visit & Appointment History */}
+          <div
+            style={{
+              background: "rgba(255,255,255,0.02)",
+              border: "1px solid rgba(255,255,255,0.08)",
+              borderRadius: 12,
+              padding: "16px 18px",
+              marginBottom: 16,
+            }}
+          >
+            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 14 }}>
+              <History size={16} color="#e5b869" />
+              <h3 style={{ margin: 0, fontSize: 14, fontWeight: 700, color: "#ffffff" }}>
+                Encounter & Visit History ({patient.visitHistory?.length || 0})
+              </h3>
             </div>
 
-            {patient.chronicConditions && patient.chronicConditions.length > 0 && (
-              <div style={{ marginTop: 10 }}>
-                <span className="data-key" style={{ display: "block", marginBottom: 6 }}>Chronic Conditions:</span>
-                <div className="conditions-pill-wrap">
-                  {patient.chronicConditions.map((cond) => (
-                    <span key={cond} className="condition-tag">
-                      • {cond}
-                    </span>
-                  ))}
-                </div>
+            {patient.visitHistory && patient.visitHistory.length > 0 ? (
+              <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                {patient.visitHistory.map((v, idx) => (
+                  <div
+                    key={v.visitId || idx}
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                      padding: "10px 14px",
+                      background: "rgba(255,255,255,0.03)",
+                      border: "1px solid rgba(255,255,255,0.06)",
+                      borderRadius: 8,
+                      flexWrap: "wrap",
+                      gap: 8,
+                    }}
+                  >
+                    <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                      <span
+                        style={{
+                          fontSize: 12,
+                          fontWeight: 800,
+                          color: "#e5b869",
+                          background: "rgba(229,184,105,0.15)",
+                          padding: "3px 8px",
+                          borderRadius: 6,
+                          fontFamily: "monospace",
+                        }}
+                      >
+                        {v.serialNumber || `#${idx + 1}`}
+                      </span>
+                      <div>
+                        <span style={{ fontSize: 13, fontWeight: 700, color: "#ffffff", display: "block" }}>
+                          {v.service || "Consultation"}
+                        </span>
+                        <span style={{ fontSize: 11.5, color: "#94a3b8" }}>
+                          {v.chamberName || "Main Chamber"} •{" "}
+                          {v.displayDate || (v.date ? v.date.split("-").reverse().join("-") : "")}
+                        </span>
+                      </div>
+                    </div>
+
+                    <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                      <span
+                        style={{
+                          fontSize: 11,
+                          fontWeight: 700,
+                          padding: "3px 9px",
+                          borderRadius: 12,
+                          background:
+                            v.status === "COMPLETED" || v.status === "ATTENDED"
+                              ? "rgba(16,185,129,0.15)"
+                              : v.status === "SKIPPED_ABSENT" || v.status === "CANCELLED"
+                              ? "rgba(239,68,68,0.15)"
+                              : "rgba(59,130,246,0.15)",
+                          color:
+                            v.status === "COMPLETED" || v.status === "ATTENDED"
+                              ? "#34d399"
+                              : v.status === "SKIPPED_ABSENT" || v.status === "CANCELLED"
+                              ? "#f87171"
+                              : "#60a5fa",
+                          border:
+                            v.status === "COMPLETED" || v.status === "ATTENDED"
+                              ? "1px solid rgba(16,185,129,0.3)"
+                              : v.status === "SKIPPED_ABSENT" || v.status === "CANCELLED"
+                              ? "1px solid rgba(239,68,68,0.3)"
+                              : "1px solid rgba(59,130,246,0.3)",
+                        }}
+                      >
+                        {v.status === "COMPLETED" || v.status === "ATTENDED"
+                          ? "Attended ✓"
+                          : v.status === "SKIPPED_ABSENT"
+                          ? "Absent (Skipped)"
+                          : v.status === "CANCELLED"
+                          ? "Cancelled"
+                          : "In Progress"}
+                      </span>
+                    </div>
+                  </div>
+                ))}
               </div>
+            ) : (
+              <p style={{ margin: 0, fontSize: 12.5, color: "#64748b" }}>
+                No past visit records found for this patient.
+              </p>
             )}
           </div>
 
           {/* Clinical Notes */}
-          <div className="patient-chart-card" style={{ marginTop: 12 }}>
-            <h3 className="patient-section-title">
-              <FileText size={14} className="text-gold" />
-              <span>Clinical Intake & Doctor Notes</span>
-            </h3>
-            <p className="clinical-notes-quote">{patient.notes || "No clinical remarks recorded."}</p>
+          <div
+            style={{
+              background: "rgba(255,255,255,0.02)",
+              border: "1px solid rgba(255,255,255,0.08)",
+              borderRadius: 12,
+              padding: "16px 18px",
+            }}
+          >
+            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
+              <FileText size={16} color="#e5b869" />
+              <h3 style={{ margin: 0, fontSize: 14, fontWeight: 700, color: "#ffffff" }}>
+                Clinical Remarks & History
+              </h3>
+            </div>
+            <p style={{ margin: 0, fontSize: 13, color: "#cbd5e1", lineHeight: 1.6 }}>
+              {patient.notes || "No clinical remarks recorded for this patient file."}
+            </p>
           </div>
         </div>
 
-        {/* Footer Actions */}
-        <div className="modal-actions-footer" style={{ borderTop: "1px solid rgba(255,255,255,0.08)", padding: "14px 24px" }}>
+        {/* Footer */}
+        <div
+          style={{
+            borderTop: "1px solid rgba(255,255,255,0.08)",
+            padding: "14px 24px",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+          }}
+        >
           <button
             type="button"
-            className="secondary-action-button"
             onClick={() => window.print()}
+            style={{
+              padding: "8px 16px",
+              borderRadius: 8,
+              border: "1px solid rgba(255,255,255,0.12)",
+              background: "rgba(255,255,255,0.04)",
+              color: "#ffffff",
+              fontSize: 12.5,
+              fontWeight: 600,
+              cursor: "pointer",
+              display: "inline-flex",
+              alignItems: "center",
+              gap: 6,
+            }}
           >
-            <Printer size={15} />
+            <Printer size={14} />
             <span>Print Chart</span>
           </button>
           <button
             type="button"
-            className="primary-gold-button"
-            onClick={() => {
-              onBookAppointment(patient);
-              onClose();
+            onClick={onClose}
+            style={{
+              padding: "8px 20px",
+              borderRadius: 8,
+              border: "none",
+              background: "linear-gradient(135deg, #e5b869 0%, #b88628 100%)",
+              color: "#070d18",
+              fontSize: 12.5,
+              fontWeight: 700,
+              cursor: "pointer",
             }}
           >
-            <Calendar size={15} />
-            <span>Book Appointment</span>
+            Close Chart
           </button>
         </div>
       </div>

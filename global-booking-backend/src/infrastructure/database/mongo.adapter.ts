@@ -10,6 +10,22 @@ import type {
   AuditLogRecord,
 } from "../../modules/admin/admin.types.js";
 import type { QueueTicketRecord, QueueCounterRecord } from "../../modules/queue/queue.types.js";
+import type { AppointmentRecord } from "../../modules/appointments/appointments.types.js";
+import type { PatientRecord } from "../../modules/patients/patients.types.js";
+
+export interface PatientIndexOperationResult {
+  readonly spec: Record<string, 1 | -1>;
+  readonly status: "CREATED" | "FAILED";
+  readonly error?: string;
+}
+
+export interface PatientIndexMaintenanceReport {
+  readonly success: boolean;
+  readonly attempted: number;
+  readonly created: number;
+  readonly failed: number;
+  readonly operations: PatientIndexOperationResult[];
+}
 
 export class MongoDatabaseAdapter implements DatabasePort {
   readonly providerName = "mongodb";
@@ -63,10 +79,12 @@ export class MongoDatabaseAdapter implements DatabasePort {
       await this.db.command({ ping: 1 });
       this.connected = true;
 
-      // Ensure required indexes for Phase A, B & Queue
+      // Ensure required indexes for Phase A, B, Queue & Appointments
+      // Note: Patient indexes are explicitly opt-in and NOT initialized automatically on connect()
       await this.ensurePhaseAIndexes();
       await this.ensurePhaseBIndexes();
       await this.ensureQueueIndexes();
+      await this.ensureAppointmentIndexes();
     } catch (error) {
       this.connected = false;
       this.client = null;
@@ -132,6 +150,25 @@ export class MongoDatabaseAdapter implements DatabasePort {
 
   getQueueCounterCollection(): Collection<QueueCounterRecord> {
     return this.getDb().collection<QueueCounterRecord>("queue_counters");
+  }
+
+  getAppointmentCollection(): Collection<AppointmentRecord> {
+    return this.getDb().collection<AppointmentRecord>("appointments");
+  }
+
+  getAppointmentCounterCollection(): Collection<{
+    id: string;
+    doctorId: string;
+    chamberId: string;
+    appointmentDate: string;
+    lastSerial: number;
+    updatedAt: string;
+  }> {
+    return this.getDb().collection("appointment_counters");
+  }
+
+  getPatientCollection(): Collection<PatientRecord> {
+    return this.getDb().collection<PatientRecord>("patients");
   }
 
   getCollection<T extends Document = Document>(name: string): Collection<T> {
@@ -225,6 +262,114 @@ export class MongoDatabaseAdapter implements DatabasePort {
       { doctorId: 1, chamberId: 1, dateKey: 1 },
       { unique: true, background: true },
     );
+  }
+
+  /**
+   * Ensures essential indexes for persistent Appointments:
+   * 1. appointments: id (unique), referenceNumber (unique), doctorId+idempotencyKey (unique sparse)
+   * 2. appointments: doctorId+appointmentDate+status, referenceNumber+patientPhone
+   */
+  async ensureAppointmentIndexes(): Promise<void> {
+    if (!this.db) {
+      return;
+    }
+    const aptCol = this.getAppointmentCollection();
+    await aptCol.createIndex({ id: 1 }, { unique: true, background: true });
+    await aptCol.createIndex({ referenceNumber: 1 }, { unique: true, background: true });
+    await aptCol.createIndex(
+      { doctorId: 1, idempotencyKey: 1 },
+      { unique: true, sparse: true, background: true },
+    );
+    await aptCol.createIndex(
+      { doctorId: 1, appointmentDate: 1, status: 1 },
+      { background: true },
+    );
+    await aptCol.createIndex(
+      { referenceNumber: 1, patientPhone: 1 },
+      { background: true },
+    );
+    try {
+      await aptCol.createIndex(
+        { doctorId: 1, appointmentDate: 1, bookingNumber: 1 },
+        {
+          unique: true,
+          partialFilterExpression: { bookingNumber: { $type: "number" } },
+          background: true,
+        },
+      );
+    } catch {
+      // Non-fatal if index conflicts with legacy unnumbered records
+    }
+
+    const counterCol = this.getAppointmentCounterCollection();
+    try {
+      await counterCol.createIndex(
+        { doctorId: 1, appointmentDate: 1 },
+        { unique: true, background: true },
+      );
+    } catch {
+      // Non-fatal
+    }
+  }
+
+  /**
+   * EXPLICIT MAINTENANCE ONLY:
+   * Initializes persistent Patients collection indexes on an opt-in basis.
+   *
+   * CRITICAL SAFETY RULES:
+   * - Must NEVER be called automatically during connect(), server startup, application initialization, or request handling.
+   * - Does NOT drop, alter, or replace existing indexes automatically.
+   * - Operates on each index independently so that one failure does not prevent remaining operations from being attempted or diagnosed.
+   * - Throws an aggregate Error if any index fails, detailing all attempted operations.
+   * - Preflight Requirement: Verify legacy database does not contain duplicate IDs or conflicting unique phone indexes before calling.
+   * - Note: normalizedPhone is intentionally NOT unique because family members may share a contact number.
+   */
+  async ensurePatientIndexes(): Promise<PatientIndexMaintenanceReport> {
+    if (!this.db) {
+      throw new Error("Database is not connected. Call connect() before running index maintenance.");
+    }
+
+    const patientCol = this.getPatientCollection();
+    const operations: PatientIndexOperationResult[] = [];
+
+    const indexDefinitions: Array<{
+      spec: Record<string, 1 | -1>;
+      options?: { unique?: boolean; background?: boolean };
+    }> = [
+      { spec: { id: 1 }, options: { unique: true, background: true } },
+      { spec: { doctorId: 1, id: 1 }, options: { unique: true, background: true } },
+      { spec: { doctorId: 1, mrn: 1 }, options: { background: true } },
+      { spec: { doctorId: 1, normalizedPhone: 1 }, options: { background: true } },
+      { spec: { doctorId: 1, "visitHistory.visitId": 1 }, options: { background: true } },
+    ];
+
+    for (const def of indexDefinitions) {
+      try {
+        await patientCol.createIndex(def.spec as any, def.options as any);
+        operations.push({ spec: def.spec, status: "CREATED" });
+      } catch (err: unknown) {
+        const errorMsg = err instanceof Error ? err.message : String(err);
+        operations.push({ spec: def.spec, status: "FAILED", error: errorMsg });
+      }
+    }
+
+    const failed = operations.filter((op) => op.status === "FAILED");
+    const created = operations.filter((op) => op.status === "CREATED");
+
+    if (failed.length > 0) {
+      const details = failed.map((f) => `${JSON.stringify(f.spec)}: ${f.error}`).join("; ");
+      throw new Error(
+        `Patient index maintenance failed for ${failed.length}/${operations.length} index(es): ${details}`,
+      );
+    }
+
+    return {
+      success: true,
+      attempted: operations.length,
+      created: created.length,
+      failed: 0,
+      operations,
+    };
   }
 }
 

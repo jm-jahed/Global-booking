@@ -1,4 +1,4 @@
-export type QueueStatus = "Serving" | "Next" | "Waiting" | "Delayed" | "Completed";
+export type QueueStatus = "Serving" | "Next" | "Waiting" | "Delayed" | "Completed" | "Skipped";
 export type PriorityLevel = "Standard" | "VIP" | "Urgent";
 export type CheckInChannel = "Online Booking" | "QR Walk-In" | "Kiosk Check-In" | "Chamber Visit";
 

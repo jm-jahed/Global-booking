@@ -4,6 +4,7 @@ export type QueueTicketStatus =
   | "IN_CONSULTATION"
   | "COMPLETED"
   | "SKIPPED"
+  | "NO_SHOW"
   | "CANCELLED";
 
 export type QueuePriority = "STANDARD" | "URGENT" | "VIP";
@@ -40,6 +41,8 @@ export interface QueueTicketRecord {
   idempotencyKey?: string | undefined;
   createdById: string;
   notes?: string | undefined;
+  isArchived?: boolean | undefined;
+  archivedAt?: string | undefined;
 }
 
 export interface QueueCounterRecord {

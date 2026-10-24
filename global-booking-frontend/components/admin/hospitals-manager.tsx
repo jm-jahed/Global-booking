@@ -969,7 +969,11 @@ export function HospitalsManager() {
                     <div><strong>Password:</strong> <code style={{ color: "#38bdf8" }}>{createdResult.credentials.password}</code></div>
                     <button
                       onClick={() => {
-                        navigator.clipboard.writeText(`Email: ${createdResult.credentials.email}\nPassword: ${createdResult.credentials.password}\nPortal: http://localhost:3000/login`);
+                        const portalOrigin =
+                          typeof window !== "undefined"
+                            ? window.location.origin
+                            : (process.env.NEXT_PUBLIC_APP_URL || (process.env.NODE_ENV === "production" ? "https://booking.webstudioae.com" : "http://localhost:3000"));
+                        navigator.clipboard.writeText(`Email: ${createdResult.credentials.email}\nPassword: ${createdResult.credentials.password}\nPortal: ${portalOrigin.replace(/\/+$/, "")}/login`);
                         setCopiedPassword(true);
                         setTimeout(() => setCopiedPassword(false), 2000);
                       }}
