@@ -8284,8 +8284,13 @@
 
 @media (max-width: 992px) {
   .queue-main-split {
-    grid-template-columns: 1fr;
+    display: flex !important;
+    flex-direction: column !important;
     gap: 14px;
+  }
+  .queue-control-card {
+    order: -1 !important;
+    width: 100% !important;
   }
 }
 
