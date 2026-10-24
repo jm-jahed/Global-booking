@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { X, Volume2, Monitor, Sparkles, Crown, Clock, Users, CheckCircle2, ChevronRight } from "lucide-react";
+import { X, Volume2, Monitor, Sparkles, Crown, Clock, Users, CheckCircle2, ChevronRight, Calendar } from "lucide-react";
 import { QueueItem, CounterStation } from "@/types/queue";
 
 interface LiveDisplayModalProps {
@@ -196,33 +196,20 @@ export function LiveDisplayModal({
   return (
     <div className="tv-display-overlay" onClick={onClose}>
       <div className="tv-display-container" onClick={(e) => e.stopPropagation()}>
-        {/* Top TV Bar */}
+        {/* Top TV Bar - Luxury Designed Header */}
         <header className="tv-display-header">
           <div className="tv-header-top-row">
             <div className="tv-brand-block">
-              <div className="tv-brand-icon">
-                <svg
-                  width="28"
-                  height="28"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="#e5b869"
-                  strokeWidth="2"
-                >
-                  <rect x="3" y="4" width="18" height="18" rx="3" />
-                  <line x1="16" y1="2" x2="16" y2="6" />
-                  <line x1="8" y1="2" x2="8" y2="6" />
-                  <line x1="3" y1="10" x2="21" y2="10" />
-                  <circle cx="8" cy="14" r="1" fill="#e5b869" />
-                  <circle cx="12" cy="14" r="1" fill="#e5b869" />
-                  <circle cx="16" cy="14" r="1" fill="#e5b869" />
-                </svg>
+              <div className="tv-brand-icon-halo">
+                <Calendar size={22} color="#e5b869" />
               </div>
-              <div>
+              <div className="tv-brand-info">
                 <div className="tv-brand-title">
-                  <span className="text-white font-extrabold tracking-wide">{activeDoctorName.toUpperCase()}</span>
+                  <span className="tv-doctor-title-text">{activeDoctorName.toUpperCase()}</span>
                 </div>
-                <span className="tv-brand-sub">WAITING ROOM LIVE DISPLAY</span>
+                <div className="tv-brand-sub-wrap">
+                  <span className="tv-brand-sub-badge">WAITING ROOM LIVE DISPLAY</span>
+                </div>
               </div>
             </div>
 
@@ -233,7 +220,7 @@ export function LiveDisplayModal({
               title="Exit TV Display (Esc)"
               aria-label="Close TV Display"
             >
-              <X size={20} />
+              <X size={18} />
             </button>
           </div>
 
@@ -252,7 +239,7 @@ export function LiveDisplayModal({
             </div>
 
             <div className="tv-header-right">
-              <div className="tv-clock-box">
+              <div className="tv-clock-hud-card">
                 <span className="tv-clock-time">{time}</span>
                 <span className="tv-clock-date">{todayDate}</span>
               </div>
@@ -263,7 +250,7 @@ export function LiveDisplayModal({
                 title="Exit TV Display (Esc)"
                 aria-label="Close TV Display"
               >
-                <X size={20} />
+                <X size={18} />
               </button>
             </div>
           </div>
