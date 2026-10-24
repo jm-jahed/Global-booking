@@ -220,10 +220,9 @@ export function LiveDisplayModal({
               </div>
               <div>
                 <div className="tv-brand-title">
-                  <span className="text-white font-extrabold tracking-wider">GLOBAL </span>
-                  <span className="text-gold font-extrabold tracking-wider">BOOKING</span>
+                  <span className="text-white font-extrabold tracking-wide">{activeDoctorName.toUpperCase()}</span>
                 </div>
-                <span className="tv-brand-sub">WAITING ROOM LIVE DISPLAY • {activeDoctorName.toUpperCase()}</span>
+                <span className="tv-brand-sub">WAITING ROOM LIVE DISPLAY</span>
               </div>
             </div>
 
