@@ -119,18 +119,22 @@ export function PortalTopBar({
           aria-label={isMobileSidebarOpen ? "Close navigation menu" : "Open navigation menu"}
           aria-expanded={isMobileSidebarOpen}
         >
-          {isMobileSidebarOpen ? <X size={22} /> : <Menu size={22} />}
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#e5b869" strokeWidth="2.4" strokeLinecap="round">
+            <line x1="3" y1="6" x2="21" y2="6" />
+            <line x1="3" y1="12" x2="21" y2="12" />
+            <line x1="3" y1="18" x2="21" y2="18" />
+          </svg>
         </button>
 
         <div className="topbar-mobile-brand">
           <div className="topbar-mobile-brand-icon">
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#e5b869" strokeWidth="2">
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#e5b869" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <rect x="3" y="4" width="18" height="18" rx="3.5" />
-              <line x1="16" y1="2" x2="16" y2="6" strokeLinecap="round" />
-              <line x1="8" y1="2" x2="8" y2="6" strokeLinecap="round" />
+              <line x1="16" y1="2" x2="16" y2="6" />
+              <line x1="8" y1="2" x2="8" y2="6" />
               <line x1="3" y1="10" x2="21" y2="10" />
-              <line x1="12" y1="13" x2="12" y2="17" strokeWidth="2.2" strokeLinecap="round" />
-              <line x1="10" y1="15" x2="14" y2="15" strokeWidth="2.2" strokeLinecap="round" />
+              <line x1="12" y1="13" x2="12" y2="17" strokeWidth="2.4" />
+              <line x1="10" y1="15" x2="14" y2="15" strokeWidth="2.4" />
             </svg>
           </div>
           <div className="topbar-mobile-brand-text">
@@ -142,9 +146,9 @@ export function PortalTopBar({
         </div>
 
         <button type="button" className="topbar-mobile-lang-pill" aria-label="Change language">
-          <Globe size={13} style={{ color: "#e5b869" }} />
+          <Globe size={14} style={{ color: "#e5b869" }} />
           <span>EN</span>
-          <ChevronDown size={12} style={{ opacity: 0.7 }} />
+          <ChevronDown size={13} style={{ color: "#94a3b8" }} />
         </button>
       </div>
 

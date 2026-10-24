@@ -604,7 +604,7 @@ export function LiveQueueView() {
   };
 
   return (
-    <div className="queue-luxury-page-container" style={{ padding: "20px 24px", minHeight: "100vh", background: "#050b14", color: "#ffffff" }}>
+    <div className="queue-luxury-page-container">
       {/* Small "Done" Luxury Toast Pill */}
       {toastMessage && (
         <div
@@ -637,7 +637,9 @@ export function LiveQueueView() {
           <div className="live-queue-brand-group">
             {/* Glowing circular concentric beacon icon */}
             <div className="live-queue-beacon-circle">
-              <Radio size={22} style={{ color: "#e5b869", filter: "drop-shadow(0 0 10px rgba(229, 184, 105, 0.5))" }} />
+              <div className="live-queue-beacon-inner">
+                <Radio size={24} style={{ color: "#f5c270" }} />
+              </div>
               <span className="live-queue-live-dot" title="Real-time synchronized" />
             </div>
             <div className="live-queue-title-wrap">
@@ -667,7 +669,7 @@ export function LiveQueueView() {
             onClick={handleManualSync}
             title="Sync live queue with latest database records"
           >
-            <RefreshCw size={14} className={isSyncing ? "spin-animation" : ""} style={{ color: "#e5b869" }} />
+            <RefreshCw size={15} className={isSyncing ? "spin-animation" : ""} style={{ color: "#38bdf8" }} />
             <span>Sync Queue</span>
           </button>
 
@@ -687,8 +689,11 @@ export function LiveQueueView() {
             onClick={() => setIsNewTicketOpen(true)}
             title="New Patient Appointment"
           >
-            <CalendarPlus size={16} strokeWidth={2.4} />
-            <span>New Patient Appointment</span>
+            <CalendarPlus size={18} strokeWidth={2.4} style={{ flexShrink: 0, color: "#180e02" }} />
+            <div className="btn-luxury-new-ticket-text">
+              <span>New Patient</span>
+              <span>Appointment</span>
+            </div>
           </button>
         </div>
       </section>
@@ -735,187 +740,79 @@ export function LiveQueueView() {
       {/* TOP 4 LUXURY KPI METRIC CARDS (Exact match to ticked cards in reference image) */}
       <section className="queue-kpi-grid" aria-label="Queue KPI Metrics">
         {/* Card 1: Now Serving (Gold Glowing Card) */}
-        <article
-          className="queue-kpi-card"
-          style={{
-            background: "linear-gradient(145deg, rgba(229, 184, 105, 0.14) 0%, rgba(184, 134, 40, 0.05) 100%)",
-            border: "1px solid rgba(229, 184, 105, 0.4)",
-            borderRadius: 14,
-            padding: "16px 18px",
-            position: "relative",
-            boxShadow: "0 8px 25px rgba(0, 0, 0, 0.4), 0 0 20px rgba(229, 184, 105, 0.08)",
-            display: "flex",
-            alignItems: "center",
-            gap: 14,
-          }}
-        >
-          <div
-            style={{
-              width: 46,
-              height: 46,
-              borderRadius: "50%",
-              background: "linear-gradient(135deg, rgba(229, 184, 105, 0.25) 0%, rgba(184, 134, 40, 0.3) 100%)",
-              border: "1px solid rgba(229, 184, 105, 0.5)",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              color: "#e5b869",
-              flexShrink: 0,
-              boxShadow: "0 0 15px rgba(229, 184, 105, 0.3)",
-            }}
-          >
+        <article className="queue-kpi-card queue-kpi-card-serving">
+          <div className="queue-kpi-card-icon queue-kpi-icon-serving">
             <Crown size={20} />
           </div>
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <span style={{ fontSize: 11, fontWeight: 700, color: "#e5b869", textTransform: "uppercase", letterSpacing: "0.05em" }}>
+          <div className="queue-kpi-card-body">
+            <span className="queue-kpi-card-label" style={{ color: "#e5b869" }}>
               Now Serving
             </span>
-            <div style={{ fontSize: 24, fontWeight: 900, color: "#ffffff", letterSpacing: "-0.01em", margin: "1px 0" }}>
+            <div className="queue-kpi-card-value">
               {kpis.servingToken}
             </div>
-            <div style={{ fontSize: 11, color: "#94a3b8", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+            <div className="queue-kpi-card-sub">
               {kpis.servingName === "No patient in consultation" ? "No patient serving" : kpis.servingName}
             </div>
           </div>
-          <ChevronRight size={16} color="#e5b869" style={{ opacity: 0.7, flexShrink: 0 }} />
+          <ChevronRight size={16} color="#e5b869" className="queue-kpi-card-chevron" />
         </article>
 
         {/* Card 2: Next Serial (Blue Card) */}
-        <article
-          className="queue-kpi-card"
-          style={{
-            background: "linear-gradient(145deg, #091326 0%, #060c18 100%)",
-            border: "1px solid rgba(56, 189, 248, 0.3)",
-            borderRadius: 14,
-            padding: "16px 18px",
-            position: "relative",
-            boxShadow: "0 8px 25px rgba(0, 0, 0, 0.4)",
-            display: "flex",
-            alignItems: "center",
-            gap: 14,
-          }}
-        >
-          <div
-            style={{
-              width: 46,
-              height: 46,
-              borderRadius: "50%",
-              background: "rgba(56, 189, 248, 0.15)",
-              border: "1px solid rgba(56, 189, 248, 0.4)",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              color: "#38bdf8",
-              flexShrink: 0,
-              boxShadow: "0 0 15px rgba(56, 189, 248, 0.25)",
-            }}
-          >
+        <article className="queue-kpi-card queue-kpi-card-next">
+          <div className="queue-kpi-card-icon queue-kpi-icon-next">
             <Clock size={20} />
           </div>
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <span style={{ fontSize: 11, fontWeight: 700, color: "#38bdf8", textTransform: "uppercase", letterSpacing: "0.05em" }}>
+          <div className="queue-kpi-card-body">
+            <span className="queue-kpi-card-label" style={{ color: "#38bdf8" }}>
               Next Serial
             </span>
-            <div style={{ fontSize: 24, fontWeight: 900, color: "#ffffff", letterSpacing: "-0.01em", margin: "1px 0" }}>
+            <div className="queue-kpi-card-value">
               {kpis.nextToken}
             </div>
-            <div style={{ fontSize: 11, color: "#94a3b8", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+            <div className="queue-kpi-card-sub">
               {kpis.nextName === "No patient waiting" ? "No patient waiting" : kpis.nextName}
             </div>
           </div>
-          <ChevronRight size={16} color="#38bdf8" style={{ opacity: 0.7, flexShrink: 0 }} />
+          <ChevronRight size={16} color="#38bdf8" className="queue-kpi-card-chevron" />
         </article>
 
         {/* Card 3: Total Waiting (Emerald/Teal Card) */}
-        <article
-          className="queue-kpi-card"
-          style={{
-            background: "linear-gradient(145deg, #06191c 0%, #030d10 100%)",
-            border: "1px solid rgba(20, 184, 166, 0.3)",
-            borderRadius: 14,
-            padding: "16px 18px",
-            position: "relative",
-            boxShadow: "0 8px 25px rgba(0, 0, 0, 0.4)",
-            display: "flex",
-            alignItems: "center",
-            gap: 14,
-          }}
-        >
-          <div
-            style={{
-              width: 46,
-              height: 46,
-              borderRadius: "50%",
-              background: "rgba(20, 184, 166, 0.15)",
-              border: "1px solid rgba(20, 184, 166, 0.4)",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              color: "#14b8a6",
-              flexShrink: 0,
-              boxShadow: "0 0 15px rgba(20, 184, 166, 0.25)",
-            }}
-          >
+        <article className="queue-kpi-card queue-kpi-card-waiting">
+          <div className="queue-kpi-card-icon queue-kpi-icon-waiting">
             <Users size={20} />
           </div>
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <span style={{ fontSize: 11, fontWeight: 700, color: "#14b8a6", textTransform: "uppercase", letterSpacing: "0.05em" }}>
+          <div className="queue-kpi-card-body">
+            <span className="queue-kpi-card-label" style={{ color: "#10b981" }}>
               Total Waiting
             </span>
-            <div style={{ fontSize: 24, fontWeight: 900, color: "#ffffff", letterSpacing: "-0.01em", margin: "1px 0" }}>
+            <div className="queue-kpi-card-value">
               {kpis.waiting.toString().padStart(2, "0")}
             </div>
-            <div style={{ fontSize: 11, color: "#94a3b8" }}>
+            <div className="queue-kpi-card-sub">
               Patients in queue
             </div>
           </div>
-          <ChevronRight size={16} color="#14b8a6" style={{ opacity: 0.7, flexShrink: 0 }} />
+          <ChevronRight size={16} color="#10b981" className="queue-kpi-card-chevron" />
         </article>
 
         {/* Card 4: Completed Today (Cyan/Green Card) */}
-        <article
-          className="queue-kpi-card"
-          style={{
-            background: "linear-gradient(145deg, #071620 0%, #040d14 100%)",
-            border: "1px solid rgba(16, 185, 129, 0.3)",
-            borderRadius: 14,
-            padding: "16px 18px",
-            position: "relative",
-            boxShadow: "0 8px 25px rgba(0, 0, 0, 0.4)",
-            display: "flex",
-            alignItems: "center",
-            gap: 14,
-          }}
-        >
-          <div
-            style={{
-              width: 46,
-              height: 46,
-              borderRadius: "50%",
-              background: "rgba(16, 185, 129, 0.15)",
-              border: "1px solid rgba(16, 185, 129, 0.4)",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              color: "#10b981",
-              flexShrink: 0,
-              boxShadow: "0 0 15px rgba(16, 185, 129, 0.25)",
-            }}
-          >
+        <article className="queue-kpi-card queue-kpi-card-completed">
+          <div className="queue-kpi-card-icon queue-kpi-icon-completed">
             <CheckCircle2 size={20} />
           </div>
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <span style={{ fontSize: 11, fontWeight: 700, color: "#10b981", textTransform: "uppercase", letterSpacing: "0.05em" }}>
+          <div className="queue-kpi-card-body">
+            <span className="queue-kpi-card-label" style={{ color: "#14b8a6" }}>
               Completed Today
             </span>
-            <div style={{ fontSize: 24, fontWeight: 900, color: "#ffffff", letterSpacing: "-0.01em", margin: "1px 0" }}>
+            <div className="queue-kpi-card-value">
               {kpis.completed.toString().padStart(2, "0")}
             </div>
-            <div style={{ fontSize: 11, color: "#94a3b8" }}>
+            <div className="queue-kpi-card-sub">
               Services completed
             </div>
           </div>
-          <ChevronRight size={16} color="#10b981" style={{ opacity: 0.7, flexShrink: 0 }} />
+          <ChevronRight size={16} color="#14b8a6" className="queue-kpi-card-chevron" />
         </article>
       </section>
 
@@ -1426,19 +1323,10 @@ export function LiveQueueView() {
         </div>
 
         {/* RIGHT COLUMN: QUEUE CONTROL PANEL (Circled in user reference image) */}
-        <aside
-          style={{
-            background: "linear-gradient(155deg, #091224 0%, #060c16 100%)",
-            border: "1px solid rgba(229, 184, 105, 0.35)",
-            borderRadius: 16,
-            padding: "20px 18px",
-            boxShadow: "0 10px 40px rgba(0,0,0,0.6), 0 0 25px rgba(229, 184, 105, 0.08)",
-          }}
-        >
+        <aside className="queue-control-card">
           {/* Panel Header */}
-          <div style={{ display: "flex", alignItems: "center", gap: 10, paddingBottom: 16, marginBottom: 16, borderBottom: "1px solid rgba(255, 255, 255, 0.08)" }}>
-            <Sliders size={18} color="#e5b869" />
-            <h2 style={{ margin: 0, fontSize: 16, fontWeight: 800, color: "#ffffff", letterSpacing: "-0.01em" }}>
+          <div className="queue-control-header-row">
+            <h2 className="queue-control-header">
               Queue Control
             </h2>
           </div>
@@ -1451,11 +1339,11 @@ export function LiveQueueView() {
               className="queue-control-btn queue-control-btn-next"
             >
               <div className="queue-control-btn-icon">
-                <Users size={22} color="#f5c270" />
+                <Users size={20} color="#f5c270" />
               </div>
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
-                  <span style={{ fontSize: 16, fontWeight: 900, color: "#ffffff", letterSpacing: "0.01em" }}>
+                  <span style={{ fontSize: 15, fontWeight: 900, color: "#ffffff", letterSpacing: "0.01em" }}>
                     Next
                   </span>
                   <span
@@ -1463,9 +1351,9 @@ export function LiveQueueView() {
                       background: "rgba(229, 184, 105, 0.2)",
                       border: "1px solid rgba(229, 184, 105, 0.4)",
                       color: "#f5c270",
-                      fontSize: 10,
+                      fontSize: 9.5,
                       fontWeight: 800,
-                      padding: "2px 7px",
+                      padding: "1px 6px",
                       borderRadius: 10,
                       textTransform: "uppercase",
                       letterSpacing: "0.03em",
@@ -1474,11 +1362,11 @@ export function LiveQueueView() {
                     Primary
                   </span>
                 </div>
-                <p style={{ margin: "4px 0 0", fontSize: 11.5, color: "#f3c87a", lineHeight: 1.35 }}>
+                <p style={{ margin: "3px 0 0", fontSize: 10.5, color: "#f3c87a", lineHeight: 1.3 }}>
                   Complete running patient &amp; call next into chamber
                 </p>
               </div>
-              <ChevronRight size={18} color="#f5c270" className="queue-control-chevron" />
+              <ChevronRight size={16} color="#f5c270" className="queue-control-chevron" />
             </button>
 
             {/* 2. Skip (Secondary Cyan/Blue Luxury Card) */}
@@ -1488,15 +1376,15 @@ export function LiveQueueView() {
               className="queue-control-btn queue-control-btn-skip"
             >
               <div className="queue-control-btn-icon queue-control-btn-icon-skip">
-                <SkipForward size={22} color="#38bdf8" />
+                <SkipForward size={20} color="#38bdf8" />
               </div>
               <div style={{ flex: 1, minWidth: 0 }}>
-                <span style={{ fontSize: 16, fontWeight: 900, color: "#ffffff" }}>Skip</span>
-                <p style={{ margin: "4px 0 0", fontSize: 11.5, color: "#94a3b8", lineHeight: 1.35 }}>
+                <span style={{ fontSize: 15, fontWeight: 900, color: "#ffffff" }}>Skip</span>
+                <p style={{ margin: "3px 0 0", fontSize: 10.5, color: "#94a3b8", lineHeight: 1.3 }}>
                   Skip absent patient &amp; call next into chamber
                 </p>
               </div>
-              <ChevronRight size={18} color="#38bdf8" className="queue-control-chevron" />
+              <ChevronRight size={16} color="#38bdf8" className="queue-control-chevron" />
             </button>
           </div>
         </aside>

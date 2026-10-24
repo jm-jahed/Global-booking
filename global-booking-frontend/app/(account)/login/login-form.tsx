@@ -158,6 +158,8 @@ export function LuxuryLoginForm() {
           res.user.role === "AUDIT_VIEWER"
         ) {
           router.push("/admin/registrations");
+        } else if (typeof window !== "undefined" && window.innerWidth <= 768) {
+          router.push("/live-queue");
         } else {
           router.push("/dashboard");
         }

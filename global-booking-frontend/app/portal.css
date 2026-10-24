@@ -5235,14 +5235,6 @@
     grid-template-columns: 1fr;
   }
 
-  /* Portal Topbar Mobile Adjustments */
-  .portal-topbar {
-    padding: 0 16px;
-    gap: 12px;
-    height: 60px;
-    min-height: 60px;
-  }
-
   .portal-main-content {
     height: calc(100vh - 60px);
     height: calc(100dvh - 60px);
@@ -5445,35 +5437,7 @@
 }
 
 @media (max-width: 480px) {
-  .portal-topbar {
-    padding: 0 10px;
-    gap: 8px;
-  }
-
-  .topbar-search-container {
-    display: none;
-  }
-
-  .topbar-actions-container {
-    gap: 6px;
-  }
-
-  .topbar-date-picker-button {
-    padding: 0 8px;
-    height: 38px;
-  }
-
-  .topbar-notification-button {
-    width: 38px;
-    height: 38px;
-  }
-
-  .topbar-user-profile {
-    padding: 0 8px 0 4px;
-    height: 38px;
-  }
-
-  /* Touch-friendly buttons */
+  /* Legacy button touch sizing */
   .station-actions-compact {
     flex-wrap: wrap;
   }
@@ -5490,11 +5454,6 @@
   .portal-sidebar {
     width: 265px;
     max-width: 88vw;
-  }
-
-  .portal-topbar {
-    padding: 0 8px;
-    gap: 6px;
   }
 
   .live-queue-module .dashboard-metrics-grid {
@@ -8100,35 +8059,197 @@
 }
 
 /* --------------------------------------------------------------------------
-   Queue KPI Grid (2x2 on Mobile matching Reference Image)
+   Queue Luxury Page Container & Header Deck
+   -------------------------------------------------------------------------- */
+.queue-luxury-page-container {
+  padding: 20px 24px 60px;
+  min-height: 100vh;
+  background: #020610;
+  color: #ffffff;
+}
+
+@media (max-width: 768px) {
+  .queue-luxury-page-container {
+    padding: 12px 12px 84px !important;
+  }
+}
+
+.live-queue-header-deck {
+  position: relative;
+  background: linear-gradient(180deg, #07101e 0%, #030813 100%);
+  border: 1px solid rgba(229, 184, 105, 0.45);
+  border-radius: 18px;
+  padding: 18px 18px 16px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5), 0 0 25px rgba(229, 184, 105, 0.12);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  overflow: hidden;
+  margin-bottom: 14px;
+}
+
+.live-queue-header-deck::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 25%;
+  right: 25%;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, #e5b869, #fde68a, #e5b869, transparent);
+  box-shadow: 0 0 15px #e5b869, 0 0 30px rgba(229, 184, 105, 0.8);
+}
+
+.live-queue-beacon-inner {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  border: 1px solid rgba(229, 184, 105, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(229, 184, 105, 0.08);
+}
+
+.btn-luxury-new-ticket-text {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.15;
+  text-align: left;
+}
+
+/* --------------------------------------------------------------------------
+   Queue KPI Grid (Exact 2x2 Glowing Cards matching Reference Image)
    -------------------------------------------------------------------------- */
 .queue-kpi-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: 16px;
-  margin-bottom: 24px;
+  gap: 14px;
+  margin-bottom: 14px;
 }
 
-@media (max-width: 992px) {
+.queue-kpi-card {
+  border-radius: 16px;
+  padding: 14px 14px;
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: linear-gradient(180deg, #07101e 0%, #030813 100%);
+  transition: all 0.2s ease;
+}
+
+.queue-kpi-card-serving {
+  border: 1px solid rgba(229, 184, 105, 0.45);
+  box-shadow: 0 0 20px rgba(229, 184, 105, 0.12), inset 0 1px 0 rgba(229, 184, 105, 0.35);
+}
+
+.queue-kpi-card-next {
+  border: 1px solid rgba(56, 189, 248, 0.45);
+  box-shadow: 0 0 20px rgba(56, 189, 248, 0.12), inset 0 1px 0 rgba(56, 189, 248, 0.35);
+}
+
+.queue-kpi-card-waiting {
+  border: 1px solid rgba(16, 185, 129, 0.45);
+  box-shadow: 0 0 20px rgba(16, 185, 129, 0.12), inset 0 1px 0 rgba(16, 185, 129, 0.35);
+}
+
+.queue-kpi-card-completed {
+  border: 1px solid rgba(20, 184, 166, 0.45);
+  box-shadow: 0 0 20px rgba(20, 184, 166, 0.12), inset 0 1px 0 rgba(20, 184, 166, 0.35);
+}
+
+.queue-kpi-card-icon {
+  width: 44px;
+  height: 44px;
+  min-width: 44px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.queue-kpi-icon-serving {
+  background: linear-gradient(135deg, rgba(229, 184, 105, 0.25) 0%, rgba(184, 134, 40, 0.35) 100%);
+  border: 1.5px solid rgba(229, 184, 105, 0.65);
+  color: #e5b869;
+  box-shadow: 0 0 15px rgba(229, 184, 105, 0.3);
+}
+
+.queue-kpi-icon-next {
+  background: rgba(56, 189, 248, 0.15);
+  border: 1.5px solid rgba(56, 189, 248, 0.55);
+  color: #38bdf8;
+  box-shadow: 0 0 15px rgba(56, 189, 248, 0.25);
+}
+
+.queue-kpi-icon-waiting {
+  background: rgba(16, 185, 129, 0.15);
+  border: 1.5px solid rgba(16, 185, 129, 0.55);
+  color: #10b981;
+  box-shadow: 0 0 15px rgba(16, 185, 129, 0.25);
+}
+
+.queue-kpi-icon-completed {
+  background: rgba(20, 184, 166, 0.15);
+  border: 1.5px solid rgba(20, 184, 166, 0.55);
+  color: #14b8a6;
+  box-shadow: 0 0 15px rgba(20, 184, 166, 0.25);
+}
+
+.queue-kpi-card-body {
+  flex: 1;
+  min-width: 0;
+}
+
+.queue-kpi-card-label {
+  display: block;
+  font-size: 10px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 2px;
+}
+
+.queue-kpi-card-value {
+  font-size: 24px;
+  font-weight: 900;
+  color: #ffffff;
+  letter-spacing: -0.01em;
+  line-height: 1.1;
+  margin: 1px 0;
+}
+
+.queue-kpi-card-sub {
+  font-size: 10.5px;
+  color: #94a3b8;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.queue-kpi-card-chevron {
+  flex-shrink: 0;
+  opacity: 0.8;
+  margin-left: auto;
+}
+
+@media (max-width: 900px) {
   .queue-kpi-grid {
-    grid-template-columns: repeat(2, 1fr);
-    gap: 12px;
-    margin-bottom: 20px;
-  }
-  .queue-kpi-card {
-    padding: 14px 14px !important;
+    grid-template-columns: repeat(2, 1fr) !important;
     gap: 10px !important;
-  }
-}
-
-@media (max-width: 480px) {
-  .queue-kpi-grid {
-    grid-template-columns: repeat(2, 1fr);
-    gap: 10px;
   }
   .queue-kpi-card {
     padding: 12px 10px !important;
     gap: 8px !important;
+  }
+  .queue-kpi-card-icon {
+    width: 38px !important;
+    height: 38px !important;
+    min-width: 38px !important;
+  }
+  .queue-kpi-card-value {
+    font-size: 20px !important;
   }
 }
 
@@ -8138,14 +8259,14 @@
 .queue-main-split {
   display: grid;
   grid-template-columns: 1fr 340px;
-  gap: 20px;
+  gap: 16px;
   align-items: start;
 }
 
 @media (max-width: 992px) {
   .queue-main-split {
     grid-template-columns: 1fr;
-    gap: 16px;
+    gap: 14px;
   }
 }
 
@@ -8171,89 +8292,103 @@
 }
 
 /* --------------------------------------------------------------------------
-   Queue Control Actions Grid & Buttons (Next & Skip)
+   Queue Control Card & 2-Column Mobile Actions
    -------------------------------------------------------------------------- */
-.queue-control-actions-grid {
+.queue-control-card {
+  background: linear-gradient(180deg, #07101e 0%, #030813 100%);
+  border: 1px solid rgba(56, 189, 248, 0.25);
+  border-radius: 18px;
+  padding: 16px 16px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+}
+
+.queue-control-header-row {
   display: flex;
-  flex-direction: column;
-  gap: 14px;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.queue-control-header {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 800;
+  color: #ffffff;
+  letter-spacing: -0.01em;
+}
+
+.queue-control-actions-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+@media (max-width: 992px) {
+  .queue-control-actions-grid {
+    grid-template-columns: 1fr 1fr !important;
+    gap: 10px !important;
+  }
 }
 
 .queue-control-btn {
   border-radius: 14px;
-  padding: 18px 18px;
+  padding: 12px 10px;
   display: flex;
   align-items: center;
-  gap: 14px;
+  gap: 10px;
   cursor: pointer;
   transition: all 0.2s ease;
   text-align: left;
   width: 100%;
+  box-sizing: border-box;
 }
 
 .queue-control-btn-next {
-  background: linear-gradient(135deg, rgba(229, 184, 105, 0.24) 0%, rgba(184, 134, 40, 0.14) 100%);
-  border: 1.5px solid rgba(229, 184, 105, 0.55);
-  box-shadow: 0 6px 20px rgba(229, 184, 105, 0.2);
+  background: linear-gradient(135deg, rgba(229, 184, 105, 0.18) 0%, rgba(184, 134, 40, 0.08) 100%);
+  border: 1.5px solid rgba(229, 184, 105, 0.5);
+  box-shadow: 0 4px 15px rgba(229, 184, 105, 0.15);
 }
 
 .queue-control-btn-next:hover {
   transform: translateY(-2px);
-  box-shadow: 0 8px 25px rgba(229, 184, 105, 0.35);
+  box-shadow: 0 6px 20px rgba(229, 184, 105, 0.25);
 }
 
 .queue-control-btn-skip {
   background: linear-gradient(135deg, rgba(8, 28, 48, 0.85) 0%, rgba(4, 16, 28, 0.95) 100%);
   border: 1.5px solid rgba(56, 189, 248, 0.45);
-  box-shadow: 0 6px 20px rgba(56, 189, 248, 0.15);
+  box-shadow: 0 4px 15px rgba(56, 189, 248, 0.15);
 }
 
 .queue-control-btn-skip:hover {
   transform: translateY(-2px);
   border-color: rgba(56, 189, 248, 0.7);
-  box-shadow: 0 8px 25px rgba(56, 189, 248, 0.28);
+  box-shadow: 0 6px 20px rgba(56, 189, 248, 0.25);
 }
 
 .queue-control-btn-icon {
-  width: 44px;
-  height: 44px;
-  border-radius: 12px;
-  background: linear-gradient(135deg, rgba(229, 184, 105, 0.35) 0%, rgba(184, 134, 40, 0.45) 100%);
+  width: 40px;
+  height: 40px;
+  min-width: 40px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, rgba(229, 184, 105, 0.3) 0%, rgba(184, 134, 40, 0.4) 100%);
   border: 1.5px solid rgba(229, 184, 105, 0.65);
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  box-shadow: 0 0 15px rgba(229, 184, 105, 0.3);
+  box-shadow: 0 0 12px rgba(229, 184, 105, 0.3);
 }
 
 .queue-control-btn-icon-skip {
   background: rgba(56, 189, 248, 0.15);
-  border: 1.5px solid rgba(56, 189, 248, 0.5);
-  box-shadow: 0 0 15px rgba(56, 189, 248, 0.25);
+  border: 1.5px solid rgba(56, 189, 248, 0.55);
+  box-shadow: 0 0 12px rgba(56, 189, 248, 0.25);
 }
 
 .queue-control-chevron {
   flex-shrink: 0;
   opacity: 0.8;
   margin-left: auto;
-}
-
-@media (max-width: 768px) {
-  .queue-control-actions-grid {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 10px;
-  }
-  .queue-control-btn {
-    padding: 12px 12px;
-    gap: 10px;
-  }
-  .queue-control-btn-icon {
-    width: 38px;
-    height: 38px;
-    border-radius: 10px;
-  }
 }
 
 @media (max-width: 420px) {
@@ -8267,5 +8402,6 @@
   .queue-control-btn-icon {
     width: 32px;
     height: 32px;
+    min-width: 32px;
   }
 }

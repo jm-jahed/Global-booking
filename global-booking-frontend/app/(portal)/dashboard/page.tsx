@@ -1,11 +1,24 @@
-import { DashboardView } from "@/components/portal/dashboard-view";
-import { pageMetadata } from "@/lib/utils/metadata";
+"use client";
 
-export const metadata = pageMetadata(
-  "Dashboard",
-  "Real-time operational dashboard, live queue, appointment metrics, and booking insights for Global Booking."
-);
+import { useEffect, useState } from "react";
+import { DashboardView } from "@/components/portal/dashboard-view";
+import { LiveQueueView } from "@/components/portal/queue/live-queue-view";
 
 export default function Page() {
+  const [isMobile, setIsMobile] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    const updateSize = () => {
+      setIsMobile(window.innerWidth <= 768);
+    };
+    updateSize();
+    window.addEventListener("resize", updateSize);
+    return () => window.removeEventListener("resize", updateSize);
+  }, []);
+
+  if (isMobile) {
+    return <LiveQueueView />;
+  }
+
   return <DashboardView />;
 }
