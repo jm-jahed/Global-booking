@@ -8088,6 +8088,25 @@
   margin-bottom: 14px;
 }
 
+@media (max-width: 768px) {
+  .live-queue-header-main-row {
+    display: none !important;
+  }
+  .live-queue-header-deck {
+    padding: 10px 10px !important;
+    gap: 0 !important;
+    margin-bottom: 12px !important;
+    border-radius: 16px !important;
+    background: linear-gradient(180deg, #07101e 0%, #030813 100%) !important;
+    border: 1px solid rgba(229, 184, 105, 0.45) !important;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5), 0 0 15px rgba(229, 184, 105, 0.1) !important;
+    overflow: visible !important;
+  }
+  .live-queue-header-deck::before {
+    display: none !important;
+  }
+}
+
 .live-queue-header-deck::before {
   content: "";
   position: absolute;
