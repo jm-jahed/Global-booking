@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Search, Calendar, Bell, ChevronDown, UserCircle } from "lucide-react";
+import { Search, Calendar, Bell, ChevronDown, UserCircle, Menu, X } from "lucide-react";
 import { getStoredPortalUser, getStoredAccountType, getAdminMe } from "@/lib/api/admin-client";
 
 import type { PortalAccountType } from "./portal-sidebar";
@@ -9,9 +9,16 @@ import type { PortalAccountType } from "./portal-sidebar";
 export interface PortalTopBarProps {
   readonly accountType?: PortalAccountType;
   readonly currentUser?: any;
+  readonly isMobileSidebarOpen?: boolean;
+  readonly onToggleMobileSidebar?: () => void;
 }
 
-export function PortalTopBar({ accountType: propAccountType, currentUser: propUser }: PortalTopBarProps = {}) {
+export function PortalTopBar({
+  accountType: propAccountType,
+  currentUser: propUser,
+  isMobileSidebarOpen = false,
+  onToggleMobileSidebar,
+}: PortalTopBarProps = {}) {
   const [searchValue, setSearchValue] = useState("");
   const [userProfile, setUserProfile] = useState<{
     name: string;
@@ -103,6 +110,17 @@ export function PortalTopBar({ accountType: propAccountType, currentUser: propUs
 
   return (
     <header className="portal-topbar">
+      {/* Mobile Drawer Hamburger Toggle (Visible on <= 1024px) */}
+      <button
+        type="button"
+        className="portal-mobile-toggle-btn"
+        onClick={onToggleMobileSidebar}
+        aria-label={isMobileSidebarOpen ? "Close navigation menu" : "Open navigation menu"}
+        aria-expanded={isMobileSidebarOpen}
+      >
+        {isMobileSidebarOpen ? <X size={20} /> : <Menu size={20} />}
+      </button>
+
       {/* Search Input Box */}
       <div className="topbar-search-container">
         <Search className="topbar-search-icon" size={17} />

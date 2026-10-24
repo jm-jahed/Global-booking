@@ -4,22 +4,56 @@
  */
 
 import { getApiBaseUrl } from "./admin-client";
-import type { PublicAppointmentRecord } from "./doctor-public-client";
+export interface BackendAppointmentItem {
+  id: string;
+  referenceNumber: string;
+  voucherId?: string;
+  bookingNumber?: number;
+  bookingNumberDisplay?: string;
+  doctorId: string;
+  doctorAccountId?: string;
+  doctorName: string;
+  doctorSpecialty: string;
+  chamberId: string;
+  chamberName: string;
+  chamberTimezone?: string;
+  patientName: string;
+  patientPhone: string;
+  patientEmail?: string;
+  appointmentDate: string;
+  appointmentTime: string;
+  service: string;
+  status: string;
+  channel?: string;
+  idempotencyKey?: string;
+  notes?: string;
+  createdAt: string;
+  updatedAt?: string;
+}
 
 export interface BackendAppointmentResponse {
   statusCode: number;
-  items: PublicAppointmentRecord[];
+  items: BackendAppointmentItem[];
   count: number;
   doctorId: string;
+  error?: string;
+  message?: string;
 }
 
-export async function fetchDoctorPortalAppointments(params?: {
+export interface FetchDoctorAppointmentsParams {
   chamberId?: string;
   appointmentDate?: string;
   status?: string;
-}): Promise<BackendAppointmentResponse | null> {
+  token?: string;
+  apiBaseUrl?: string;
+  fetchImplementation?: typeof fetch;
+}
+
+export async function fetchDoctorPortalAppointments(
+  params?: FetchDoctorAppointmentsParams
+): Promise<BackendAppointmentResponse | null> {
   try {
-    const baseUrl = getApiBaseUrl();
+    const baseUrl = params?.apiBaseUrl || getApiBaseUrl();
     const query = new URLSearchParams();
     if (params?.chamberId) query.set("chamberId", params.chamberId);
     if (params?.appointmentDate) query.set("appointmentDate", params.appointmentDate);
@@ -32,20 +66,24 @@ export async function fetchDoctorPortalAppointments(params?: {
       Accept: "application/json",
     });
 
-    if (typeof window !== "undefined") {
-      const token = localStorage.getItem("gb_admin_token");
-      if (token) {
-        headers.set("Authorization", `Bearer ${token}`);
-      }
+    const authToken =
+      params?.token ||
+      (typeof window !== "undefined" ? localStorage.getItem("gb_admin_token") : null);
+
+    if (authToken) {
+      headers.set("Authorization", `Bearer ${authToken}`);
     }
 
-    const res = await fetch(url, {
+    const fetchFn = params?.fetchImplementation || fetch;
+    const res = await fetchFn(url, {
       method: "GET",
       headers,
       credentials: "include",
     });
 
     if (!res.ok) {
+      const errJson = await res.json().catch(() => ({}));
+      console.warn(`Doctor portal appointments fetch returned status ${res.status}:`, errJson);
       return null;
     }
 
@@ -55,3 +93,4 @@ export async function fetchDoctorPortalAppointments(params?: {
     return null;
   }
 }
+

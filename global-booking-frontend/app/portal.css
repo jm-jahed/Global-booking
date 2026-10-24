@@ -70,11 +70,27 @@
   border-radius: 3px;
 }
 
+/* Mobile Drawer Backdrop Base */
+.portal-mobile-backdrop {
+  display: none;
+}
+
+.portal-mobile-toggle-btn {
+  display: none;
+}
+
+.portal-sidebar-close-btn {
+  display: none;
+}
+
 /* Sidebar Brand Header */
 .sidebar-brand-wrapper {
   margin-bottom: 10px;
   padding: 0 4px;
   flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
 }
 
 .sidebar-brand-link {
@@ -5117,8 +5133,17 @@
 }
 
 /* --------------------------------------------------------------------------
-   RESPONSIVENESS
+   RESPONSIVENESS (A–Z MOBILE & MULTI-DEVICE SUPPORT)
    -------------------------------------------------------------------------- */
+@keyframes portalFadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
 @media (max-width: 1280px) {
   .dashboard-middle-grid,
   .dashboard-bottom-grid,
@@ -5145,33 +5170,286 @@
   .tv-stations-grid {
     grid-template-columns: 1fr;
   }
+
+  /* Portal Topbar Mobile Adjustments */
+  .portal-topbar {
+    padding: 0 16px;
+    gap: 12px;
+    height: 60px;
+    min-height: 60px;
+  }
+
+  .portal-main-content {
+    height: calc(100vh - 60px);
+    height: calc(100dvh - 60px);
+  }
+
+  /* Portal Mobile Hamburger Toggle */
+  .portal-mobile-toggle-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    min-width: 40px;
+    border-radius: 10px;
+    background: rgba(229, 184, 105, 0.12);
+    border: 1px solid rgba(229, 184, 105, 0.35);
+    color: #e5b869;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    flex-shrink: 0;
+  }
+
+  .portal-mobile-toggle-btn:hover {
+    background: rgba(229, 184, 105, 0.22);
+    border-color: rgba(229, 184, 105, 0.5);
+    color: #ffffff;
+  }
+
+  /* Close Button inside Mobile Drawer Header */
+  .portal-sidebar-close-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    min-width: 32px;
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    color: #94a3b8;
+    cursor: pointer;
+    transition: all 0.18s ease;
+  }
+
+  .portal-sidebar-close-btn:hover {
+    background: rgba(239, 68, 68, 0.18);
+    border-color: rgba(239, 68, 68, 0.35);
+    color: #ef4444;
+  }
+
+  /* Off-canvas mobile drawer (Doctor, Hospital, Staff) */
+  .portal-sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    width: 285px;
+    max-width: 85vw;
+    z-index: 1000;
+    transform: translateX(-100%);
+    transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    box-shadow: 8px 0 36px rgba(0, 0, 0, 0.75);
+  }
+
+  .portal-sidebar.sidebar-open {
+    transform: translateX(0);
+  }
+
+  /* Full Screen Backdrop */
+  .portal-mobile-backdrop.sidebar-open {
+    display: block;
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.75);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    z-index: 999;
+    animation: portalFadeIn 0.2s ease-out;
+  }
 }
 
 @media (max-width: 768px) {
-  .portal-sidebar {
-    display: none;
-  }
   .dashboard-metrics-grid,
   .kanban-columns-grid,
   .stations-cards-grid {
     grid-template-columns: 1fr;
   }
+
   .topbar-search-container {
-    width: 200px;
+    max-width: 220px;
   }
+
+  .topbar-user-details {
+    display: none;
+  }
+
+  .topbar-date-picker-button span:last-child {
+    display: none;
+  }
+
   .overview-charts-container {
     grid-template-columns: 1fr;
   }
+
   .queue-quick-stats-row {
     grid-template-columns: repeat(2, 1fr);
   }
+
   .detail-header-panel {
     flex-direction: column;
     align-items: flex-start;
   }
+
   .detail-logistics-grid,
   .detail-client-info-grid {
     grid-template-columns: 1fr;
+  }
+
+  /* Table Smooth Momentum Touch Scrolling */
+  .table-responsive-wrapper {
+    flex: 1;
+    min-height: 0;
+    overflow-x: auto;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* Appointments Controls Bar */
+  .appointments-controls-bar {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+  }
+
+  .view-mode-toggle-group {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .view-mode-button {
+    flex: 1;
+    justify-content: center;
+  }
+
+  .filters-right-group {
+    width: 100%;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .table-search-wide {
+    width: 100%;
+    flex: 1;
+    min-width: 180px;
+  }
+
+  /* Live Queue Responsive Adjustments */
+  .live-queue-module {
+    padding: 8px 12px 10px !important;
+  }
+
+  .live-queue-module .dashboard-metrics-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+
+  .stations-cards-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  .station-dispatch-card {
+    padding: 10px !important;
+  }
+
+  .station-mid-row {
+    flex-wrap: wrap;
+  }
+}
+
+@media (max-width: 640px) {
+  /* QR Code Modal Cards & View Mode Switcher */
+  .qr-cards-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  .qr-viewmode-switcher {
+    flex-wrap: wrap !important;
+  }
+
+  /* Modal Dialog Cards */
+  .new-appointment-modal-card {
+    width: 95vw !important;
+    max-width: 95vw !important;
+    padding: 16px 14px !important;
+  }
+
+  .appointment-form-grid-2,
+  .appointment-form-grid-3 {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .portal-topbar {
+    padding: 0 10px;
+    gap: 8px;
+  }
+
+  .topbar-search-container {
+    display: none;
+  }
+
+  .topbar-actions-container {
+    gap: 6px;
+  }
+
+  .topbar-date-picker-button {
+    padding: 0 8px;
+    height: 38px;
+  }
+
+  .topbar-notification-button {
+    width: 38px;
+    height: 38px;
+  }
+
+  .topbar-user-profile {
+    padding: 0 8px 0 4px;
+    height: 38px;
+  }
+
+  /* Touch-friendly buttons */
+  .station-actions-compact {
+    flex-wrap: wrap;
+  }
+
+  .station-btn-call,
+  .station-btn-complete {
+    height: 30px;
+    padding: 0 10px;
+  }
+}
+
+@media (max-width: 360px) {
+  /* Ultra-small phones (320px–360px) */
+  .portal-sidebar {
+    width: 265px;
+    max-width: 88vw;
+  }
+
+  .portal-topbar {
+    padding: 0 8px;
+    gap: 6px;
+  }
+
+  .live-queue-module .dashboard-metrics-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  .metric-card {
+    padding: 6px 8px;
+  }
+
+  .brand-global,
+  .brand-booking {
+    font-size: 13px;
+  }
+
+  .sidebar-brand-icon {
+    width: 32px;
+    height: 32px;
+    min-width: 32px;
   }
 }
 

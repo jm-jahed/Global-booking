@@ -15,6 +15,7 @@ import type { DoctorChamberDetail } from "../admin/admin.types.js";
 
 let schedulerTimer: NodeJS.Timeout | null = null;
 let isExecuting = false;
+let activeRunPromise: Promise<DayEndRunResult> | null = null;
 
 export interface DayEndRunResult {
   totalDoctorsProcessed: number;
@@ -60,6 +61,7 @@ export async function runSystemDayEndCleanup(
   }
 
   isExecuting = true;
+  const execution = (async () => {
   const result: DayEndRunResult = {
     totalDoctorsProcessed: 0,
     totalChambersProcessed: 0,
@@ -193,9 +195,19 @@ export async function runSystemDayEndCleanup(
     }
   } finally {
     isExecuting = false;
+    activeRunPromise = null;
   }
 
   return result;
+  })();
+
+  activeRunPromise = execution;
+  return execution;
+}
+
+export interface SchedulerDrainResult {
+  drained: boolean;
+  activeJobWasRunning: boolean;
 }
 
 /**
@@ -217,11 +229,53 @@ export function startDayEndQueueScheduler(intervalMs = 30 * 60 * 1000): void {
 }
 
 /**
- * Stops the background scheduler cleanly.
+ * Stops the background scheduler cleanly and drains any active running job.
+ * If a job is in-flight, it awaits its completion up to drainTimeoutMs.
+ * If the drain times out, it does NOT delete or mutate the distributed lock in MongoDB,
+ * leaving the automatic lease expiry to recover safely on subsequent runs without corrupting state.
  */
-export function stopDayEndQueueScheduler(): void {
+export async function stopDayEndQueueScheduler(
+  drainTimeoutMs = 5000,
+): Promise<SchedulerDrainResult> {
   if (schedulerTimer) {
     clearInterval(schedulerTimer);
     schedulerTimer = null;
   }
+
+  if (!activeRunPromise) {
+    return { drained: true, activeJobWasRunning: false };
+  }
+
+  let timer: NodeJS.Timeout | null = null;
+  const timeoutPromise = new Promise<"TIMEOUT">((resolve) => {
+    timer = setTimeout(() => resolve("TIMEOUT"), drainTimeoutMs);
+    if (typeof timer.unref === "function") {
+      timer.unref();
+    }
+  });
+
+  try {
+    const outcome = await Promise.race([
+      activeRunPromise.then(() => "COMPLETED" as const).catch(() => "ERROR" as const),
+      timeoutPromise,
+    ]);
+
+    return {
+      drained: outcome !== "TIMEOUT",
+      activeJobWasRunning: true,
+    };
+  } finally {
+    if (timer) {
+      clearTimeout(timer);
+    }
+  }
 }
+
+export function isSchedulerExecuting(): boolean {
+  return isExecuting;
+}
+
+export function getActiveRunPromise(): Promise<DayEndRunResult> | null {
+  return activeRunPromise;
+}
+

@@ -1,8 +1,15 @@
 /**
  * GLOBAL BOOKING — Doctor Appointments & Online Real-time Sync Service
- * Manages genuine clinical appointments for Personal Doctor Practice (Dr. Jahedul Islam)
- * Synchronizes in real-time with online patient bookings made on public profile (/dr-jahedul-islam/book).
+ * Authenticated MongoDB-backed appointments service for Doctor Portal.
+ * Server API (/api/v1/portal/doctor/appointments) is the authoritative source of truth.
+ * Browser localStorage is retained solely as a non-authoritative offline/display cache.
  */
+
+import {
+  fetchDoctorPortalAppointments,
+  type BackendAppointmentItem,
+  type FetchDoctorAppointmentsParams,
+} from "../api/doctor-appointments-client";
 
 export type DoctorAppointmentStatus =
   | "Confirmed"
@@ -47,6 +54,7 @@ export interface ActiveDoctorContext {
   name: string;
   specialty: string;
   chamber: string;
+  doctorId?: string;
 }
 
 export function getActiveDoctorContext(): ActiveDoctorContext {
@@ -74,7 +82,8 @@ export function getActiveDoctorContext(): ActiveDoctorContext {
         u.chamberLocationsSummary ||
         (Array.isArray(u.chambers) && u.chambers[0]?.facilityName) ||
         "Main Consultation Chamber";
-      return { slug, name, specialty, chamber };
+      const doctorId = u.doctorId || u.id || undefined;
+      return { slug, name, specialty, chamber, doctorId };
     }
   } catch {}
 
@@ -88,182 +97,193 @@ export function getActiveDoctorContext(): ActiveDoctorContext {
 
 export function getDoctorStorageKey(): string {
   const ctx = getActiveDoctorContext();
-  if (!ctx.slug) {
+  const keyIdentifier = (ctx.slug || ctx.doctorId || "").trim().toLowerCase();
+  if (!keyIdentifier) {
     return "global_booking_doctor_appointments_anonymous";
   }
-  if (ctx.slug === "dr-jahedul-islam") {
+  if (keyIdentifier === "dr-jahedul-islam") {
     return "global_booking_doctor_appointments";
   }
-  return `global_booking_doctor_appointments_${ctx.slug}`;
+  return `global_booking_doctor_appointments_${keyIdentifier}`;
 }
 
 export function getPublicBookingsStorageKey(): string {
   const ctx = getActiveDoctorContext();
-  if (!ctx.slug) {
+  const keyIdentifier = (ctx.slug || ctx.doctorId || "").trim().toLowerCase();
+  if (!keyIdentifier) {
     return "global_booking_appointments_anonymous";
   }
-  return `global_booking_appointments_${ctx.slug}`;
+  return `global_booking_appointments_${keyIdentifier}`;
 }
 
 /**
- * Baseline Authentic Clinical Registry for Dr. Jahedul Islam (Cardiology Practice)
- * Used only on clean initialization with zero fake data (genuine cardiology clinical roster).
+ * Maps a MongoDB backend AppointmentRecord to the DoctorAppointment UI contract.
  */
-const INITIAL_DOCTOR_APPOINTMENTS: DoctorAppointment[] = [
-  {
-    id: "GB-DOC-101",
-    referenceNumber: "GB-DOC-101",
-    serialNumber: "#01",
-    patientName: "Ahmed Al Mansoori",
-    patientPhone: "+971 50 492 1184",
-    patientEmail: "a.mansoori@dubaihealth.ae",
-    patientAgeGender: "52 Yrs, Male",
-    bloodGroup: "O+",
-    service: "Interventional Cardiology Follow-up & Stent Review",
-    serviceCategory: "Cardiology",
-    doctorName: "Dr. Jahedul Islam",
-    doctorSpecialty: "Consultant Interventional Cardiologist",
-    chamberLocation: "Medcare Heart Centre, Chamber 302",
-    date: "2026-04-24",
-    time: "09:30 AM",
+export function mapBackendToDoctorAppointment(item: BackendAppointmentItem): DoctorAppointment {
+  let mappedStatus: DoctorAppointmentStatus = "Confirmed";
+  const rawStatus = (item.status || "").toUpperCase();
+  if (rawStatus === "IN_CONSULTATION" || item.status === "In Consultation") {
+    mappedStatus = "In Consultation";
+  } else if (rawStatus === "COMPLETED" || item.status === "Completed") {
+    mappedStatus = "Completed";
+  } else if (rawStatus === "CANCELLED" || item.status === "Cancelled") {
+    mappedStatus = "Cancelled";
+  } else if (rawStatus === "PENDING" || item.status === "Pending") {
+    mappedStatus = "Pending";
+  } else {
+    mappedStatus = "Confirmed";
+  }
+
+  let mappedChannel: DoctorAppointmentChannel = "Online Web";
+  const rawChannel = (item.channel || "").toUpperCase();
+  if (rawChannel === "IN_PERSON" || item.channel === "In-Person Chamber") {
+    mappedChannel = "In-Person Chamber";
+  } else if (rawChannel === "PHONE" || item.channel === "Phone Booking") {
+    mappedChannel = "Phone Booking";
+  } else {
+    mappedChannel = "Online Web";
+  }
+
+  const serial =
+    item.bookingNumberDisplay ||
+    (typeof item.bookingNumber === "number" && item.bookingNumber > 0
+      ? `#${String(item.bookingNumber).padStart(2, "0")}`
+      : "#01");
+
+  return {
+    id: item.id,
+    referenceNumber: item.referenceNumber || item.id,
+    serialNumber: serial,
+    patientName: item.patientName || "Patient",
+    patientPhone: item.patientPhone || "",
+    patientEmail: item.patientEmail || undefined,
+    patientAgeGender: "Adult Patient",
+    bloodGroup: "Pending",
+    service: item.service || `${item.doctorSpecialty || "Specialist"} Consultation`,
+    serviceCategory: item.doctorSpecialty || "Consultation",
+    doctorName: item.doctorName || "",
+    doctorSpecialty: item.doctorSpecialty || "Specialist Physician",
+    chamberLocation: item.chamberName || "Main Consultation Chamber",
+    date: item.appointmentDate || new Date().toISOString().split("T")[0],
+    time: item.appointmentTime || "10:00 AM",
     duration: "30 min",
-    status: "Completed",
-    channel: "In-Person Chamber",
+    status: mappedStatus,
+    channel: mappedChannel,
     paymentStatus: "Paid",
     price: "500 AED",
-    notes: "Post-PCI follow-up completed. Vitals stable, prescriptions updated.",
-    createdAt: new Date(Date.now() - 3600000 * 2).toISOString(),
-  },
-  {
-    id: "GB-DOC-102",
-    referenceNumber: "GB-DOC-102",
-    serialNumber: "#02",
-    patientName: "Fatima Rahman",
-    patientPhone: "+971 52 831 9042",
-    patientEmail: "fatima.r@emiratescare.com",
-    patientAgeGender: "46 Yrs, Female",
-    bloodGroup: "B+",
-    service: "Hypertension & 2D Echocardiography Review",
-    serviceCategory: "Cardiology",
-    doctorName: "Dr. Jahedul Islam",
-    doctorSpecialty: "Consultant Interventional Cardiologist",
-    chamberLocation: "Medcare Heart Centre, Chamber 302",
-    date: "2026-04-24",
-    time: "10:00 AM",
-    duration: "30 min",
-    status: "Completed",
-    channel: "Online Web",
-    paymentStatus: "Paid",
-    price: "500 AED",
-    notes: "Consultation completed. Blood pressure diary reviewed.",
-    createdAt: new Date(Date.now() - 3600000 * 4).toISOString(),
-    isOnlineBooking: true,
-  },
-  {
-    id: "GB-DOC-103",
-    referenceNumber: "GB-DOC-103",
-    serialNumber: "#03",
-    patientName: "Tariq Al Hashimi",
-    patientPhone: "+971 55 120 7731",
-    patientEmail: "tariq.hashimi@investcorp.ae",
-    patientAgeGender: "39 Yrs, Male",
-    bloodGroup: "A+",
-    service: "Chest Pain & Coronary Artery Assessment",
-    serviceCategory: "Cardiology",
-    doctorName: "Dr. Jahedul Islam",
-    doctorSpecialty: "Consultant Interventional Cardiologist",
-    chamberLocation: "Medcare Heart Centre, Chamber 302",
-    date: "2026-04-24",
-    time: "11:00 AM",
-    duration: "30 min",
-    status: "In Consultation",
-    channel: "In-Person Chamber",
-    paymentStatus: "Paid",
-    price: "500 AED",
-    notes: "Currently in chamber. ECG normal, undergoing treadmill stress evaluation.",
-    createdAt: new Date(Date.now() - 3600000 * 6).toISOString(),
-  },
-  {
-    id: "GB-DOC-104",
-    referenceNumber: "GB-DOC-104",
-    serialNumber: "#04",
-    patientName: "Rashid Kamal",
-    patientPhone: "+971 50 662 9940",
-    patientEmail: "rashid.k@dubaichamber.ae",
-    patientAgeGender: "61 Yrs, Male",
-    bloodGroup: "AB+",
-    service: "Preventive Cardiovascular Screening & Calcium Score",
-    serviceCategory: "Cardiology",
-    doctorName: "Dr. Jahedul Islam",
-    doctorSpecialty: "Consultant Interventional Cardiologist",
-    chamberLocation: "Medcare Heart Centre, Chamber 302",
-    date: "2026-04-24",
-    time: "11:30 AM",
-    duration: "30 min",
-    status: "Pending",
-    channel: "In-Person Chamber",
-    paymentStatus: "Insurance",
-    price: "500 AED",
-    notes: "Chamber appointment. Patient checked in at receptionist desk.",
-    createdAt: new Date(Date.now() - 3600000 * 8).toISOString(),
-  },
-  {
-    id: "GB-DOC-105",
-    referenceNumber: "GB-DOC-105",
-    serialNumber: "#05",
-    patientName: "Sara Al Suwaidi",
-    patientPhone: "+971 56 312 4490",
-    patientEmail: "sara.suwaidi@adnoc.ae",
-    patientAgeGender: "34 Yrs, Female",
-    bloodGroup: "O-",
-    service: "Holter Monitor & Palpitation Review",
-    serviceCategory: "Cardiology",
-    doctorName: "Dr. Jahedul Islam",
-    doctorSpecialty: "Consultant Interventional Cardiologist",
-    chamberLocation: "Medcare Heart Centre, Chamber 302",
-    date: "2026-04-24",
-    time: "12:00 PM",
-    duration: "30 min",
-    status: "Pending",
-    channel: "In-Person Chamber",
-    paymentStatus: "Paid",
-    price: "450 AED",
-    notes: "Chamber visit appointment booked online. Serial assigned.",
-    createdAt: new Date(Date.now() - 3600000 * 12).toISOString(),
-    isOnlineBooking: true,
-  },
-  {
-    id: "GB-DOC-100",
-    referenceNumber: "GB-DOC-100",
-    serialNumber: "#06",
-    patientName: "Mohammed Al Nuaimi",
-    patientPhone: "+971 50 994 3321",
-    patientEmail: "m.nuaimi@gulfhealth.org",
-    patientAgeGender: "58 Yrs, Male",
-    bloodGroup: "A+",
-    service: "Routine Post-Op Cardiac Clearance",
-    serviceCategory: "Cardiology",
-    doctorName: "Dr. Jahedul Islam",
-    doctorSpecialty: "Consultant Interventional Cardiologist",
-    chamberLocation: "Medcare Heart Centre, Chamber 302",
-    date: "2026-04-24",
-    time: "09:30 AM",
-    duration: "30 min",
-    status: "Completed",
-    channel: "In-Person Chamber",
-    paymentStatus: "Paid",
-    price: "500 AED",
-    notes: "Consultation completed. Vital signs stable, cleared for travel.",
-    createdAt: new Date(Date.now() - 3600000 * 18).toISOString(),
-  },
-];
+    notes: item.notes || undefined,
+    createdAt: item.createdAt || new Date().toISOString(),
+    isOnlineBooking: mappedChannel === "Online Web",
+  };
+}
+
+/**
+ * Retrieve cached doctor appointments from non-authoritative localStorage.
+ * Guaranteed zero-mock: returns empty array if no real data is cached.
+ */
+export function getDoctorAppointments(): DoctorAppointment[] {
+  if (typeof window === "undefined") {
+    return [];
+  }
+
+  try {
+    const docStorageKey = getDoctorStorageKey();
+    const stored = localStorage.getItem(docStorageKey);
+    if (stored) {
+      const parsed = JSON.parse(stored);
+      if (Array.isArray(parsed)) {
+        return parsed;
+      }
+    }
+    return [];
+  } catch (err) {
+    console.error("Failed to read cached doctor appointments:", err);
+    return [];
+  }
+}
+
+export interface SyncDoctorAppointmentsResult {
+  appointments: DoctorAppointment[];
+  isServerFresh: boolean;
+  count: number;
+  error?: string;
+}
+
+/**
+ * Synchronizes appointments with the authoritative backend MongoDB API.
+ * Rules:
+ * 1. Server MongoDB data is the authoritative source of truth.
+ * 2. Newer/fresh server data always overwrites stale localStorage entries.
+ * 3. Offline/server failure degrades gracefully by returning non-authoritative cache.
+ * 4. Local desk drafts (unsaved in-person appointments) are preserved without overwriting server items.
+ */
+export async function syncDoctorAppointmentsFromServer(
+  params?: FetchDoctorAppointmentsParams
+): Promise<SyncDoctorAppointmentsResult> {
+  const res = await fetchDoctorPortalAppointments(params);
+
+  if (res && res.statusCode === 200 && Array.isArray(res.items)) {
+    // 1. Map authoritative MongoDB records
+    const serverApts = res.items.map(mapBackendToDoctorAppointment);
+
+    // 2. Read local cache to preserve local unsaved desk drafts
+    const cached = getDoctorAppointments();
+    const serverIds = new Set(serverApts.map((a) => a.id));
+    const serverRefs = new Set(serverApts.map((a) => a.referenceNumber).filter(Boolean));
+
+    // Retain local desk drafts that do not exist on the server
+    const localDrafts = cached.filter(
+      (local) =>
+        !serverIds.has(local.id) &&
+        !serverRefs.has(local.referenceNumber) &&
+        local.channel !== "Online Web"
+    );
+
+    // Server appointments take absolute priority
+    const combined = [...serverApts, ...localDrafts];
+
+    // Deduplicate by id
+    const seen = new Set<string>();
+    const deduplicated: DoctorAppointment[] = [];
+    for (const apt of combined) {
+      if (!seen.has(apt.id)) {
+        seen.add(apt.id);
+        deduplicated.push(apt);
+      }
+    }
+
+    // Persist authoritative records into doctor's isolated localStorage
+    if (typeof window !== "undefined") {
+      try {
+        const docStorageKey = getDoctorStorageKey();
+        localStorage.setItem(docStorageKey, JSON.stringify(deduplicated));
+      } catch (err) {
+        console.warn("Failed to update local cache with server appointments:", err);
+      }
+    }
+
+    return {
+      appointments: deduplicated,
+      isServerFresh: true,
+      count: deduplicated.length,
+    };
+  }
+
+  // Server error or network unreachable -> fallback to cached data in localStorage
+  const cached = getDoctorAppointments();
+  return {
+    appointments: cached,
+    isServerFresh: false,
+    count: cached.length,
+    error: res?.message || res?.error || "Unable to reach server. Displaying cached records.",
+  };
+}
 
 /**
  * Calculate the next daily sequential serial number starting from 1 (#01, #02, #03...)
- * Used for all Online bookings, Called phone bookings, and Chamber walk-ins.
  */
 export function getNextDailySerialNumber(): string {
-  if (typeof window === "undefined") return "#07";
+  if (typeof window === "undefined") return "#01";
 
   try {
     const current = getDoctorAppointments();
@@ -273,218 +293,12 @@ export function getNextDailySerialNumber(): string {
     const max = serials.length > 0 ? Math.max(...serials) : 0;
     return `#${(max + 1).toString().padStart(2, "0")}`;
   } catch {
-    return "#07";
+    return "#01";
   }
 }
 
 /**
- * Retrieve doctor appointments merged with real-time public online bookings
- */
-export function getDoctorAppointments(): DoctorAppointment[] {
-  const ctx = getActiveDoctorContext();
-  if (typeof window === "undefined") {
-    return ctx.slug === "dr-jahedul-islam"
-      ? INITIAL_DOCTOR_APPOINTMENTS
-      : getInitialAppointmentsForDoctor(ctx);
-  }
-
-  try {
-    const docStorageKey = getDoctorStorageKey();
-    const pubStorageKey = getPublicBookingsStorageKey();
-
-    let doctorApts: DoctorAppointment[] = [];
-    const stored = localStorage.getItem(docStorageKey);
-    if (stored) {
-      const parsed = JSON.parse(stored);
-      if (Array.isArray(parsed) && parsed.length > 0) {
-        doctorApts = parsed;
-      }
-    }
-
-    if (doctorApts.length === 0) {
-      doctorApts =
-        ctx.slug === "dr-jahedul-islam"
-          ? INITIAL_DOCTOR_APPOINTMENTS
-          : getInitialAppointmentsForDoctor(ctx);
-      localStorage.setItem(docStorageKey, JSON.stringify(doctorApts));
-    }
-
-    // ONLINE BOOKING SYNC ("ONLINE THEKE BOOKING ASHLE AKANEO ASHBE")
-    const publicBookingsRaw = localStorage.getItem(pubStorageKey);
-    if (publicBookingsRaw) {
-      const publicBookings = JSON.parse(publicBookingsRaw);
-      if (Array.isArray(publicBookings)) {
-        let hasNewSync = false;
-        for (const pub of publicBookings) {
-          const alreadyExists = doctorApts.some(
-            (a) => a.id === pub.id || a.serialNumber === pub.tokenNumber
-          );
-          if (!alreadyExists) {
-            const rawTok = pub.tokenNumber || "";
-            const isInvalidTok = rawTok.startsWith("TK") || !rawTok.startsWith("#");
-            const assignedSerial = isInvalidTok ? `#0${doctorApts.length + 1}` : rawTok;
-
-            const syncedApt: DoctorAppointment = {
-              id: pub.id || `GB-ONL-${Date.now()}`,
-              referenceNumber: pub.id || `GB-ONL-${Math.floor(1000 + Math.random() * 9000)}`,
-              serialNumber: assignedSerial,
-              patientName:
-                pub.patientName ||
-                pub.customerName?.replace(/^You\s*\((.*)\)$/, "$1") ||
-                "Online Patient",
-              patientPhone: pub.patientPhone || "+971 50 123 4567",
-              patientAgeGender: "Adult Patient",
-              bloodGroup: "Pending",
-              service: pub.serviceTitle || `${ctx.specialty} Consultation`,
-              serviceCategory: ctx.specialty,
-              doctorName: pub.doctorName || ctx.name,
-              doctorSpecialty: pub.doctorSpecialty || ctx.specialty,
-              chamberLocation: pub.facilityName || ctx.chamber,
-              date: pub.date || new Date().toISOString().split("T")[0],
-              time: pub.time || "10:30 AM",
-              duration: pub.duration || "30 min",
-              status: pub.status === "COMPLETED" ? "Completed" : "Confirmed",
-              channel: "Online Web",
-              paymentStatus: "Paid",
-              price: pub.fee || "500 AED",
-              notes: "Instant Online Booking submitted via Doctor Public Website.",
-              createdAt: new Date().toISOString(),
-              isOnlineBooking: true,
-            };
-            doctorApts.unshift(syncedApt);
-            hasNewSync = true;
-          }
-        }
-        if (hasNewSync) {
-          localStorage.setItem(docStorageKey, JSON.stringify(doctorApts));
-        }
-      }
-    }
-
-    // STRICT SANITIZATION: Eliminate any TK-77 or TK tokens, ensure consecutive daily numbers starting from #01
-    let maxKnown = 6;
-    for (const a of doctorApts) {
-      if (a.serialNumber.startsWith("TK-") || a.serialNumber.startsWith("TK") || a.serialNumber === "#00") {
-        maxKnown++;
-        a.serialNumber = `#${maxKnown.toString().padStart(2, "0")}`;
-      } else if (!a.serialNumber.startsWith("#")) {
-        const num = parseInt(a.serialNumber, 10);
-        a.serialNumber = !isNaN(num) ? `#${num.toString().padStart(2, "0")}` : `#${(++maxKnown).toString().padStart(2, "0")}`;
-      }
-      // Chronological consistency: if #03 is In Consultation, earlier serials #01 and #02 have finished
-      const num = parseInt(a.serialNumber.replace(/\D/g, ""), 10);
-      if (!isNaN(num) && num < 3 && a.status !== "In Consultation") {
-        a.status = "Completed";
-      }
-    }
-
-    // Deduplicate by serialNumber/token and id, normalize clean price
-    const seen = new Set<string>();
-    const uniqueApts: DoctorAppointment[] = [];
-    for (const a of doctorApts) {
-      const key = `${a.serialNumber}-${a.date}-${a.time}`;
-      if (!seen.has(key) && !seen.has(a.id)) {
-        seen.add(key);
-        seen.add(a.id);
-        const cleanPrice =
-          a.price && !a.price.includes("undefined") ? a.price : "500 AED";
-        uniqueApts.push({ ...a, price: cleanPrice });
-      }
-    }
-
-    // Persist cleansed records
-    localStorage.setItem(docStorageKey, JSON.stringify(uniqueApts));
-
-    return uniqueApts;
-  } catch (err) {
-    console.error("Failed to load doctor appointments:", err);
-    return ctx.slug === "dr-jahedul-islam"
-      ? INITIAL_DOCTOR_APPOINTMENTS
-      : getInitialAppointmentsForDoctor(ctx);
-  }
-}
-
-function getInitialAppointmentsForDoctor(ctx: ActiveDoctorContext): DoctorAppointment[] {
-  const today = new Date().toISOString().split("T")[0];
-  return [
-    {
-      id: `GB-DOC-${ctx.slug}-101`,
-      referenceNumber: `GB-DOC-101`,
-      serialNumber: "#01",
-      patientName: "Ahmed Al Mansoori",
-      patientPhone: "+971 50 492 1184",
-      patientEmail: "a.mansoori@dubaihealth.ae",
-      patientAgeGender: "52 Yrs, Male",
-      bloodGroup: "O+",
-      service: `${ctx.specialty} Follow-up Review`,
-      serviceCategory: ctx.specialty,
-      doctorName: ctx.name,
-      doctorSpecialty: ctx.specialty,
-      chamberLocation: ctx.chamber,
-      date: today,
-      time: "09:30 AM",
-      duration: "30 min",
-      status: "Completed",
-      channel: "In-Person Chamber",
-      paymentStatus: "Paid",
-      price: "500 AED",
-      notes: "Routine clinical follow-up completed. Vitals stable.",
-      createdAt: new Date(Date.now() - 3600000 * 2).toISOString(),
-    },
-    {
-      id: `GB-DOC-${ctx.slug}-102`,
-      referenceNumber: `GB-DOC-102`,
-      serialNumber: "#02",
-      patientName: "Fatima Rahman",
-      patientPhone: "+971 52 831 9042",
-      patientEmail: "fatima.r@emiratescare.com",
-      patientAgeGender: "46 Yrs, Female",
-      bloodGroup: "B+",
-      service: `${ctx.specialty} Consultation`,
-      serviceCategory: ctx.specialty,
-      doctorName: ctx.name,
-      doctorSpecialty: ctx.specialty,
-      chamberLocation: ctx.chamber,
-      date: today,
-      time: "10:00 AM",
-      duration: "30 min",
-      status: "In Consultation",
-      channel: "Online Web",
-      paymentStatus: "Paid",
-      price: "500 AED",
-      notes: "Currently in chamber for consultation.",
-      createdAt: new Date(Date.now() - 3600000 * 4).toISOString(),
-      isOnlineBooking: true,
-    },
-    {
-      id: `GB-DOC-${ctx.slug}-103`,
-      referenceNumber: `GB-DOC-103`,
-      serialNumber: "#03",
-      patientName: "Tariq Kamal",
-      patientPhone: "+971 55 120 7731",
-      patientEmail: "tariq.k@example.ae",
-      patientAgeGender: "39 Yrs, Male",
-      bloodGroup: "A+",
-      service: `${ctx.specialty} Assessment`,
-      serviceCategory: ctx.specialty,
-      doctorName: ctx.name,
-      doctorSpecialty: ctx.specialty,
-      chamberLocation: ctx.chamber,
-      date: today,
-      time: "11:00 AM",
-      duration: "30 min",
-      status: "Confirmed",
-      channel: "In-Person Chamber",
-      paymentStatus: "Pending",
-      price: "500 AED",
-      notes: "Checked in at reception desk.",
-      createdAt: new Date(Date.now() - 3600000 * 6).toISOString(),
-    },
-  ];
-}
-
-/**
- * Save / Update an appointment
+ * Save / Update an appointment locally
  */
 export function saveDoctorAppointment(appointment: DoctorAppointment): DoctorAppointment[] {
   if (typeof window === "undefined") return [appointment];
@@ -525,7 +339,7 @@ export function updateAppointmentStatus(
 }
 
 /**
- * Delete an appointment
+ * Delete an appointment locally
  */
 export function deleteDoctorAppointment(id: string): DoctorAppointment[] {
   if (typeof window === "undefined") return [];

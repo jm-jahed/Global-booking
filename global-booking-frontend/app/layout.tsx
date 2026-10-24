@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import type { ReactNode } from "react";
 
 import "./globals.css";
@@ -8,6 +8,13 @@ import { SITE } from "@/config/site";
 const appOrigin =
   process.env.NEXT_PUBLIC_APP_URL?.trim() ||
   (process.env.NODE_ENV === "production" ? "https://booking.webstudioae.com" : "http://localhost:3000");
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 5,
+  themeColor: "#0b0f19",
+};
 
 export const metadata: Metadata = {
   metadataBase: new URL(appOrigin),

@@ -150,6 +150,7 @@ export function NewAppointmentModal({
       }}
     >
       <div
+        className="new-appointment-modal-card"
         style={{
           background: "#0c1527",
           border: "1px solid rgba(229, 184, 105, 0.35)",
@@ -216,7 +217,7 @@ export function NewAppointmentModal({
         {/* Form Body */}
         <form onSubmit={handleSubmit} style={{ padding: "20px 24px", overflowY: "auto", display: "flex", flexDirection: "column", gap: 14 }}>
           {/* Patient Details */}
-          <div style={{ display: "grid", gridTemplateColumns: "1.2fr 1fr", gap: 12 }}>
+          <div className="appointment-form-grid-2" style={{ display: "grid", gridTemplateColumns: "1.2fr 1fr", gap: 12 }}>
             <div>
               <label style={{ display: "block", fontSize: 12, fontWeight: 600, color: "#cbd5e1", marginBottom: 5 }}>
                 Patient Full Name *
@@ -265,7 +266,7 @@ export function NewAppointmentModal({
             </div>
           </div>
 
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 12 }}>
+          <div className="appointment-form-grid-3" style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 12 }}>
             <div>
               <label style={{ display: "block", fontSize: 12, fontWeight: 600, color: "#cbd5e1", marginBottom: 5 }}>
                 Age & Gender
@@ -392,7 +393,7 @@ export function NewAppointmentModal({
           </div>
 
           {/* Schedule Date & Time */}
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+          <div className="appointment-form-grid-2" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
             <div>
               <label style={{ display: "block", fontSize: 12, fontWeight: 600, color: "#cbd5e1", marginBottom: 5 }}>
                 Consultation Date

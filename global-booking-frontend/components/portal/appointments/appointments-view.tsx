@@ -33,6 +33,7 @@ import {
 } from "lucide-react";
 import {
   getDoctorAppointments,
+  syncDoctorAppointmentsFromServer,
   updateAppointmentStatus,
   saveDoctorAppointment,
   deleteDoctorAppointment,
@@ -56,6 +57,9 @@ export function AppointmentsView() {
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [newOnlineAlert, setNewOnlineAlert] = useState<DoctorAppointment | null>(null);
   const [isSyncing, setIsSyncing] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isServerFresh, setIsServerFresh] = useState(false);
+  const [syncError, setSyncError] = useState<string | null>(null);
   const [currentUser, setCurrentUser] = useState<any>(null);
 
   useEffect(() => {
@@ -80,17 +84,29 @@ export function AppointmentsView() {
     (Array.isArray(currentUser?.chambers) && currentUser?.chambers[0]?.facilityName) ||
     "Main Consultation Chamber";
 
-  // Load genuine doctor clinical appointments & listen for real-time online bookings
-  const loadAppointments = () => {
-    const list = getDoctorAppointments();
-    setAppointments(list);
+  // Load genuine doctor clinical appointments from backend MongoDB API
+  const loadAppointments = async () => {
+    try {
+      const res = await syncDoctorAppointmentsFromServer();
+      setAppointments(res.appointments);
+      setIsServerFresh(res.isServerFresh);
+      setSyncError(res.error || null);
 
-    // Check if there was an online booking created in the last 15 minutes
-    const latestOnline = list.find(
-      (a) => a.channel === "Online Web" && Date.now() - new Date(a.createdAt).getTime() < 900000
-    );
-    if (latestOnline) {
-      setNewOnlineAlert(latestOnline);
+      // Check if there was an online booking created in the last 15 minutes
+      const latestOnline = res.appointments.find(
+        (a) => a.channel === "Online Web" && Date.now() - new Date(a.createdAt).getTime() < 900000
+      );
+      if (latestOnline) {
+        setNewOnlineAlert(latestOnline);
+      }
+    } catch (err: any) {
+      console.warn("Error syncing appointments:", err);
+      const fallbackList = getDoctorAppointments();
+      setAppointments(fallbackList);
+      setIsServerFresh(false);
+      setSyncError("Network error while connecting to server. Displaying cached records.");
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -101,6 +117,7 @@ export function AppointmentsView() {
     const handleStorageChange = (e: StorageEvent) => {
       if (
         e.key === "global_booking_doctor_appointments" ||
+        e.key?.startsWith("global_booking_doctor_appointments_") ||
         e.key?.startsWith("global_booking_appointments_")
       ) {
         loadAppointments();
@@ -132,13 +149,15 @@ export function AppointmentsView() {
     setTimeout(() => setToastMessage(null), 3500);
   };
 
-  const handleManualSync = () => {
+  const handleManualSync = async () => {
     setIsSyncing(true);
-    loadAppointments();
-    setTimeout(() => {
-      setIsSyncing(false);
-      showToast("Synchronized live clinical appointments with online web bookings!");
-    }, 400);
+    await loadAppointments();
+    setIsSyncing(false);
+    showToast(
+      isServerFresh
+        ? "Synchronized live appointments from MongoDB backend!"
+        : "Server currently unreachable. Displaying cached appointments."
+    );
   };
 
   const handleAddAppointment = (newApp: DoctorAppointment) => {
@@ -267,8 +286,8 @@ export function AppointmentsView() {
                   {doctorName} • {doctorSpecialty}
                 </span>
                 <span className="live-sync-pill">
-                  <span className="suite-pulse-dot" />
-                  Live Web Sync Active
+                  <span className={isServerFresh ? "suite-pulse-dot" : "suite-offline-dot"} />
+                  {isServerFresh ? "MongoDB Live Sync" : "Cached Practice Data"}
                 </span>
               </div>
             </div>

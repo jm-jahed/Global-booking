@@ -750,14 +750,15 @@ export function DoctorPublicPortfolio({
               display: "flex",
               justifyContent: "center",
               alignItems: "center",
-              minHeight: 480,
+              minHeight: "clamp(320px, 50vw, 480px)",
             }}
           >
             {/* The Signature Lavender Organic Circle Backdrop */}
             <div
               style={{
-                width: "clamp(320px, 40vw, 480px)",
-                height: "clamp(320px, 40vw, 480px)",
+                width: "clamp(240px, 80vw, 480px)",
+                height: "clamp(240px, 80vw, 480px)",
+                maxWidth: "100%",
                 borderRadius: "50%",
                 background: "linear-gradient(145deg, #c7d2fe 0%, #e0e7ff 50%, #f1f5f9 100%)",
                 boxShadow: "0 24px 60px rgba(99, 102, 241, 0.2)",
@@ -771,8 +772,9 @@ export function DoctorPublicPortfolio({
               style={{
                 position: "relative",
                 zIndex: 2,
-                width: "clamp(280px, 36vw, 420px)",
-                height: "clamp(340px, 44vw, 500px)",
+                width: "clamp(220px, 75vw, 420px)",
+                height: "clamp(260px, 85vw, 500px)",
+                maxWidth: "100%",
                 display: "flex",
                 alignItems: "flex-end",
                 justifyContent: "center",

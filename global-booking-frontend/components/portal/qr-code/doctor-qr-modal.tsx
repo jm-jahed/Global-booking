@@ -344,7 +344,7 @@ export function DoctorQrModal({ isOpen, onClose, initialProfile }: DoctorQrModal
           <>
             {/* View Mode Switcher */}
             <div
-              className="no-print"
+              className="no-print qr-viewmode-switcher"
               style={{
                 display: "flex",
                 background: "rgba(255,255,255,0.04)",

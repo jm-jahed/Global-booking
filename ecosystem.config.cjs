@@ -25,6 +25,8 @@ module.exports = {
       max_memory_restart: "500M",
       restart_delay: 2000,
       time: true,
+      kill_timeout: 12000,
+      listen_timeout: 10000,
       env: {
         NODE_ENV: "production",
         HOST: "127.0.0.1",

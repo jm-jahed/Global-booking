@@ -128,6 +128,34 @@ export function PortalLayoutClient({ children }: PortalLayoutClientProps) {
   const [isCheckingAuth, setIsCheckingAuth] = useState(true);
   const [currentUser, setCurrentUser] = useState<any>(null);
   const [accountType, setAccountType] = useState<PortalAccountType>("DOCTOR");
+  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
+
+  // Close mobile sidebar on route change
+  useEffect(() => {
+    setIsMobileSidebarOpen(false);
+  }, [pathname]);
+
+  // Close mobile sidebar on Escape key or desktop resize
+  useEffect(() => {
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape") {
+        setIsMobileSidebarOpen(false);
+      }
+    }
+
+    function handleResize() {
+      if (window.innerWidth > 1024) {
+        setIsMobileSidebarOpen(false);
+      }
+    }
+
+    window.addEventListener("keydown", handleKeyDown);
+    window.addEventListener("resize", handleResize);
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+      window.removeEventListener("resize", handleResize);
+    };
+  }, []);
 
   useEffect(() => {
     let isMounted = true;
@@ -249,11 +277,28 @@ export function PortalLayoutClient({ children }: PortalLayoutClientProps) {
 
   return (
     <div className="portal-layout-container">
+      {/* Mobile Backdrop */}
+      <div
+        className={`portal-mobile-backdrop ${isMobileSidebarOpen ? "sidebar-open" : ""}`}
+        onClick={() => setIsMobileSidebarOpen(false)}
+        aria-hidden="true"
+      />
+
       {/* Sidebar strictly locked to authenticated account type (no manual switcher) */}
-      <PortalSidebar accountType={accountType} currentUser={currentUser} />
+      <PortalSidebar
+        isOpen={isMobileSidebarOpen}
+        onClose={() => setIsMobileSidebarOpen(false)}
+        accountType={accountType}
+        currentUser={currentUser}
+      />
 
       <div className="portal-main-wrapper">
-        <PortalTopBar accountType={accountType} currentUser={currentUser} />
+        <PortalTopBar
+          isMobileSidebarOpen={isMobileSidebarOpen}
+          onToggleMobileSidebar={() => setIsMobileSidebarOpen((prev) => !prev)}
+          accountType={accountType}
+          currentUser={currentUser}
+        />
         <main className="portal-main-content">
           {isRestricted ? (
             <RestrictedRouteNotice

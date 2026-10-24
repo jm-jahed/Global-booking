@@ -5,6 +5,10 @@ import {
   startDayEndQueueScheduler,
   stopDayEndQueueScheduler,
 } from "./modules/queue/queue.scheduler.js";
+import {
+  cleanupStartupFailure,
+  shutdownServer,
+} from "./server.lifecycle.js";
 
 const env = readServerEnvironment();
 const app = buildApp(env);
@@ -16,15 +20,28 @@ async function shutDown(signal: NodeJS.Signals): Promise<void> {
   }
 
   isShuttingDown = true;
-  app.log.info({ signal }, "Shutting down server");
 
-  try {
-    stopDayEndQueueScheduler();
-    await mongoAdapter.disconnect();
-    await app.close();
-  } catch (error) {
-    app.log.error(error, "Failed to close server cleanly");
+  // Emergency safety timer: if graceful shutdown hangs beyond 10s, force exit
+  const forceExitTimer = setTimeout(() => {
+    app.log.error({ signal }, "Graceful shutdown timed out after 10s; forcing exit");
+    process.exit(1);
+  }, 10_000);
+  if (typeof forceExitTimer.unref === "function") {
+    forceExitTimer.unref();
+  }
+
+  const result = await shutdownServer(
+    app,
+    mongoAdapter,
+    stopDayEndQueueScheduler,
+    { signal, drainTimeoutMs: 5000 },
+  );
+
+  clearTimeout(forceExitTimer);
+
+  if (!result.success) {
     process.exitCode = 1;
+    process.exit(1);
   }
 }
 
@@ -53,6 +70,9 @@ if (env.mongoUri) {
 try {
   await app.listen({ host: env.host, port: env.port });
 } catch (error) {
-  app.log.error(error);
+  app.log.error(error, "Failed to bind listen port; cleaning up initialized resources");
+  await cleanupStartupFailure(app, mongoAdapter, stopDayEndQueueScheduler);
   process.exitCode = 1;
+  process.exit(1);
 }
+

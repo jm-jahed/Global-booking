@@ -326,11 +326,15 @@ export const HOSPITAL_NAV_ITEMS: readonly PortalNavItem[] = [
 export interface PortalSidebarProps {
   readonly accountType?: PortalAccountType;
   readonly currentUser?: any;
+  readonly isOpen?: boolean;
+  readonly onClose?: () => void;
 }
 
 export function PortalSidebar({
   accountType: propAccountType,
   currentUser: propUser,
+  isOpen = false,
+  onClose,
 }: PortalSidebarProps = {}) {
   const pathname = usePathname();
   const router = useRouter();
@@ -421,10 +425,10 @@ export function PortalSidebar({
   };
 
   return (
-    <aside className="portal-sidebar" aria-label="Portal Navigation">
+    <aside className={`portal-sidebar ${isOpen ? "sidebar-open" : ""}`} aria-label="Portal Navigation">
       {/* Brand Header */}
       <div className="sidebar-brand-wrapper">
-        <Link href="/dashboard" className="sidebar-brand-link">
+        <Link href="/dashboard" className="sidebar-brand-link" onClick={() => onClose?.()}>
           <div className="sidebar-brand-icon">
             <svg
               width="26"
@@ -456,6 +460,16 @@ export function PortalSidebar({
             <p className="sidebar-brand-sub">Healthcare Practice Suite</p>
           </div>
         </Link>
+        {onClose && (
+          <button
+            type="button"
+            className="portal-sidebar-close-btn"
+            onClick={onClose}
+            aria-label="Close navigation"
+          >
+            <X size={18} />
+          </button>
+        )}
       </div>
 
       {/* Verified Account Type Indicator (Executive Medical SaaS Design) */}
@@ -572,6 +586,7 @@ export function PortalSidebar({
               <li key={item.id} className="sidebar-nav-item">
                 <Link
                   href={item.href || "/dashboard"}
+                  onClick={() => onClose?.()}
                   className={`sidebar-nav-link ${isActive ? "active" : ""}`}
                   style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}
                 >
