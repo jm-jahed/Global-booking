@@ -4,6 +4,7 @@ import { useState, useEffect, type ReactNode } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { PortalSidebar, type PortalAccountType } from "./portal-sidebar";
 import { PortalTopBar } from "./portal-topbar";
+import { PortalBottomNav } from "./portal-bottom-nav";
 import { getAdminMe, getStoredAccountType, getStoredPortalUser } from "@/lib/api/admin-client";
 import { ShieldAlert, ArrowLeft, Building2, Lock } from "lucide-react";
 
@@ -310,6 +311,7 @@ export function PortalLayoutClient({ children }: PortalLayoutClientProps) {
             children
           )}
         </main>
+        <PortalBottomNav onOpenSidebar={() => setIsMobileSidebarOpen(true)} />
       </div>
     </div>
   );

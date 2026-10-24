@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Search, Calendar, Bell, ChevronDown, UserCircle, Menu, X } from "lucide-react";
+import { Search, Calendar, Bell, ChevronDown, UserCircle, Menu, X, Globe } from "lucide-react";
 import { getStoredPortalUser, getStoredAccountType, getAdminMe } from "@/lib/api/admin-client";
 
 import type { PortalAccountType } from "./portal-sidebar";
@@ -110,16 +110,43 @@ export function PortalTopBar({
 
   return (
     <header className="portal-topbar">
-      {/* Mobile Drawer Hamburger Toggle (Visible on <= 1024px) */}
-      <button
-        type="button"
-        className="portal-mobile-toggle-btn"
-        onClick={onToggleMobileSidebar}
-        aria-label={isMobileSidebarOpen ? "Close navigation menu" : "Open navigation menu"}
-        aria-expanded={isMobileSidebarOpen}
-      >
-        {isMobileSidebarOpen ? <X size={20} /> : <Menu size={20} />}
-      </button>
+      {/* Mobile Top Row (Visible on <= 768px as shown in mobile design) */}
+      <div className="topbar-mobile-row">
+        <button
+          type="button"
+          className="portal-mobile-toggle-btn"
+          onClick={onToggleMobileSidebar}
+          aria-label={isMobileSidebarOpen ? "Close navigation menu" : "Open navigation menu"}
+          aria-expanded={isMobileSidebarOpen}
+        >
+          {isMobileSidebarOpen ? <X size={22} /> : <Menu size={22} />}
+        </button>
+
+        <div className="topbar-mobile-brand">
+          <div className="topbar-mobile-brand-icon">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#e5b869" strokeWidth="2">
+              <rect x="3" y="4" width="18" height="18" rx="3.5" />
+              <line x1="16" y1="2" x2="16" y2="6" strokeLinecap="round" />
+              <line x1="8" y1="2" x2="8" y2="6" strokeLinecap="round" />
+              <line x1="3" y1="10" x2="21" y2="10" />
+              <line x1="12" y1="13" x2="12" y2="17" strokeWidth="2.2" strokeLinecap="round" />
+              <line x1="10" y1="15" x2="14" y2="15" strokeWidth="2.2" strokeLinecap="round" />
+            </svg>
+          </div>
+          <div className="topbar-mobile-brand-text">
+            <span className="topbar-mobile-brand-title">
+              GLOBAL <span style={{ color: "#e5b869" }}>BOOKING</span>
+            </span>
+            <span className="topbar-mobile-brand-sub">Healthcare Practice Suite</span>
+          </div>
+        </div>
+
+        <button type="button" className="topbar-mobile-lang-pill" aria-label="Change language">
+          <Globe size={13} style={{ color: "#e5b869" }} />
+          <span>EN</span>
+          <ChevronDown size={12} style={{ opacity: 0.7 }} />
+        </button>
+      </div>
 
       {/* Search Input Box */}
       <div className="topbar-search-container">
