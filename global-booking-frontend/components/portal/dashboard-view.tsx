@@ -22,6 +22,8 @@ import {
   Ticket,
   Users,
   Calendar,
+  Settings,
+  Filter,
 } from "lucide-react";
 import { ROUTES } from "@/config/routes";
 import {
@@ -50,6 +52,7 @@ import {
   formatChamberClock,
   getChamberLocalHour,
   getChamberBusinessDate,
+  formatIsoToDDMMYYYY,
 } from "@/lib/utils/timezone";
 import { NewTicketModal } from "./queue/new-ticket-modal";
 import { NewPatientModal } from "./patients/new-patient-modal";
@@ -509,20 +512,21 @@ export function DashboardView() {
             style={{
               display: "inline-flex",
               alignItems: "center",
-              gap: 7,
-              padding: "8px 16px",
-              borderRadius: 10,
+              gap: 8,
+              padding: "9px 18px",
+              borderRadius: 12,
               background: "linear-gradient(135deg, #e5b869 0%, #b88628 100%)",
               color: "#060b13",
               fontSize: 13,
-              fontWeight: 700,
+              fontWeight: 800,
               border: "none",
               cursor: "pointer",
-              boxShadow: "0 4px 15px rgba(229, 184, 105, 0.3)",
+              boxShadow: "0 4px 16px rgba(229, 184, 105, 0.35)",
             }}
           >
-            <Ticket size={15} />
+            <Ticket size={16} />
             <span>Issue OPD Token</span>
+            <ChevronRight size={14} />
           </button>
 
           {/* Quick Register Patient */}
@@ -532,19 +536,21 @@ export function DashboardView() {
             style={{
               display: "inline-flex",
               alignItems: "center",
-              gap: 7,
-              padding: "8px 16px",
-              borderRadius: 10,
-              background: "rgba(14, 165, 233, 0.15)",
-              border: "1px solid rgba(56, 189, 248, 0.4)",
-              color: "#38bdf8",
+              gap: 8,
+              padding: "9px 18px",
+              borderRadius: 12,
+              background: "rgba(255, 255, 255, 0.04)",
+              border: "1px solid rgba(255, 255, 255, 0.15)",
+              color: "#ffffff",
               fontSize: 13,
               fontWeight: 700,
               cursor: "pointer",
+              boxShadow: "0 4px 12px rgba(0, 0, 0, 0.2)",
             }}
           >
-            <UserPlus size={15} />
+            <UserPlus size={16} />
             <span>Register Patient</span>
+            <ChevronRight size={14} />
           </button>
         </div>
       </section>
@@ -683,167 +689,154 @@ export function DashboardView() {
             gap: 20,
           }}
         >
-          {/* Header Row & Tab Switcher */}
+          {/* Header Row: Exact Reference Match */}
           <div
             style={{
               display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-              flexWrap: "wrap",
+              flexDirection: "column",
               gap: 14,
               borderBottom: "1px solid rgba(255, 255, 255, 0.07)",
               paddingBottom: 16,
             }}
           >
-            <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
-              <button
-                type="button"
-                onClick={() => setActiveTab("queue")}
-                style={{
-                  display: "inline-flex",
-                  alignItems: "center",
-                  gap: 6,
-                  padding: "8px 16px",
-                  borderRadius: 20,
-                  fontSize: 13,
-                  fontWeight: 700,
-                  cursor: "pointer",
-                  border: activeTab === "queue" ? "1px solid rgba(229, 184, 105, 0.5)" : "1px solid transparent",
-                  background: activeTab === "queue" ? "rgba(229, 184, 105, 0.15)" : "transparent",
-                  color: activeTab === "queue" ? "#e5b869" : "#94a3b8",
-                }}
-              >
-                <Tv size={14} />
-                <span>Live OPD Queue</span>
-                <span
+            {/* Row 1: Title, Red Live Pill, Total Patients, Queue Settings */}
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 12 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                <div
                   style={{
-                    background: activeTab === "queue" ? "#e5b869" : "rgba(255, 255, 255, 0.1)",
-                    color: activeTab === "queue" ? "#060b13" : "#cbd5e1",
-                    padding: "1px 7px",
-                    borderRadius: 10,
-                    fontSize: 11,
-                    fontWeight: 800,
+                    width: 36,
+                    height: 36,
+                    borderRadius: "50%",
+                    background: "rgba(229, 184, 105, 0.15)",
+                    border: "1.5px solid rgba(229, 184, 105, 0.5)",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    color: "#e5b869",
                   }}
                 >
-                  {queueTickets.length}
-                </span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => setActiveTab("appointments")}
-                style={{
-                  display: "inline-flex",
-                  alignItems: "center",
-                  gap: 6,
-                  padding: "8px 16px",
-                  borderRadius: 20,
-                  fontSize: 13,
-                  fontWeight: 700,
-                  cursor: "pointer",
-                  border: activeTab === "appointments" ? "1px solid rgba(129, 140, 248, 0.5)" : "1px solid transparent",
-                  background: activeTab === "appointments" ? "rgba(129, 140, 248, 0.15)" : "transparent",
-                  color: activeTab === "appointments" ? "#818cf8" : "#94a3b8",
-                }}
-              >
-                <CalendarDays size={14} />
-                <span>Appointments</span>
+                  <Activity size={18} />
+                </div>
+                <h2 style={{ margin: 0, fontSize: 18, fontWeight: 800, color: "#ffffff", letterSpacing: "0.02em" }}>
+                  Live OPD Queue
+                </h2>
                 <span
                   style={{
-                    background: activeTab === "appointments" ? "#818cf8" : "rgba(255, 255, 255, 0.1)",
-                    color: activeTab === "appointments" ? "#ffffff" : "#cbd5e1",
-                    padding: "1px 7px",
-                    borderRadius: 10,
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: 5,
+                    padding: "3px 10px",
+                    borderRadius: 999,
+                    background: "rgba(239, 68, 68, 0.15)",
+                    border: "1px solid rgba(239, 68, 68, 0.4)",
+                    color: "#f87171",
                     fontSize: 11,
                     fontWeight: 800,
+                    textTransform: "uppercase",
                   }}
                 >
-                  {appointments.length}
+                  <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#ef4444", boxShadow: "0 0 8px #ef4444" }} />
+                  Live
                 </span>
-              </button>
+              </div>
 
-              <button
-                type="button"
-                onClick={() => setActiveTab("patients")}
-                style={{
-                  display: "inline-flex",
-                  alignItems: "center",
-                  gap: 6,
-                  padding: "8px 16px",
-                  borderRadius: 20,
-                  fontSize: 13,
-                  fontWeight: 700,
-                  cursor: "pointer",
-                  border: activeTab === "patients" ? "1px solid rgba(56, 189, 248, 0.5)" : "1px solid transparent",
-                  background: activeTab === "patients" ? "rgba(56, 189, 248, 0.15)" : "transparent",
-                  color: activeTab === "patients" ? "#38bdf8" : "#94a3b8",
-                }}
-              >
-                <Users2 size={14} />
-                <span>Recent Patients</span>
-                <span
+              <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
+                <span style={{ fontSize: 13, color: "#94a3b8" }}>
+                  Total Patients: <strong style={{ color: "#e5b869", fontSize: 14 }}>{queueTickets.length}</strong>
+                </span>
+                <Link
+                  href="/settings"
                   style={{
-                    background: activeTab === "patients" ? "#38bdf8" : "rgba(255, 255, 255, 0.1)",
-                    color: activeTab === "patients" ? "#060b13" : "#cbd5e1",
-                    padding: "1px 7px",
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: 6,
+                    padding: "6px 12px",
                     borderRadius: 10,
-                    fontSize: 11,
-                    fontWeight: 800,
+                    background: "rgba(255, 255, 255, 0.04)",
+                    border: "1px solid rgba(255, 255, 255, 0.1)",
+                    color: "#cbd5e1",
+                    fontSize: 12,
+                    fontWeight: 600,
+                    textDecoration: "none",
                   }}
                 >
-                  {patients.length}
-                </span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => setActiveTab("hourly")}
-                style={{
-                  display: "inline-flex",
-                  alignItems: "center",
-                  gap: 6,
-                  padding: "8px 16px",
-                  borderRadius: 20,
-                  fontSize: 13,
-                  fontWeight: 700,
-                  cursor: "pointer",
-                  border: activeTab === "hourly" ? "1px solid rgba(16, 185, 129, 0.5)" : "1px solid transparent",
-                  background: activeTab === "hourly" ? "rgba(16, 185, 129, 0.15)" : "transparent",
-                  color: activeTab === "hourly" ? "#10b981" : "#94a3b8",
-                }}
-              >
-                <Activity size={14} />
-                <span>Inflow Analysis</span>
-              </button>
+                  <Settings size={14} color="#e5b869" />
+                  <span>Queue Settings</span>
+                </Link>
+              </div>
             </div>
 
-            {/* Quick Search in Tab Header */}
-            <div
-              style={{
-                display: "inline-flex",
-                alignItems: "center",
-                gap: 8,
-                padding: "6px 12px",
-                borderRadius: 10,
-                background: "rgba(255, 255, 255, 0.05)",
-                border: "1px solid rgba(255, 255, 255, 0.1)",
-              }}
-            >
-              <Search size={14} color="#64748b" />
-              <input
-                type="text"
-                placeholder="Filter stream..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
+            {/* Row 2: Date Navigator, Search Bar, Service Filter */}
+            <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
+              {/* Date Navigator Pill */}
+              <div
                 style={{
-                  background: "transparent",
-                  border: "none",
-                  outline: "none",
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: 8,
+                  padding: "6px 12px",
+                  borderRadius: 10,
+                  background: "rgba(255, 255, 255, 0.04)",
+                  border: "1px solid rgba(255, 255, 255, 0.1)",
+                  fontSize: 12.5,
+                  fontWeight: 600,
                   color: "#ffffff",
-                  fontSize: 12,
-                  width: 140,
                 }}
-              />
+              >
+                <Calendar size={14} color="#e5b869" />
+                <span>&gt; {formatIsoToDDMMYYYY(getChamberBusinessDate(chamberTimezone))} &gt;</span>
+              </div>
+
+              {/* Search Bar */}
+              <div
+                style={{
+                  flex: 1,
+                  minWidth: 180,
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: 8,
+                  padding: "6px 14px",
+                  borderRadius: 10,
+                  background: "rgba(255, 255, 255, 0.04)",
+                  border: "1px solid rgba(255, 255, 255, 0.1)",
+                }}
+              >
+                <Search size={14} color="#64748b" />
+                <input
+                  type="text"
+                  placeholder="Search token, name..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  style={{
+                    background: "transparent",
+                    border: "none",
+                    outline: "none",
+                    color: "#ffffff",
+                    fontSize: 12.5,
+                    width: "100%",
+                  }}
+                />
+              </div>
+
+              {/* Service Filter */}
+              <div
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: 8,
+                  padding: "6px 14px",
+                  borderRadius: 10,
+                  background: "rgba(255, 255, 255, 0.04)",
+                  border: "1px solid rgba(255, 255, 255, 0.1)",
+                  color: "#cbd5e1",
+                  fontSize: 12.5,
+                  fontWeight: 600,
+                  cursor: "pointer",
+                }}
+              >
+                <Filter size={14} color="#38bdf8" />
+                <span>All Services ({Array.from(new Set(queueTickets.map((t) => t.service))).filter(Boolean).length || 1})</span>
+              </div>
             </div>
           </div>
 
@@ -1340,13 +1333,13 @@ export function DashboardView() {
 
         {/* RIGHT COLUMN: CLINICAL COMMAND WIDGETS */}
         <aside style={{ display: "flex", flexDirection: "column", gap: 20 }}>
-          {/* Widget 1: Station Status / Now Serving Box */}
+          {/* Widget 1: Queue Control Box (Exact Reference Match) */}
           <div
             style={{
               background: "linear-gradient(135deg, rgba(11, 19, 37, 0.95) 0%, rgba(7, 12, 23, 0.98) 100%)",
               border: "1px solid rgba(229, 184, 105, 0.4)",
               borderRadius: 18,
-              padding: 22,
+              padding: 20,
               boxShadow: "0 8px 30px rgba(0, 0, 0, 0.4)",
               display: "flex",
               flexDirection: "column",
@@ -1355,38 +1348,99 @@ export function DashboardView() {
           >
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
               <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                <span
+                <div
                   style={{
-                    width: 8,
-                    height: 8,
+                    width: 32,
+                    height: 32,
                     borderRadius: "50%",
-                    background: "#10b981",
-                    boxShadow: "0 0 8px #10b981",
+                    background: "rgba(229, 184, 105, 0.15)",
+                    border: "1px solid rgba(229, 184, 105, 0.4)",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    color: "#e5b869",
                   }}
-                />
-                <h3 style={{ margin: 0, fontSize: 14, fontWeight: 700, color: "#ffffff" }}>
-                  OPD Chamber Station
+                >
+                  <Tv size={15} />
+                </div>
+                <h3 style={{ margin: 0, fontSize: 16, fontWeight: 800, color: "#ffffff", letterSpacing: "0.02em" }}>
+                  Queue Control
                 </h3>
               </div>
               <Link
-                href="/live-queue?tv=1"
-                target="_blank"
+                href="/live-queue"
                 style={{
-                  fontSize: 11,
+                  fontSize: 12,
                   fontWeight: 700,
-                  color: "#e5b869",
+                  color: "#94a3b8",
                   textDecoration: "none",
                   display: "inline-flex",
                   alignItems: "center",
                   gap: 4,
-                  background: "rgba(229, 184, 105, 0.12)",
-                  padding: "3px 8px",
+                  background: "rgba(255, 255, 255, 0.05)",
+                  padding: "4px 10px",
                   borderRadius: 8,
+                  border: "1px solid rgba(255, 255, 255, 0.1)",
                 }}
               >
-                <Tv size={12} />
-                TV Mode
+                <span>View All</span>
+                <ChevronRight size={13} />
               </Link>
+            </div>
+
+            {/* Next Patient Card with Primary Badge (Exact Reference Match) */}
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                padding: "12px 14px",
+                borderRadius: 14,
+                background: "rgba(229, 184, 105, 0.06)",
+                border: "1px solid rgba(229, 184, 105, 0.3)",
+                gap: 12,
+              }}
+            >
+              <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                <div
+                  style={{
+                    width: 40,
+                    height: 40,
+                    borderRadius: "50%",
+                    background: "rgba(229, 184, 105, 0.2)",
+                    border: "1.5px solid rgba(229, 184, 105, 0.6)",
+                    color: "#e5b869",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    flexShrink: 0,
+                  }}
+                >
+                  <Users size={18} />
+                </div>
+                <div>
+                  <div style={{ fontSize: 11, color: "#94a3b8", fontWeight: 700 }}>Next Patient</div>
+                  <div style={{ fontSize: 14, fontWeight: 800, color: "#ffffff" }}>
+                    {waitingTickets[0] ? `${waitingTickets[0].ticketNumber} ${waitingTickets[0].patientName}` : "No patient waiting"}
+                  </div>
+                </div>
+              </div>
+              <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                <span
+                  style={{
+                    padding: "3px 8px",
+                    borderRadius: 6,
+                    background: "rgba(229, 184, 105, 0.2)",
+                    color: "#e5b869",
+                    fontSize: 10,
+                    fontWeight: 800,
+                    letterSpacing: "0.05em",
+                  }}
+                >
+                  PRIMARY
+                </span>
+                <ChevronRight size={16} color="#e5b869" />
+              </div>
             </div>
 
             {/* Now Serving Big Display */}
