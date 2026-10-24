@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { X, Volume2, Monitor, Sparkles } from "lucide-react";
+import { X, Volume2, Monitor, Sparkles, Crown, Clock, Users, CheckCircle2, ChevronRight } from "lucide-react";
 import { QueueItem, CounterStation } from "@/types/queue";
 
 interface LiveDisplayModalProps {
@@ -134,11 +134,14 @@ export function LiveDisplayModal({
     {
       id: "box-1-serving",
       stageTag: "1. NOW IN CONSULTATION",
-      badgeText: "● With Doctor",
+      badgeText: "With Doctor",
       badgeClass: "badge-serving",
-      cardClass: "stage-serving",
+      kpiCardClass: "queue-kpi-card-serving",
+      kpiIconClass: "queue-kpi-icon-serving",
+      accentColor: "#e5b869",
+      icon: <Crown size={22} />,
       ticket: currentServing?.ticketNumber || "—",
-      patientName: currentServing?.clientName || (queue.length > 0 ? "Chamber Available" : "No Active Patient"),
+      patientName: currentServing?.clientName || (queue.length > 0 ? "Chamber Available" : "No patient serving"),
       subtitle: currentServing?.service || `${activeSpecialty} Review`,
       footerLeft: activeDoctorName,
       footerRight: activeChamber,
@@ -148,7 +151,10 @@ export function LiveDisplayModal({
       stageTag: "2. NEXT NUMBER",
       badgeText: "Stand By Door",
       badgeClass: "badge-next",
-      cardClass: "stage-next",
+      kpiCardClass: "queue-kpi-card-next",
+      kpiIconClass: "queue-kpi-icon-next",
+      accentColor: "#38bdf8",
+      icon: <Clock size={22} />,
       ticket: nextPatient?.ticketNumber || "—",
       patientName: nextPatient?.clientName || (waitingLine.length === 0 ? "No patient waiting" : "Ready for next"),
       subtitle: nextPatient ? `Est. Wait: ~${nextPatient.estWaitMinutes} min • ${nextPatient.service}` : "Please be ready at door",
@@ -160,7 +166,10 @@ export function LiveDisplayModal({
       stageTag: "3. 3RD IN QUEUE",
       badgeText: "Waiting Lounge",
       badgeClass: "badge-waiting",
-      cardClass: "stage-waiting",
+      kpiCardClass: "queue-kpi-card-waiting",
+      kpiIconClass: "queue-kpi-icon-waiting",
+      accentColor: "#10b981",
+      icon: <Users size={22} />,
       ticket: thirdPatient?.ticketNumber || "—",
       patientName: thirdPatient?.clientName || "Lounge Available",
       subtitle: thirdPatient ? `Est. Wait: ~${thirdPatient.estWaitMinutes} min • ${thirdPatient.service}` : "Waiting lounge seating",
@@ -171,8 +180,11 @@ export function LiveDisplayModal({
       id: "box-4-fourth",
       stageTag: "4. 4TH IN QUEUE",
       badgeText: "Waiting Lounge",
-      badgeClass: "badge-waiting",
-      cardClass: "stage-waiting",
+      badgeClass: "badge-completed",
+      kpiCardClass: "queue-kpi-card-completed",
+      kpiIconClass: "queue-kpi-icon-completed",
+      accentColor: "#14b8a6",
+      icon: <CheckCircle2 size={22} />,
       ticket: fourthPatient?.ticketNumber || "—",
       patientName: fourthPatient?.clientName || "Lounge Available",
       subtitle: fourthPatient ? `Est. Wait: ~${fourthPatient.estWaitMinutes} min • ${fourthPatient.service}` : "Waiting lounge seating",
@@ -260,7 +272,7 @@ export function LiveDisplayModal({
 
         {/* TV Main Grid */}
         <main className="tv-display-main-grid">
-          {/* Left: 4 EQUAL BOXES (Consultation + Queue Progression) */}
+          {/* Left: 4 EQUAL BOXES (Consultation + Queue Progression styled like KPI Cards) */}
           <section className="tv-serving-section">
             <div className="tv-section-heading-row">
               <h2 className="tv-section-heading">CONSULTATION & QUEUE PROGRESSION</h2>
@@ -269,27 +281,29 @@ export function LiveDisplayModal({
 
             <div className="tv-stations-grid four-boxes-grid">
               {stages.map((st) => (
-                <div key={st.id} className={`tv-station-card equal-box ${st.cardClass}`}>
-                  <div className="tv-station-header">
-                    <span className="tv-station-name">{st.stageTag}</span>
-                    <span className={`tv-stage-badge ${st.badgeClass}`}>{st.badgeText}</span>
+                <article key={st.id} className={`queue-kpi-card tv-station-kpi-card ${st.kpiCardClass}`}>
+                  <div className={`queue-kpi-card-icon ${st.kpiIconClass}`}>
+                    {st.icon}
                   </div>
-
-                  <div className="tv-station-ticket-display">
-                    <span className={`tv-ticket-number ${st.ticket === "—" ? "ticket-idle-num" : ""}`}>
+                  <div className="queue-kpi-card-body">
+                    <div className="tv-kpi-top-row">
+                      <span className="queue-kpi-card-label" style={{ color: st.accentColor }}>
+                        {st.stageTag}
+                      </span>
+                      <span className={`tv-stage-badge ${st.badgeClass}`}>
+                        {st.badgeText}
+                      </span>
+                    </div>
+                    <div className="queue-kpi-card-value tv-kpi-value">
                       {st.ticket}
-                    </span>
-                    <span className={`tv-ticket-client ${st.ticket === "—" ? "ticket-idle-sub" : ""}`}>
-                      {st.patientName}
-                    </span>
-                    <span className="tv-ticket-sub">{st.subtitle}</span>
+                    </div>
+                    <div className="queue-kpi-card-sub tv-kpi-sub">
+                      <span className="tv-kpi-patient-name">{st.patientName}</span>
+                      {st.subtitle && <span className="tv-kpi-patient-desc"> • {st.subtitle}</span>}
+                    </div>
                   </div>
-
-                  <div className="tv-station-footer">
-                    <span className="tv-doctor-name">{st.footerLeft}</span>
-                    <span className="tv-doctor-role">{st.footerRight}</span>
-                  </div>
-                </div>
+                  <ChevronRight size={18} color={st.accentColor} className="queue-kpi-card-chevron" />
+                </article>
               ))}
             </div>
           </section>
