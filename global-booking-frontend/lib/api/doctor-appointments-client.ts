@@ -93,4 +93,3 @@ export async function fetchDoctorPortalAppointments(
     return null;
   }
 }
-

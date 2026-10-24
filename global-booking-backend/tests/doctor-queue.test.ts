@@ -660,15 +660,26 @@ test("GET /api/v1/portal/doctor/queue dateKey filtering guarantees strict date b
     },
   });
 
+  function shiftDateIso(isoDate: string, days: number): string {
+    const d = new Date(isoDate + "T12:00:00Z");
+    d.setUTCDate(d.getUTCDate() + days);
+    return d.toISOString().split("T")[0];
+  }
+
   // Seed 3 existing tickets across 3 distinct dates: Yesterday, Today, Tomorrow
+  const tz = "Asia/Dubai";
+  const todayDateKey = getChamberBusinessDate(tz, new Date());
+  const yesterdayDateKey = shiftDateIso(todayDateKey, -1);
+  const tomorrowDateKey = shiftDateIso(todayDateKey, 1);
+
   const ticketYesterday: QueueTicketRecord = {
-    id: "TKT-20261023-DOC-DATE-1-CH-DATE-1-001",
+    id: `TKT-${yesterdayDateKey.replace(/\D/g, "")}-DOC-DATE-1-CH-DATE-1-001`,
     doctorId: doctor.doctorId,
     doctorAccountId: doctor.id,
     chamberId: "CH-DATE-1",
     chamberName: "Cardiology Wing",
-    chamberTimezone: "Asia/Dubai",
-    dateKey: "2026-10-23",
+    chamberTimezone: tz,
+    dateKey: yesterdayDateKey,
     serialIndex: 1,
     ticketNumber: "#01",
     patientName: "Yesterday Patient",
@@ -677,18 +688,18 @@ test("GET /api/v1/portal/doctor/queue dateKey filtering guarantees strict date b
     channel: "WALK_IN",
     status: "COMPLETED",
     checkInTime: "09:00 AM",
-    createdAt: "2026-10-23T05:00:00.000Z",
+    createdAt: `${yesterdayDateKey}T05:00:00.000Z`,
     createdById: "SYSTEM",
   };
 
   const ticketToday: QueueTicketRecord = {
-    id: "TKT-20261024-DOC-DATE-1-CH-DATE-1-001",
+    id: `TKT-${todayDateKey.replace(/\D/g, "")}-DOC-DATE-1-CH-DATE-1-001`,
     doctorId: doctor.doctorId,
     doctorAccountId: doctor.id,
     chamberId: "CH-DATE-1",
     chamberName: "Cardiology Wing",
-    chamberTimezone: "Asia/Dubai",
-    dateKey: "2026-10-24",
+    chamberTimezone: tz,
+    dateKey: todayDateKey,
     serialIndex: 1,
     ticketNumber: "#01",
     patientName: "Today Walkin Patient",
@@ -697,32 +708,32 @@ test("GET /api/v1/portal/doctor/queue dateKey filtering guarantees strict date b
     channel: "WALK_IN",
     status: "WAITING",
     checkInTime: "10:00 AM",
-    createdAt: "2026-10-24T06:00:00.000Z",
+    createdAt: `${todayDateKey}T06:00:00.000Z`,
     createdById: "SYSTEM",
   };
 
   ticketsStore.set(ticketYesterday.id, ticketYesterday);
   ticketsStore.set(ticketToday.id, ticketToday);
 
-  // Seed 2 appointments: one for Today (2026-10-24), one for Tomorrow (2026-10-25)
+  // Seed 2 appointments: one for Today, one for Tomorrow
   const aptToday = {
     id: "APT-TODAY-001",
     doctorId: doctor.doctorId,
     doctorAccountId: doctor.id,
     chamberId: "CH-DATE-1",
     chamberName: "Cardiology Wing",
-    chamberTimezone: "Asia/Dubai",
-    appointmentDate: "2026-10-24",
+    chamberTimezone: tz,
+    appointmentDate: todayDateKey,
     appointmentTime: "11:30 AM",
     patientName: "Today Online Patient",
     patientPhone: "+971501112233",
-    voucherId: "ID-24102026",
+    voucherId: "ID-TODAY-001",
     bookingNumber: 2,
     bookingNumberDisplay: "#02",
     service: "Echocardiogram",
     status: "CONFIRMED",
     channel: "ONLINE_WEB",
-    createdAt: "2026-10-22T10:00:00.000Z",
+    createdAt: `${todayDateKey}T10:00:00.000Z`,
   };
 
   const aptTomorrow = {
@@ -731,27 +742,27 @@ test("GET /api/v1/portal/doctor/queue dateKey filtering guarantees strict date b
     doctorAccountId: doctor.id,
     chamberId: "CH-DATE-1",
     chamberName: "Cardiology Wing",
-    chamberTimezone: "Asia/Dubai",
-    appointmentDate: "2026-10-25",
+    chamberTimezone: tz,
+    appointmentDate: tomorrowDateKey,
     appointmentTime: "02:00 PM",
     patientName: "Tomorrow Online Patient",
     patientPhone: "+971509998877",
-    voucherId: "ID-25102026",
+    voucherId: "ID-TOMORROW-002",
     bookingNumber: 1,
     bookingNumberDisplay: "#01",
     service: "Stress Test",
     status: "CONFIRMED",
     channel: "ONLINE_WEB",
-    createdAt: "2026-10-22T11:00:00.000Z",
+    createdAt: `${todayDateKey}T11:00:00.000Z`,
   };
 
   appointmentsStore.set(aptToday.id, aptToday);
   appointmentsStore.set(aptTomorrow.id, aptTomorrow);
 
-  // 1. Query strictly for TODAY: dateKey=2026-10-24
+  // 1. Query strictly for TODAY
   const resToday = await app.inject({
     method: "GET",
-    url: "/api/v1/portal/doctor/queue?dateKey=2026-10-24",
+    url: `/api/v1/portal/doctor/queue?dateKey=${todayDateKey}`,
     headers: { authorization: `Bearer ${token}` },
   });
 
@@ -768,15 +779,15 @@ test("GET /api/v1/portal/doctor/queue dateKey filtering guarantees strict date b
   assert.equal(todayNames.includes("Yesterday Patient"), false, "Yesterday patient must not leak into today's queue");
   assert.equal(todayNames.includes("Tomorrow Online Patient"), false, "Tomorrow patient must not leak into today's queue");
 
-  // All returned items must strictly have dateKey = 2026-10-24
+  // All returned items must strictly have dateKey = todayDateKey
   for (const item of bodyToday.items) {
-    assert.equal(item.dateKey, "2026-10-24");
+    assert.equal(item.dateKey, todayDateKey);
   }
 
-  // 2. Query strictly for TOMORROW: dateKey=2026-10-25
+  // 2. Query strictly for TOMORROW
   const resTomorrow = await app.inject({
     method: "GET",
-    url: "/api/v1/portal/doctor/queue?dateKey=2026-10-25",
+    url: `/api/v1/portal/doctor/queue?dateKey=${tomorrowDateKey}`,
     headers: { authorization: `Bearer ${token}` },
   });
 
@@ -786,12 +797,12 @@ test("GET /api/v1/portal/doctor/queue dateKey filtering guarantees strict date b
   // Tomorrow must return Tomorrow's synchronized appointment
   assert.equal(bodyTomorrow.count, 1);
   assert.equal(bodyTomorrow.items[0].patientName, "Tomorrow Online Patient");
-  assert.equal(bodyTomorrow.items[0].dateKey, "2026-10-25");
+  assert.equal(bodyTomorrow.items[0].dateKey, tomorrowDateKey);
 
-  // 3. Query strictly for YESTERDAY: dateKey=2026-10-23
+  // 3. Query strictly for YESTERDAY
   const resYesterday = await app.inject({
     method: "GET",
-    url: "/api/v1/portal/doctor/queue?dateKey=2026-10-23",
+    url: `/api/v1/portal/doctor/queue?dateKey=${yesterdayDateKey}`,
     headers: { authorization: `Bearer ${token}` },
   });
 
@@ -799,7 +810,7 @@ test("GET /api/v1/portal/doctor/queue dateKey filtering guarantees strict date b
   const bodyYesterday = JSON.parse(resYesterday.body);
   assert.equal(bodyYesterday.count, 1);
   assert.equal(bodyYesterday.items[0].patientName, "Yesterday Patient");
-  assert.equal(bodyYesterday.items[0].dateKey, "2026-10-23");
+  assert.equal(bodyYesterday.items[0].dateKey, yesterdayDateKey);
 
   // 4. READ-ONLY GUARANTEE: Date filtering did not delete, cancel, or modify any records
   assert.equal(appointmentsStore.size, 2, "Appointments count must be 100% preserved");

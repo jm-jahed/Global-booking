@@ -278,4 +278,3 @@ export function isSchedulerExecuting(): boolean {
 export function getActiveRunPromise(): Promise<DayEndRunResult> | null {
   return activeRunPromise;
 }
-

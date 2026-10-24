@@ -1618,11 +1618,15 @@ test("Live Queue -> Patients Auto-Sync & Day-End Cleanup Comprehensive 12-Scenar
   // =========================================================================
   // SCENARIO 24: REGRESSION — Appointment Auto-Sync Historical Guard & Upsert Semantics
   // =========================================================================
+  function shiftDateIso(isoDate: string, days: number): string {
+    const d = new Date(isoDate + "T12:00:00Z");
+    d.setUTCDate(d.getUTCDate() + days);
+    return d.toISOString().split("T")[0];
+  }
   const chamberTz = "Asia/Dubai";
-  const todayKey = getChamberBusinessDate(chamberTz, new Date());
   const now = new Date();
-  const pastDateObj = new Date(now.getTime() - 2 * 24 * 60 * 60 * 1000);
-  const pastDateKey = getChamberBusinessDate(chamberTz, pastDateObj);
+  const todayKey = getChamberBusinessDate(chamberTz, now);
+  const pastDateKey = shiftDateIso(todayKey, -30);
 
   // 1. Historical date: an appointment without a matching queue ticket must not create a new active ticket when querying a past chamber-local date
   const pastApt: AppointmentRecord = {
