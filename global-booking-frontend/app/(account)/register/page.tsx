@@ -1,6 +1,11 @@
-import { FoundationPage } from "@/components/shared/foundation-page";
-import { PAGE_CONTENT } from "@/config/page-content";
 import { pageMetadata } from "@/lib/utils/metadata";
-const content = PAGE_CONTENT.register;
-export const metadata = pageMetadata("Register", content.description);
-export default function Page() { return <FoundationPage {...content} />; }
+import { LuxuryRegisterForm } from "./register-form";
+
+export const metadata = pageMetadata(
+  "Register Practice",
+  "Register your healthcare practice, doctor portfolio, or hospital facility on Global Booking."
+);
+
+export default function RegisterPage() {
+  return <LuxuryRegisterForm />;
+}

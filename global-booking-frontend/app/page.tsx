@@ -162,33 +162,81 @@ export default function HomePage() {
         {/* Mobile Navigation Drawer */}
         {mobileMenuOpen && (
           <div className="mobile-drawer">
-            <button
-              type="button"
-              onClick={() => {
-                setActiveModal("doctor");
-                setMobileMenuOpen(false);
-              }}
-            >
-              For Doctors — What You Get
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                setActiveModal("hospital");
-                setMobileMenuOpen(false);
-              }}
-            >
-              For Hospitals & Clinics — What You Get
-            </button>
-            <div className="mobile-drawer-divider" />
-            <Link
-              href="/login"
-              className="mobile-login"
-              onClick={() => setMobileMenuOpen(false)}
-            >
-              <LogIn size={16} />
-              <span>Sign In (/login)</span>
-            </Link>
+            <div className="mobile-drawer-header">
+              <span className="mobile-drawer-eyebrow">PRACTICE SOLUTIONS</span>
+              <button
+                type="button"
+                className="mobile-drawer-close"
+                onClick={() => setMobileMenuOpen(false)}
+                aria-label="Close menu"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            <div className="mobile-nav-items">
+              <button
+                type="button"
+                className="mobile-nav-card doc-nav-card"
+                onClick={() => {
+                  setActiveModal("doctor");
+                  setMobileMenuOpen(false);
+                }}
+              >
+                <div className="mobile-nav-icon doc-bg">
+                  <span style={{ fontSize: 18 }}>👨‍⚕️</span>
+                </div>
+                <div className="mobile-nav-text">
+                  <strong>For Doctors & Specialists</strong>
+                  <span>Branded portfolio URL + acrylic QR standee</span>
+                </div>
+                <ChevronRight size={16} className="mobile-nav-arrow" />
+              </button>
+
+              <button
+                type="button"
+                className="mobile-nav-card hosp-nav-card"
+                onClick={() => {
+                  setActiveModal("hospital");
+                  setMobileMenuOpen(false);
+                }}
+              >
+                <div className="mobile-nav-icon hosp-bg">
+                  <Building2 size={18} />
+                </div>
+                <div className="mobile-nav-text">
+                  <strong>For Hospitals & Clinics</strong>
+                  <span>Multi-department intake & OPD kiosks</span>
+                </div>
+                <ChevronRight size={16} className="mobile-nav-arrow" />
+              </button>
+
+              <Link
+                href="/dr-jahedul-islam"
+                className="mobile-nav-card sample-nav-card"
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                <div className="mobile-nav-icon sample-bg">
+                  <Sparkles size={16} />
+                </div>
+                <div className="mobile-nav-text">
+                  <strong>Sample Doctor Portfolio</strong>
+                  <span>View live verified practice showcase</span>
+                </div>
+                <ChevronRight size={16} className="mobile-nav-arrow" />
+              </Link>
+            </div>
+
+            <div className="mobile-drawer-footer">
+              <Link
+                href="/login"
+                className="mobile-login-btn"
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                <LogIn size={16} />
+                <span>Doctor & Staff Sign In (/login)</span>
+              </Link>
+            </div>
           </div>
         )}
       </header>

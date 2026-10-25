@@ -38,6 +38,8 @@ import {
   Briefcase,
   Users,
   FileCheck,
+  Menu,
+  X,
 } from "lucide-react";
 import type { PublicDoctorProfile } from "@/lib/api/doctor-public-client";
 import { getPublicDoctorProfile } from "@/lib/api/doctor-public-client";
@@ -120,6 +122,7 @@ export function DoctorPublicPortfolio({
   const [copiedLink, setCopiedLink] = useState<boolean>(false);
   const [currentLang, setCurrentLang] = useState<string>("English");
   const [showLangMenu, setShowLangMenu] = useState<boolean>(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState<boolean>(false);
 
   useEffect(() => {
     if (initialData) {
@@ -538,8 +541,8 @@ export function DoctorPublicPortfolio({
             )}
           </nav>
 
-          {/* Right Controls: Share & Direct Booking CTA */}
-          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+          {/* Right Controls: Share, Direct Booking CTA & Mobile Menu Toggle */}
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
             <button
               type="button"
               onClick={handleShare}
@@ -550,7 +553,7 @@ export function DoctorPublicPortfolio({
                 background: "#f1f5f9",
                 border: "1px solid #e2e8f0",
                 color: copiedLink ? "#10b981" : "#475569",
-                padding: "8px 14px",
+                padding: "8px 12px",
                 borderRadius: 10,
                 fontSize: 13,
                 fontWeight: 600,
@@ -560,18 +563,19 @@ export function DoctorPublicPortfolio({
               title="Share Doctor Profile"
             >
               {copiedLink ? <Check size={14} /> : <Share2 size={14} />}
-              <span>{copiedLink ? "Copied" : "Share"}</span>
+              <span className="share-btn-text">{copiedLink ? "Copied" : "Share"}</span>
             </button>
 
             <Link
               href={bookingHref}
+              className="desktop-book-btn"
               style={{
                 display: "inline-flex",
                 alignItems: "center",
                 gap: 7,
                 background: "linear-gradient(135deg, #4338ca 0%, #6366f1 100%)",
                 color: "#ffffff",
-                padding: "9px 20px",
+                padding: "9px 18px",
                 borderRadius: 10,
                 fontSize: 13,
                 fontWeight: 700,
@@ -585,14 +589,178 @@ export function DoctorPublicPortfolio({
               <Calendar size={14} />
               <span>Book Appointment</span>
             </Link>
+
+            <button
+              type="button"
+              onClick={() => setMobileMenuOpen((prev) => !prev)}
+              className="mobile-menu-btn"
+              aria-label="Toggle navigation menu"
+            >
+              {mobileMenuOpen ? <X size={20} /> : <Menu size={20} />}
+            </button>
           </div>
         </div>
+
+        {/* Mobile Slide-down Navigation Drawer */}
+        {mobileMenuOpen && (
+          <div
+            className="mobile-drawer-menu"
+            style={{
+              background: "rgba(255, 255, 255, 0.98)",
+              backdropFilter: "blur(20px)",
+              WebkitBackdropFilter: "blur(20px)",
+              borderTop: "1px solid rgba(224, 231, 255, 0.8)",
+              padding: "16px 20px 22px",
+              display: "flex",
+              flexDirection: "column",
+              gap: 10,
+              boxShadow: "0 14px 30px rgba(15, 23, 42, 0.08)",
+              animation: "slideDown 0.2s ease-out",
+            }}
+          >
+            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+              {isAboutVisible && (
+                <a
+                  href="#about"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="mobile-nav-link"
+                >
+                  About Practitioner
+                </a>
+              )}
+              {isServicesVisible && (
+                <a
+                  href="#services"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="mobile-nav-link"
+                >
+                  Clinical Services
+                </a>
+              )}
+              {isEducationVisible && (
+                <a
+                  href="#qualifications"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="mobile-nav-link"
+                >
+                  Qualifications & Degrees
+                </a>
+              )}
+              {isExperienceVisible && (
+                <a
+                  href="#experience"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="mobile-nav-link"
+                >
+                  Career & Appointments
+                </a>
+              )}
+              {isChambersVisible && (
+                <a
+                  href="#chambers"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="mobile-nav-link"
+                >
+                  Visiting Schedule & Chambers
+                </a>
+              )}
+              {isContactVisible && (
+                <a
+                  href="#contact"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="mobile-nav-link"
+                >
+                  Contact & Inquiries
+                </a>
+              )}
+            </div>
+
+            <div style={{ paddingTop: 8, borderTop: "1px solid #f1f5f9" }}>
+              <Link
+                href={bookingHref}
+                onClick={() => setMobileMenuOpen(false)}
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: 8,
+                  background: "linear-gradient(135deg, #4338ca 0%, #6366f1 100%)",
+                  color: "#ffffff",
+                  padding: "12px 20px",
+                  borderRadius: 12,
+                  fontSize: 14,
+                  fontWeight: 700,
+                  textDecoration: "none",
+                  boxShadow: "0 8px 20px rgba(79, 70, 229, 0.3)",
+                }}
+              >
+                <Calendar size={16} />
+                <span>Book Appointment</span>
+              </Link>
+            </div>
+          </div>
+        )}
       </header>
+
+      {/* Mobile Quick In-Page Section Jump Bar */}
+      <div
+        className="mobile-quick-jump-bar"
+        style={{
+          display: "none",
+          overflowX: "auto",
+          whiteSpace: "nowrap",
+          padding: "10px 16px",
+          gap: 8,
+          borderBottom: "1px solid rgba(224, 231, 255, 0.8)",
+          background: "#ffffff",
+          position: "sticky",
+          top: 61,
+          zIndex: 40,
+        }}
+      >
+        {isServicesVisible && (
+          <a href="#services" className="quick-jump-pill">
+            <Stethoscope size={13} color="#4f46e5" />
+            <span>Services</span>
+          </a>
+        )}
+        {isAboutVisible && (
+          <a href="#about" className="quick-jump-pill">
+            <Heart size={13} color="#4f46e5" />
+            <span>About</span>
+          </a>
+        )}
+        {isEducationVisible && (
+          <a href="#qualifications" className="quick-jump-pill">
+            <GraduationCap size={13} color="#4f46e5" />
+            <span>Qualifications</span>
+          </a>
+        )}
+        {isExperienceVisible && (
+          <a href="#experience" className="quick-jump-pill">
+            <Briefcase size={13} color="#4f46e5" />
+            <span>Experience</span>
+          </a>
+        )}
+        {isChambersVisible && (
+          <a href="#chambers" className="quick-jump-pill">
+            <Building2 size={13} color="#4f46e5" />
+            <span>Chambers</span>
+          </a>
+        )}
+        {isContactVisible && (
+          <a href="#contact" className="quick-jump-pill">
+            <Phone size={13} color="#4f46e5" />
+            <span>Contact</span>
+          </a>
+        )}
+      </div>
 
       {/* =========================================================================
           02. HERO SECTION (Matching User Mockup: Bold Heading, Dual CTAs & Circle Doctor)
           ========================================================================= */}
       <section
+        className="hero-section-pad"
         style={{
           position: "relative",
           padding: "50px 24px 80px",
@@ -670,9 +838,10 @@ export function DoctorPublicPortfolio({
             </p>
 
             {/* Dual CTA Buttons (Exact Match to User's Mockup) */}
-            <div style={{ display: "flex", alignItems: "center", gap: 14, flexWrap: "wrap", marginBottom: 36 }}>
+            <div className="hero-cta-container" style={{ display: "flex", alignItems: "center", gap: 14, flexWrap: "wrap", marginBottom: 36 }}>
               <a
                 href="#services"
+                className="hero-cta-button"
                 style={{
                   display: "inline-flex",
                   alignItems: "center",
@@ -697,6 +866,7 @@ export function DoctorPublicPortfolio({
 
               <Link
                 href={bookingHref}
+                className="hero-cta-button"
                 style={{
                   display: "inline-flex",
                   alignItems: "center",
@@ -817,6 +987,7 @@ export function DoctorPublicPortfolio({
 
             {/* Floating Glassmorphic Pill 1: Doctor Identity Card (Matching User Mockup Bottom-Left) */}
             <div
+              className="hero-badge-left"
               style={{
                 position: "absolute",
                 bottom: 20,
@@ -875,6 +1046,7 @@ export function DoctorPublicPortfolio({
 
             {/* Floating Glassmorphic Pill 2: Verified Clinical Badge (Matching User Mockup Right) */}
             <div
+              className="hero-badge-right"
               style={{
                 position: "absolute",
                 top: 40,
@@ -960,6 +1132,7 @@ export function DoctorPublicPortfolio({
 
             {/* Services Grid */}
             <div
+              className="services-grid"
               style={{
                 display: "grid",
                 gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))",
@@ -1301,6 +1474,7 @@ export function DoctorPublicPortfolio({
             </div>
 
             <div
+              className="qualifications-grid"
               style={{
                 display: "grid",
                 gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))",
@@ -1467,6 +1641,7 @@ export function DoctorPublicPortfolio({
             </div>
 
             <div
+              className="experience-grid"
               style={{
                 display: "grid",
                 gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))",
@@ -1566,6 +1741,7 @@ export function DoctorPublicPortfolio({
             </div>
 
             <div
+              className="awards-grid"
               style={{
                 display: "grid",
                 gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))",
@@ -1667,6 +1843,7 @@ export function DoctorPublicPortfolio({
             </div>
 
             <div
+              className="publications-grid"
               style={{
                 display: "grid",
                 gridTemplateColumns: "repeat(auto-fit, minmax(340px, 1fr))",
@@ -1770,6 +1947,7 @@ export function DoctorPublicPortfolio({
             </div>
 
             <div
+              className="memberships-grid"
               style={{
                 display: "grid",
                 gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
@@ -1913,6 +2091,7 @@ export function DoctorPublicPortfolio({
             </div>
 
             <div
+              className="chambers-grid"
               style={{
                 display: "grid",
                 gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))",
@@ -2075,6 +2254,7 @@ export function DoctorPublicPortfolio({
             </div>
 
             <div
+              className="contact-grid"
               style={{
                 display: "grid",
                 gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
@@ -2260,6 +2440,7 @@ export function DoctorPublicPortfolio({
           ========================================================================= */}
       <section style={{ padding: "40px 24px 80px" }}>
         <div
+          className="bottom-cta-banner"
           style={{
             maxWidth: 1240,
             margin: "0 auto",
@@ -2336,6 +2517,7 @@ export function DoctorPublicPortfolio({
           09. PRACTICE FOOTER
           ========================================================================= */}
       <footer
+        className="portfolio-footer"
         style={{
           borderTop: "1px solid #e2e8f0",
           background: "#ffffff",
@@ -2385,7 +2567,87 @@ export function DoctorPublicPortfolio({
         </div>
       </footer>
 
-      {/* Floating animation keyframes style */}
+      {/* Mobile Sticky Bottom Floating Action Bar */}
+      <div
+        className="mobile-sticky-bottom-bar"
+        style={{
+          position: "fixed",
+          bottom: 0,
+          left: 0,
+          right: 0,
+          zIndex: 70,
+          background: "rgba(255, 255, 255, 0.95)",
+          backdropFilter: "blur(20px)",
+          WebkitBackdropFilter: "blur(20px)",
+          borderTop: "1px solid rgba(224, 231, 255, 0.9)",
+          padding: "12px 16px",
+          display: "none",
+          justifyContent: "space-between",
+          alignItems: "center",
+          boxShadow: "0 -4px 25px rgba(15, 23, 42, 0.12)",
+        }}
+      >
+        <div style={{ display: "flex", alignItems: "center", gap: 10, minWidth: 0 }}>
+          <div
+            style={{
+              width: 38,
+              height: 38,
+              borderRadius: 10,
+              background: "linear-gradient(135deg, #4338ca, #6366f1)",
+              display: "grid",
+              placeItems: "center",
+              color: "#ffffff",
+              fontWeight: 800,
+              fontSize: 13,
+              flexShrink: 0,
+            }}
+          >
+            {doctorInitials}
+          </div>
+          <div style={{ minWidth: 0 }}>
+            <div
+              style={{
+                fontSize: 13,
+                fontWeight: 700,
+                color: "#0f172a",
+                lineHeight: 1.2,
+                whiteSpace: "nowrap",
+                overflow: "hidden",
+                textOverflow: "ellipsis",
+              }}
+            >
+              {profile.fullName}
+            </div>
+            <div style={{ fontSize: 11, color: "#64748b", fontWeight: 600 }}>
+              Fee: <span style={{ color: "#4f46e5", fontWeight: 800 }}>{fees.initial}</span>
+            </div>
+          </div>
+        </div>
+
+        <Link
+          href={bookingHref}
+          style={{
+            display: "inline-flex",
+            alignItems: "center",
+            gap: 7,
+            background: "linear-gradient(135deg, #4338ca 0%, #6366f1 100%)",
+            color: "#ffffff",
+            padding: "10px 18px",
+            borderRadius: 12,
+            fontSize: 13,
+            fontWeight: 700,
+            textDecoration: "none",
+            boxShadow: "0 6px 16px rgba(79, 70, 229, 0.35)",
+            whiteSpace: "nowrap",
+            flexShrink: 0,
+          }}
+        >
+          <Calendar size={15} />
+          <span>Book Appointment</span>
+        </Link>
+      </div>
+
+      {/* Floating animation keyframes and responsive mobile styles */}
       <style jsx global>{`
         @keyframes float {
           0%, 100% {
@@ -2395,6 +2657,70 @@ export function DoctorPublicPortfolio({
             transform: translateY(-6px);
           }
         }
+        @keyframes slideDown {
+          from {
+            opacity: 0;
+            transform: translateY(-8px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+        .quick-jump-pill {
+          display: inline-flex;
+          align-items: center;
+          gap: 6px;
+          background: #f1f5f9;
+          border: 1px solid #e2e8f0;
+          color: #334155;
+          padding: 7px 14px;
+          border-radius: 999px;
+          font-size: 12px;
+          font-weight: 600;
+          text-decoration: none;
+          transition: all 0.15s ease;
+          flex-shrink: 0;
+        }
+        .quick-jump-pill:hover,
+        .quick-jump-pill:active {
+          background: #e0e7ff;
+          color: #4338ca;
+          border-color: #c7d2fe;
+        }
+        .mobile-nav-link {
+          padding: 11px 14px;
+          border-radius: 10px;
+          font-size: 14px;
+          font-weight: 600;
+          color: #334155;
+          text-decoration: none;
+          background: #f8faff;
+          border: 1px solid #e0e7ff;
+          transition: all 0.15s ease;
+        }
+        .mobile-nav-link:hover,
+        .mobile-nav-link:active {
+          background: #eef2ff;
+          color: #4338ca;
+        }
+        .mobile-menu-btn {
+          display: none;
+          align-items: center;
+          justify-content: center;
+          width: 38px;
+          height: 38px;
+          border-radius: 10px;
+          background: #f1f5f9;
+          border: 1px solid #e2e8f0;
+          color: #334155;
+          cursor: pointer;
+          transition: all 0.15s ease;
+        }
+        .mobile-menu-btn:hover {
+          background: #e2e8f0;
+        }
+
         @media (max-width: 900px) {
           .hero-grid-container {
             grid-template-columns: 1fr !important;
@@ -2404,6 +2730,86 @@ export function DoctorPublicPortfolio({
             grid-template-columns: 1fr !important;
           }
           .portfolio-desktop-nav {
+            display: none !important;
+          }
+        }
+
+        @media (max-width: 768px) {
+          .mobile-menu-btn {
+            display: inline-flex !important;
+          }
+          .mobile-sticky-bottom-bar {
+            display: flex !important;
+          }
+          .mobile-quick-jump-bar {
+            display: flex !important;
+          }
+          .portfolio-main-wrapper {
+            padding-bottom: 84px !important;
+          }
+          .hero-badge-left {
+            left: 12px !important;
+            bottom: 12px !important;
+            max-width: calc(100% - 24px) !important;
+          }
+          .hero-badge-right {
+            right: 12px !important;
+            top: 16px !important;
+            max-width: calc(100% - 24px) !important;
+          }
+          .hero-cta-container {
+            flex-direction: column !important;
+            align-items: stretch !important;
+            gap: 12px !important;
+          }
+          .hero-cta-button {
+            width: 100% !important;
+            justify-content: center !important;
+            padding: 14px 20px !important;
+          }
+          .hero-section-pad {
+            padding: 32px 16px 48px !important;
+          }
+          .bottom-cta-banner {
+            padding: 32px 20px !important;
+            border-radius: 20px !important;
+          }
+          .bottom-cta-banner h2 {
+            font-size: 26px !important;
+          }
+          .bottom-cta-banner > div:last-child {
+            width: 100% !important;
+          }
+          .bottom-cta-banner > div:last-child a {
+            width: 100% !important;
+            justify-content: center !important;
+          }
+          .portfolio-footer > div {
+            flex-direction: column !important;
+            align-items: flex-start !important;
+            gap: 14px !important;
+          }
+        }
+
+        @media (max-width: 640px) {
+          .services-grid,
+          .chambers-grid,
+          .qualifications-grid,
+          .experience-grid,
+          .awards-grid,
+          .publications-grid,
+          .memberships-grid,
+          .contact-grid {
+            grid-template-columns: 1fr !important;
+            gap: 14px !important;
+          }
+          .desktop-book-btn {
+            display: none !important;
+          }
+        }
+
+        @media (max-width: 480px) {
+          .share-btn-text {
             display: none !important;
           }
         }

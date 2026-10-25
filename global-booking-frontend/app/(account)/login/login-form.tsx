@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
   Lock,
-  User,
+  Mail,
   Eye,
   EyeOff,
   ShieldCheck,
@@ -15,103 +15,55 @@ import {
   CheckCircle2,
   X,
   ArrowLeft,
+  Stethoscope,
+  Building2,
+  ArrowRight,
+  KeyRound,
 } from "lucide-react";
 import { adminLogin } from "@/lib/api/admin-client";
 
-function LuxuryGoldEmblem() {
+/* =========================================================================
+   HEALTHCARE PULSE (ECG) BRAND EMBLEM
+   ========================================================================= */
+function HealthcarePulseLogo({ size = 48 }: { size?: number }) {
   return (
     <svg
       viewBox="0 0 100 100"
-      className="gold-emblem-svg"
+      style={{ width: size, height: size, flexShrink: 0, display: "block" }}
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
       aria-hidden="true"
     >
       <defs>
-        {/* Ambient Gold Glow Filter */}
-        <filter id="goldGlow" x="-30%" y="-30%" width="160%" height="160%">
+        <linearGradient id="loginPulseGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stopColor="#a5b4fc" />
+          <stop offset="45%" stopColor="#6366f1" />
+          <stop offset="100%" stopColor="#4338ca" />
+        </linearGradient>
+        <filter id="loginPulseGlow" x="-20%" y="-20%" width="140%" height="140%">
           <feGaussianBlur stdDeviation="3.5" result="blur" />
-          <feComponentTransfer in="blur" result="glow1">
-            <feFuncA type="linear" slope="0.6" />
-          </feComponentTransfer>
           <feMerge>
-            <feMergeNode in="glow1" />
+            <feMergeNode in="blur" />
             <feMergeNode in="SourceGraphic" />
           </feMerge>
         </filter>
-
-        {/* Facet Lighting Gradients */}
-        <linearGradient id="goldTopPeak" x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" stopColor="#FFF7CC" />
-          <stop offset="40%" stopColor="#F5D77F" />
-          <stop offset="100%" stopColor="#C9A24B" />
-        </linearGradient>
-
-        <linearGradient id="goldLightFacet" x1="0%" y1="0%" x2="80%" y2="100%">
-          <stop offset="0%" stopColor="#FFECA8" />
-          <stop offset="50%" stopColor="#E2BD63" />
-          <stop offset="100%" stopColor="#B3892F" />
-        </linearGradient>
-
-        <linearGradient id="goldMidFacet" x1="20%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" stopColor="#E6C25E" />
-          <stop offset="60%" stopColor="#AD8224" />
-          <stop offset="100%" stopColor="#78550E" />
-        </linearGradient>
-
-        <linearGradient id="goldDarkFacet" x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" stopColor="#B88E33" />
-          <stop offset="70%" stopColor="#6E4E10" />
-          <stop offset="100%" stopColor="#3D2905" />
-        </linearGradient>
-
-        <linearGradient id="goldStarTip" x1="0%" y1="0%" x2="0%" y2="100%">
-          <stop offset="0%" stopColor="#FFF3B8" />
-          <stop offset="60%" stopColor="#D4AE47" />
-          <stop offset="100%" stopColor="#8C6619" />
-        </linearGradient>
       </defs>
-
-      {/* Outer 6-Pointed Star Points */}
-      <g filter="url(#goldGlow)">
-        {/* Top Point */}
-        <polygon points="50,4 40,28 50,22 60,28" fill="url(#goldStarTip)" />
-        <polygon points="50,4 40,28 50,22" fill="url(#goldTopPeak)" opacity="0.9" />
-
-        {/* Top-Right Point */}
-        <polygon points="90,27 68,34 70,24 80,17" fill="url(#goldLightFacet)" />
-        <polygon points="90,27 68,34 75,44" fill="url(#goldMidFacet)" />
-
-        {/* Bottom-Right Point */}
-        <polygon points="90,73 68,66 75,56" fill="url(#goldMidFacet)" />
-        <polygon points="90,73 68,66 70,76 80,83" fill="url(#goldDarkFacet)" />
-
-        {/* Bottom Point */}
-        <polygon points="50,96 40,72 50,78 60,72" fill="url(#goldDarkFacet)" />
-        <polygon points="50,96 60,72 50,78" fill="url(#goldMidFacet)" />
-
-        {/* Bottom-Left Point */}
-        <polygon points="10,73 32,66 25,56" fill="url(#goldMidFacet)" />
-        <polygon points="10,73 32,66 30,76 20,83" fill="url(#goldDarkFacet)" />
-
-        {/* Top-Left Point */}
-        <polygon points="10,27 32,34 25,44" fill="url(#goldMidFacet)" />
-        <polygon points="10,27 32,34 30,24 20,17" fill="url(#goldLightFacet)" />
-
-        {/* Center 3D Isometric Faceted Cube */}
-        <polygon points="50,22 75,36 50,50 25,36" fill="url(#goldTopPeak)" />
-        <line x1="50" y1="22" x2="50" y2="50" stroke="#FFF7CC" strokeWidth="0.8" opacity="0.6" />
-
-        {/* Left Rhombus Facet */}
-        <polygon points="25,36 50,50 50,78 25,64" fill="url(#goldMidFacet)" />
-
-        {/* Right Rhombus Facet */}
-        <polygon points="50,50 75,36 75,64 50,78" fill="url(#goldDarkFacet)" />
-
-        {/* Center Facet Ridge Lines */}
-        <line x1="50" y1="50" x2="50" y2="78" stroke="#FFECA8" strokeWidth="0.9" opacity="0.5" />
-        <line x1="25" y1="36" x2="50" y2="50" stroke="#FFF7CC" strokeWidth="0.9" opacity="0.7" />
-        <line x1="75" y1="36" x2="50" y2="50" stroke="#E2BD63" strokeWidth="0.7" opacity="0.6" />
+      <g filter="url(#loginPulseGlow)">
+        <path
+          d="M50 86 C25 68 12 52 12 34 C12 19 23 10 37 10 C44 10 50 14 50 14 C50 14 56 10 63 10 C77 10 88 19 88 34 C88 52 75 68 50 86 Z"
+          stroke="url(#loginPulseGrad)"
+          strokeWidth="6"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          fill="rgba(99, 102, 241, 0.14)"
+        />
+        <path
+          d="M26 44 L38 44 L44 28 L50 58 L56 34 L62 44 L74 44"
+          stroke="url(#loginPulseGrad)"
+          strokeWidth="5"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
       </g>
     </svg>
   );
@@ -120,6 +72,7 @@ function LuxuryGoldEmblem() {
 export function LuxuryLoginForm() {
   const router = useRouter();
 
+  const [portalType, setPortalType] = useState<"doctor" | "hospital">("doctor");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [rememberMe, setRememberMe] = useState(true);
@@ -138,12 +91,12 @@ export function LuxuryLoginForm() {
 
     const trimmedEmail = email.trim();
     if (!trimmedEmail) {
-      setError("Please enter your username or executive email address.");
+      setError("Please enter your registered doctor or clinical staff email address.");
       return;
     }
 
     if (!password) {
-      setError("Please enter your password.");
+      setError("Please enter your secure password.");
       return;
     }
 
@@ -165,11 +118,13 @@ export function LuxuryLoginForm() {
         }
         return;
       }
-      setError("Authentication failed: Invalid credentials or missing account profile.");
+      setError("Authentication failed: Invalid credentials or unverified clinical account.");
     } catch (err) {
       const msg = err instanceof Error ? err.message : "Authentication failed.";
       if (msg.includes("Failed to fetch") || msg.includes("NetworkError")) {
-        setError("Unable to connect to the authentication server. Please check your network connection or verify that the server is online.");
+        setError(
+          "Unable to connect to the authentication server. Please check your network connection or verify backend service is running on port 3003."
+        );
       } else {
         setError(msg);
       }
@@ -179,82 +134,103 @@ export function LuxuryLoginForm() {
   };
 
   return (
-    <div className="luxury-login-root">
-      {/* Top Bar Floating Utilities */}
-      <div className="top-utility-bar">
-        <Link href="/" className="utility-nav-link">
-          <ArrowLeft size={14} />
+    <div className="login-viewport-root">
+      {/* Dynamic Ambient Radiant Background Glows */}
+      <div className="ambient-sphere sphere-primary" aria-hidden="true" />
+      <div className="ambient-sphere sphere-accent" aria-hidden="true" />
+      <div className="ambient-sphere sphere-tertiary" aria-hidden="true" />
+      <div className="grid-subtle-pattern" aria-hidden="true" />
+
+      {/* Floating Top Utility Bar */}
+      <nav className="top-nav-bar" aria-label="Portal Navigation">
+        <Link href="/" className="nav-return-btn">
+          <ArrowLeft size={15} />
           <span>Return Home</span>
         </Link>
-        <div className="utility-status-badge">
-          <span className="status-live-pulse" />
-          <span>ERP System Active</span>
+
+        <div className="system-health-pill">
+          <span className="live-radar-dot" />
+          <span className="health-label">Clinical Network Active</span>
         </div>
-      </div>
+      </nav>
 
-      {/* Subtle Backdrop Darkening for High-Contrast Luxury Feel */}
-      <div className="luxury-backdrop-overlay" />
-
-      {/* Main Luxury Stage */}
-      <div className="luxury-login-stage">
-        {/* BRAND IDENTITY BLOCK ABOVE CARD */}
-        <header className="brand-header-group">
-          {/* 3D Geometric Gold Emblem */}
-          <div className="emblem-wrapper">
-            <LuxuryGoldEmblem />
-          </div>
-
-          {/* GLOBAL ERP Title */}
-          <div className="brand-title-row">
-            <span className="brand-title-global">GLOBAL</span>{" "}
-            <span className="brand-title-erp">ERP</span>
-          </div>
-
-          {/* Subtitle */}
-          <div className="brand-subtitle">
-            ENTERPRISE RESOURCE PLANNING
-          </div>
-
-          {/* Tagline with Diamond Accents */}
-          <div className="brand-tagline">
-            <span className="tagline-diamond">◆</span>
-            <span>CONNECTING PEOPLE, SPACES & EXPERIENCES</span>
-            <span className="tagline-diamond">◆</span>
-          </div>
+      {/* Main Luxury Login Card Stage */}
+      <div className="login-stage-container">
+        {/* Brand Header */}
+        <header className="brand-header-area">
+          <Link href="/" className="brand-logo-link" title="Global Booking Homepage">
+            <div className="emblem-container">
+              <HealthcarePulseLogo size={46} />
+            </div>
+            <div className="brand-text-block">
+              <div className="brand-name-row">
+                <span className="brand-name-primary">GLOBAL</span>{" "}
+                <span className="brand-name-accent">BOOKING</span>
+              </div>
+              <div className="brand-badge-tag">HEALTHCARE PRACTICE PLATFORM</div>
+            </div>
+          </Link>
         </header>
 
-        {/* LUXURY FROSTED GLASS CARD */}
-        <main className="luxury-card">
-          {/* Card Header */}
-          <div className="card-header">
-            <div className="welcome-title-row">
-              <ShieldCheck size={24} className="welcome-shield" />
-              <h1 className="welcome-title">Welcome Back</h1>
+        {/* Glassmorphic Portal Login Card */}
+        <main className="login-glass-card">
+          {/* Card Header & Portal Type Switcher */}
+          <div className="card-top-section">
+            <div className="portal-selector-tabs" role="tablist" aria-label="Select Account Type">
+              <button
+                type="button"
+                role="tab"
+                aria-selected={portalType === "doctor"}
+                className={`tab-btn ${portalType === "doctor" ? "active" : ""}`}
+                onClick={() => setPortalType("doctor")}
+              >
+                <Stethoscope size={15} />
+                <span>Doctor & Specialist</span>
+              </button>
+
+              <button
+                type="button"
+                role="tab"
+                aria-selected={portalType === "hospital"}
+                className={`tab-btn ${portalType === "hospital" ? "active" : ""}`}
+                onClick={() => setPortalType("hospital")}
+              >
+                <Building2 size={15} />
+                <span>Hospital & Clinic</span>
+              </button>
             </div>
-            <p className="welcome-subtitle">
-              Sign in to manage your appointments, patients, and bookings
-            </p>
+
+            <div className="greeting-block">
+              <h1 className="greeting-title">
+                {portalType === "doctor" ? "Doctor Practice Sign In" : "Hospital Administration Sign In"}
+              </h1>
+              <p className="greeting-desc">
+                {portalType === "doctor"
+                  ? "Access your live OPD queue, patient appointments, and chamber schedule."
+                  : "Centralize outpatient registration, multi-department intake, and OPD roster."}
+              </p>
+            </div>
           </div>
 
-          {/* Error Notification Banner */}
+          {/* Error Alert Banner */}
           {error && (
-            <div role="alert" aria-live="polite" className="error-alert-banner">
-              <AlertCircle size={17} className="error-icon" />
-              <span className="error-text">{error}</span>
+            <div role="alert" aria-live="polite" className="auth-error-banner">
+              <AlertCircle size={18} className="error-svg" />
+              <div className="error-copy">{error}</div>
             </div>
           )}
 
           {/* Authentication Form */}
-          <form onSubmit={handleSubmit} noValidate className="login-form">
-            {/* Username / Email Field */}
-            <div className="field-group">
-              <label htmlFor={emailId} className="field-label">
-                Username / Email
+          <form onSubmit={handleSubmit} noValidate className="auth-form-body">
+            {/* Email Field */}
+            <div className="form-field-group">
+              <label htmlFor={emailId} className="field-label-text">
+                {portalType === "doctor" ? "Doctor Email or Username" : "Staff or Facility Email"}
               </label>
-              <div className="input-box">
-                <div className="input-leading-icon">
-                  <User size={17} />
-                </div>
+              <div className="field-input-wrapper">
+                <span className="field-leading-icon" aria-hidden="true">
+                  <Mail size={16} />
+                </span>
                 <input
                   id={emailId}
                   type="email"
@@ -267,21 +243,25 @@ export function LuxuryLoginForm() {
                     setEmail(e.target.value);
                     if (error) setError(null);
                   }}
-                  placeholder="Enter your username or email"
-                  className="luxury-input"
+                  placeholder={
+                    portalType === "doctor"
+                      ? "doctor@globalbooking.com"
+                      : "reception@cityhospital.com"
+                  }
+                  className="card-text-input"
                 />
               </div>
             </div>
 
             {/* Password Field */}
-            <div className="field-group">
-              <label htmlFor={passwordId} className="field-label">
+            <div className="form-field-group">
+              <label htmlFor={passwordId} className="field-label-text">
                 Password
               </label>
-              <div className="input-box">
-                <div className="input-leading-icon">
-                  <Lock size={17} />
-                </div>
+              <div className="field-input-wrapper">
+                <span className="field-leading-icon" aria-hidden="true">
+                  <Lock size={16} />
+                </span>
                 <input
                   id={passwordId}
                   type={showPassword ? "text" : "password"}
@@ -294,243 +274,278 @@ export function LuxuryLoginForm() {
                     setPassword(e.target.value);
                     if (error) setError(null);
                   }}
-                  placeholder="Enter your password"
-                  className="luxury-input has-toggle"
+                  placeholder="Enter your confidential password"
+                  className="card-text-input has-action"
                 />
                 <button
                   type="button"
-                  tabIndex={-1}
                   onClick={() => setShowPassword(!showPassword)}
-                  className="password-toggle-btn"
+                  className="field-toggle-btn"
                   aria-label={showPassword ? "Hide password" : "Show password"}
+                  title={showPassword ? "Hide password" : "Show password"}
                 >
-                  {showPassword ? <EyeOff size={17} /> : <Eye size={17} />}
+                  {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                 </button>
               </div>
             </div>
 
-            {/* Remember Me & Forgot Password Row */}
-            <div className="remember-forgot-row">
-              <label htmlFor={rememberMeId} className="remember-checkbox-label">
+            {/* Remember & Assistance Row */}
+            <div className="remember-assistance-row">
+              <label htmlFor={rememberMeId} className="checkbox-wrap-label">
                 <input
                   id={rememberMeId}
                   type="checkbox"
                   checked={rememberMe}
                   onChange={(e) => setRememberMe(e.target.checked)}
-                  className="luxury-checkbox"
+                  className="indigo-checkbox"
                 />
-                <span>Remember me</span>
+                <span>Keep session active</span>
               </label>
 
               <button
                 type="button"
                 onClick={() => setSupportModalOpen(true)}
-                className="forgot-password-link"
+                className="forgot-pass-btn"
               >
                 Forgot Password?
               </button>
             </div>
 
-            {/* Sign In Securely Button */}
+            {/* Primary Submit Button */}
             <button
               type="submit"
               disabled={submitting}
-              className="btn-gold-submit"
+              className="login-submit-cta"
             >
               {submitting ? (
                 <>
-                  <Loader2 size={19} className="btn-spinner" />
-                  <span>Signing In Securely...</span>
+                  <Loader2 size={18} className="cta-spinner" />
+                  <span>Authenticating Session...</span>
                 </>
               ) : (
                 <>
-                  <ShieldCheck size={19} className="btn-shield-icon" />
-                  <span>Sign In Securely</span>
+                  <ShieldCheck size={18} className="cta-icon" />
+                  <span>
+                    Sign In to {portalType === "doctor" ? "Doctor Portal" : "Hospital Portal"}
+                  </span>
+                  <ArrowRight size={15} className="cta-arrow" />
                 </>
               )}
             </button>
           </form>
 
-          {/* Register Prompt */}
-          <div className="register-prompt-row">
-            <span>Don&apos;t have an executive account?</span>{" "}
-            <Link href="/register" className="register-link">
-              Create an account
+          {/* Registration Link */}
+          <div className="registration-prompt-box">
+            <span>New medical practitioner or facility?</span>
+            <Link href="/register" className="register-now-link">
+              <span>Register Practice</span>
+              <ArrowRight size={13} />
             </Link>
           </div>
 
-          {/* Bottom Protected Access Strip */}
-          <footer className="card-footer-protected">
-            <div className="footer-diamond">◆</div>
-            <div className="protected-badge-row">
-              <ShieldCheck size={15} className="protected-shield-icon" />
-              <span className="protected-badge-text">Protected Access</span>
-            </div>
-            <div className="footer-compliance-row">
-              <span>Enterprise-grade security</span>
-              <span className="pipe-sep">|</span>
-              <span>256-bit SSL Encryption</span>
-              <span className="pipe-sep">|</span>
-              <span>Multi-industry ready</span>
+          {/* Card Footer Security Trust Strip */}
+          <footer className="card-security-strip">
+            <div className="security-badge-row">
+              <ShieldCheck size={14} className="security-shield-ic" />
+              <span>HIPAA & GDPR Ready</span>
+              <span className="dot-sep">•</span>
+              <span>256-Bit TLS</span>
+              <span className="dot-sep">•</span>
+              <span>Role-Isolated Architecture</span>
             </div>
           </footer>
         </main>
       </div>
 
-      {/* Forgot Password / Credential Assistance Modal */}
+      {/* Forgot Password / Assistance Modal */}
       {supportModalOpen && (
-        <div className="modal-backdrop-overlay" role="dialog" aria-modal="true">
-          <div className="luxury-modal-card">
-            <div className="modal-header-row">
+        <div className="modal-root-overlay" role="dialog" aria-modal="true">
+          <div className="modal-glass-container">
+            <div className="modal-top-bar">
               <div className="modal-icon-badge">
-                <HelpCircle size={22} />
+                <KeyRound size={20} />
               </div>
-              <div className="modal-title-group">
-                <h3 className="modal-title">Credential Assistance</h3>
-                <p className="modal-subtitle">Enterprise Security Policy</p>
+              <div className="modal-header-copy">
+                <h2 className="modal-heading">Clinical Security Assistance</h2>
+                <span className="modal-subheading">Healthcare Tenant Isolation Policy</span>
               </div>
               <button
                 type="button"
                 onClick={() => setSupportModalOpen(false)}
-                className="modal-close-btn"
+                className="modal-dismiss-x"
                 aria-label="Close dialog"
               >
                 <X size={18} />
               </button>
             </div>
 
-            <div className="modal-body">
-              <p className="modal-text">
-                To guarantee strict enterprise tenant isolation and audit trail compliance, self-service email credential resets are handled securely through your company administrator.
+            <div className="modal-content-area">
+              <p className="modal-intro-text">
+                To guarantee zero patient record leakage and uphold strict medical confidentiality,
+                password re-issuance is governed by verified administrator audit controls.
               </p>
-              <div className="modal-steps-box">
-                <div className="modal-step-item">
-                  <CheckCircle2 size={16} className="modal-step-check" />
+
+              <div className="modal-steps-card">
+                <div className="step-row">
+                  <CheckCircle2 size={16} className="step-check-ic" />
                   <span>
-                    Contact your <strong>Company Administrator</strong> or <strong>IT Security Officer</strong> to reset your access.
+                    Contact your clinic&apos;s <strong>Clinical Administrator</strong> or IT Security Lead to generate an authenticated reset token.
                   </span>
                 </div>
-                <div className="modal-step-item">
-                  <CheckCircle2 size={16} className="modal-step-check" />
+                <div className="step-row">
+                  <CheckCircle2 size={16} className="step-check-ic" />
                   <span>
-                    Administrators can issue temporary credentials via <strong>Admin Portal → User Management</strong>.
+                    Super Administrators can verify medical practitioner identity and issue temporary passcodes via the <strong>Admin Roster Portal</strong>.
                   </span>
                 </div>
               </div>
             </div>
 
-            <div className="modal-footer">
+            <div className="modal-action-row">
               <button
                 type="button"
                 onClick={() => setSupportModalOpen(false)}
-                className="btn-modal-dismiss"
+                className="modal-acknowledge-btn"
               >
-                Understood / Close
+                Understood & Close
               </button>
             </div>
           </div>
         </div>
       )}
 
-      {/* Scoped High-Fidelity Luxury Stylesheet */}
+      {/* Scoped CSS Stylesheet */}
       <style jsx>{`
         /* ===================================================================
-           LUXURY EXECUTIVE ROOT CONTAINER & BACKGROUND
+           VIEWPORT CONTAINER & AMBIENT HEALTHCARE CANVAS
            =================================================================== */
-        .luxury-login-root {
+        .login-viewport-root {
           min-height: 100vh;
           width: 100%;
           position: relative;
-          background-color: #050e0a;
-          background-image: url("/images/luxury-login-bg.jpg");
-          background-position: center center;
-          background-repeat: no-repeat;
-          background-size: cover;
-          background-attachment: fixed;
+          background-color: #090d16;
           display: flex;
+          flex-direction: column;
           align-items: center;
           justify-content: center;
-          padding: 32px 16px;
+          padding: 72px 16px 36px;
           box-sizing: border-box;
           overflow-x: hidden;
-          font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+          font-family: var(--font-inter, "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif);
+          color: #f8fafc;
         }
 
-        /* Subtle Dark Radial Vignette Overlay for Crisp Contrast */
-        .luxury-backdrop-overlay {
-          position: absolute;
-          inset: 0;
-          background: radial-gradient(
-            circle at 50% 45%,
-            rgba(3, 10, 7, 0.35) 0%,
-            rgba(3, 10, 7, 0.65) 60%,
-            rgba(2, 6, 4, 0.88) 100%
-          );
+        /* Ambient Dynamic Light Spheres */
+        .ambient-sphere {
+          position: fixed;
+          border-radius: 50%;
+          filter: blur(100px);
           pointer-events: none;
-          z-index: 1;
+          z-index: 0;
+          opacity: 0.55;
         }
 
-        /* Floating Top Utility Bar */
-        .top-utility-bar {
-          position: absolute;
-          top: 18px;
+        .sphere-primary {
+          width: 500px;
+          height: 500px;
+          top: -120px;
+          left: 50%;
+          transform: translateX(-50%);
+          background: radial-gradient(circle, rgba(99, 102, 241, 0.32) 0%, rgba(67, 56, 202, 0.08) 70%, transparent 100%);
+        }
+
+        .sphere-accent {
+          width: 440px;
+          height: 440px;
+          bottom: -100px;
+          left: -80px;
+          background: radial-gradient(circle, rgba(16, 185, 129, 0.18) 0%, rgba(5, 150, 105, 0.04) 70%, transparent 100%);
+        }
+
+        .sphere-tertiary {
+          width: 380px;
+          height: 380px;
+          top: 30%;
+          right: -100px;
+          background: radial-gradient(circle, rgba(139, 92, 246, 0.22) 0%, rgba(79, 70, 229, 0.05) 70%, transparent 100%);
+        }
+
+        /* Subtle Medical Tech Grid Pattern */
+        .grid-subtle-pattern {
+          position: fixed;
+          inset: 0;
+          background-image: radial-gradient(rgba(255, 255, 255, 0.06) 1px, transparent 1px);
+          background-size: 28px 28px;
+          pointer-events: none;
+          z-index: 0;
+          mask-image: radial-gradient(circle at 50% 50%, black 40%, transparent 80%);
+          -webkit-mask-image: radial-gradient(circle at 50% 50%, black 40%, transparent 80%);
+        }
+
+        /* ===================================================================
+           FLOATING TOP UTILITY BAR
+           =================================================================== */
+        .top-nav-bar {
+          position: fixed;
+          top: 16px;
           left: 20px;
           right: 20px;
           display: flex;
           align-items: center;
           justify-content: space-between;
-          z-index: 20;
-          opacity: 0.9;
-          transition: opacity 0.2s ease;
+          z-index: 30;
+          max-width: 1100px;
+          margin: 0 auto;
         }
 
-        .top-utility-bar:hover {
-          opacity: 1;
-        }
-
-        .utility-nav-link {
+        .nav-return-btn {
           display: inline-flex;
           align-items: center;
           gap: 7px;
-          font-size: 12.5px;
+          font-size: 0.82rem;
           font-weight: 600;
-          color: #e2e8f0;
-          background: rgba(12, 28, 22, 0.65);
-          border: 1px solid rgba(212, 175, 55, 0.3);
-          padding: 6px 14px;
-          border-radius: 999px;
-          backdrop-filter: blur(12px);
-          transition: all 0.2s ease;
+          color: #cbd5e1;
+          background: rgba(15, 23, 42, 0.72);
+          border: 1px solid rgba(255, 255, 255, 0.12);
+          padding: 7px 15px;
+          border-radius: 9999px;
+          backdrop-filter: blur(16px);
+          -webkit-backdrop-filter: blur(16px);
+          text-decoration: none;
+          transition: all 0.18s ease;
+          box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
         }
 
-        .utility-nav-link:hover {
-          border-color: #e6c97a;
-          color: #fff;
-          background: rgba(12, 28, 22, 0.85);
+        .nav-return-btn:hover {
+          color: #ffffff;
+          background: rgba(30, 41, 59, 0.9);
+          border-color: rgba(129, 140, 248, 0.4);
           transform: translateX(-2px);
         }
 
-        .utility-status-badge {
+        .system-health-pill {
           display: inline-flex;
           align-items: center;
-          gap: 7px;
-          font-size: 11.5px;
+          gap: 8px;
+          font-size: 0.76rem;
           font-weight: 600;
-          color: #cbd5e1;
-          background: rgba(12, 28, 22, 0.65);
-          border: 1px solid rgba(212, 175, 55, 0.3);
+          color: #94a3b8;
+          background: rgba(15, 23, 42, 0.72);
+          border: 1px solid rgba(255, 255, 255, 0.1);
           padding: 6px 14px;
-          border-radius: 999px;
-          backdrop-filter: blur(12px);
+          border-radius: 9999px;
+          backdrop-filter: blur(16px);
+          -webkit-backdrop-filter: blur(16px);
+          box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
         }
 
-        .status-live-pulse {
+        .live-radar-dot {
           width: 8px;
           height: 8px;
           border-radius: 50%;
           background: #10b981;
           box-shadow: 0 0 10px #10b981;
-          animation: pulseGreen 2s infinite ease-in-out;
+          animation: pulseGreen 2.2s infinite ease-in-out;
         }
 
         @keyframes pulseGreen {
@@ -539,268 +554,280 @@ export function LuxuryLoginForm() {
             transform: scale(1);
           }
           50% {
-            opacity: 0.5;
-            transform: scale(0.85);
+            opacity: 0.45;
+            transform: scale(0.8);
           }
         }
 
-        /* Centered Stage Wrapper */
-        .luxury-login-stage {
+        /* ===================================================================
+           CENTERED STAGE CONTAINER & BRAND HEADER
+           =================================================================== */
+        .login-stage-container {
           position: relative;
           z-index: 10;
           width: 100%;
-          max-width: 440px;
+          max-width: 460px;
           display: flex;
           flex-direction: column;
           align-items: center;
-          margin-top: 20px;
         }
 
-        /* ===================================================================
-           BRAND IDENTITY HEADER (Above the card)
-           =================================================================== */
-        .brand-header-group {
+        .brand-header-area {
           display: flex;
           flex-direction: column;
           align-items: center;
+          margin-bottom: 22px;
           text-align: center;
-          margin-bottom: 16px;
-          user-select: none;
         }
 
-        .emblem-wrapper {
-          width: 54px;
-          height: 54px;
+        .brand-logo-link {
           display: flex;
           align-items: center;
-          justify-content: center;
-          margin-bottom: 8px;
-          filter: drop-shadow(0 4px 16px rgba(212, 175, 55, 0.5));
-          animation: subtleFloat 6s ease-in-out infinite;
+          gap: 12px;
+          text-decoration: none;
+          transition: transform 0.2s ease;
         }
 
-        .gold-emblem-svg {
-          width: 100%;
-          height: 100%;
+        .brand-logo-link:hover {
+          transform: translateY(-1px);
         }
 
-        .brand-title-row {
-          font-family: "Cinzel", "Playfair Display", Georgia, serif;
-          font-size: 28px;
-          font-weight: 700;
-          letter-spacing: 0.18em;
+        .emblem-container {
+          filter: drop-shadow(0 4px 18px rgba(99, 102, 241, 0.45));
+          animation: gentleFloat 6s ease-in-out infinite;
+        }
+
+        @keyframes gentleFloat {
+          0%, 100% { transform: translateY(0); }
+          50% { transform: translateY(-4px); }
+        }
+
+        .brand-text-block {
+          display: flex;
+          flex-direction: column;
+          align-items: flex-start;
+          text-align: left;
+        }
+
+        .brand-name-row {
+          font-size: 1.35rem;
+          font-weight: 800;
+          letter-spacing: 0.08em;
           line-height: 1.1;
-          margin-bottom: 4px;
-          padding-left: 0.18em;
         }
 
-        .brand-title-global {
-          color: #f8fafc;
-          text-shadow: 0 2px 10px rgba(0, 0, 0, 0.8), 0 0 20px rgba(255, 255, 255, 0.25);
+        .brand-name-primary {
+          color: #ffffff;
         }
 
-        .brand-title-booking {
-          background: linear-gradient(180deg, #fff2b2 0%, #e6c25e 50%, #c9a24b 100%);
+        .brand-name-accent {
+          background: linear-gradient(135deg, #a5b4fc 0%, #6366f1 100%);
           -webkit-background-clip: text;
           -webkit-text-fill-color: transparent;
-          filter: drop-shadow(0 2px 8px rgba(201, 162, 75, 0.5));
         }
 
-        .brand-subtitle {
-          font-size: 9.5px;
-          font-weight: 600;
-          letter-spacing: 0.28em;
-          color: #d4af37;
+        .brand-badge-tag {
+          font-size: 0.62rem;
+          font-weight: 700;
+          letter-spacing: 0.16em;
+          color: #818cf8;
           text-transform: uppercase;
-          margin-bottom: 6px;
-          padding-left: 0.28em;
-          text-shadow: 0 1px 4px rgba(0, 0, 0, 0.8);
-        }
-
-        .brand-tagline {
-          display: flex;
-          align-items: center;
-          gap: 8px;
-          font-size: 8px;
-          font-weight: 600;
-          letter-spacing: 0.2em;
-          color: #f1f5f9;
-          opacity: 0.85;
-          text-shadow: 0 1px 4px rgba(0, 0, 0, 0.9);
-          padding-left: 0.2em;
-        }
-
-        .tagline-diamond {
-          color: #d4af37;
-          font-size: 6.5px;
-          opacity: 0.9;
+          margin-top: 2px;
         }
 
         /* ===================================================================
-           LUXURY FROSTED GLASS LOGIN CARD
+           LUXURY GLASS CARD
            =================================================================== */
-        .luxury-card {
+        .login-glass-card {
           width: 100%;
           background: linear-gradient(
-            160deg,
-            rgba(12, 28, 22, 0.74) 0%,
-            rgba(7, 18, 14, 0.86) 100%
+            170deg,
+            rgba(18, 27, 47, 0.82) 0%,
+            rgba(11, 17, 32, 0.92) 100%
           );
-          backdrop-filter: blur(28px) saturate(150%);
-          -webkit-backdrop-filter: blur(28px) saturate(150%);
-          border: 1px solid rgba(212, 175, 55, 0.42);
-          border-radius: 20px;
-          padding: 26px 28px 22px;
+          backdrop-filter: blur(28px) saturate(160%);
+          -webkit-backdrop-filter: blur(28px) saturate(160%);
+          border: 1px solid rgba(129, 140, 248, 0.22);
+          border-radius: 24px;
+          padding: 26px 28px 24px;
           box-shadow:
-            0 25px 60px rgba(0, 0, 0, 0.85),
-            0 0 45px rgba(16, 185, 129, 0.08),
-            inset 0 1px 1px rgba(255, 255, 255, 0.18),
-            inset 0 0 20px rgba(201, 162, 75, 0.06);
+            0 24px 64px -12px rgba(0, 0, 0, 0.75),
+            0 0 36px rgba(99, 102, 241, 0.12),
+            inset 0 1px 0 rgba(255, 255, 255, 0.12);
           box-sizing: border-box;
-          transition: transform 0.3s ease, box-shadow 0.3s ease;
+          transition: box-shadow 0.3s ease, border-color 0.3s ease;
         }
 
-        /* Card Header */
-        .card-header {
+        .login-glass-card:hover {
+          border-color: rgba(129, 140, 248, 0.35);
+          box-shadow:
+            0 28px 72px -12px rgba(0, 0, 0, 0.8),
+            0 0 45px rgba(99, 102, 241, 0.18),
+            inset 0 1px 0 rgba(255, 255, 255, 0.16);
+        }
+
+        /* Portal Selector Tabs */
+        .portal-selector-tabs {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 6px;
+          background: rgba(8, 13, 26, 0.7);
+          padding: 4px;
+          border-radius: 14px;
+          border: 1px solid rgba(255, 255, 255, 0.08);
+          margin-bottom: 18px;
+        }
+
+        .tab-btn {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 7px;
+          padding: 9px 12px;
+          border-radius: 10px;
+          background: transparent;
+          border: none;
+          color: #94a3b8;
+          font-size: 0.8rem;
+          font-weight: 600;
+          cursor: pointer;
+          transition: all 0.18s ease;
+        }
+
+        .tab-btn:hover {
+          color: #f1f5f9;
+          background: rgba(255, 255, 255, 0.04);
+        }
+
+        .tab-btn.active {
+          background: linear-gradient(135deg, rgba(79, 70, 229, 0.9) 0%, rgba(99, 102, 241, 0.85) 100%);
+          color: #ffffff;
+          box-shadow: 0 4px 14px rgba(79, 70, 229, 0.35);
+        }
+
+        /* Greeting Block */
+        .greeting-block {
           text-align: center;
           margin-bottom: 16px;
         }
 
-        .welcome-title-row {
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          gap: 9px;
-          margin-bottom: 5px;
+        .greeting-title {
+          font-size: 1.35rem;
+          font-weight: 700;
+          color: #ffffff;
+          letter-spacing: -0.015em;
+          margin: 0 0 5px 0;
         }
 
-        .welcome-shield {
-          color: #e6c97a;
-          filter: drop-shadow(0 2px 6px rgba(230, 201, 122, 0.45));
-          flex-shrink: 0;
-        }
-
-        .welcome-title {
-          font-family: "Playfair Display", "Cinzel", Georgia, serif;
-          font-size: 24px;
-          font-weight: 600;
-          color: #f8fafc;
-          letter-spacing: -0.01em;
-          margin: 0;
-          text-shadow: 0 2px 8px rgba(0, 0, 0, 0.6);
-        }
-
-        .welcome-subtitle {
-          font-size: 12.5px;
+        .greeting-desc {
+          font-size: 0.82rem;
+          line-height: 1.45;
           color: #94a3b8;
           margin: 0;
-          line-height: 1.4;
         }
 
         /* Error Banner */
-        .error-alert-banner {
+        .auth-error-banner {
           display: flex;
-          align-items: center;
+          align-items: flex-start;
           gap: 10px;
-          padding: 9px 12px;
-          background: rgba(220, 38, 38, 0.16);
-          border: 1px solid rgba(239, 68, 68, 0.4);
-          border-radius: 10px;
+          padding: 10px 14px;
+          background: rgba(239, 68, 68, 0.12);
+          border: 1px solid rgba(239, 68, 68, 0.35);
+          border-radius: 12px;
           color: #fca5a5;
-          font-size: 12.5px;
-          line-height: 1.4;
-          margin-bottom: 16px;
-          box-shadow: 0 4px 12px rgba(220, 38, 38, 0.12);
+          font-size: 0.82rem;
+          line-height: 1.45;
+          margin-bottom: 18px;
+          box-shadow: 0 4px 14px rgba(239, 68, 68, 0.1);
         }
 
-        .error-icon {
+        .error-svg {
           color: #ef4444;
           flex-shrink: 0;
+          margin-top: 1px;
         }
 
-        .error-text {
+        .error-copy {
           flex: 1;
         }
 
-        /* Form Styles */
-        .login-form {
+        /* Auth Form Elements */
+        .auth-form-body {
           display: flex;
           flex-direction: column;
-          gap: 15px;
+          gap: 16px;
         }
 
-        .field-group {
+        .form-field-group {
           display: flex;
           flex-direction: column;
           gap: 6px;
         }
 
-        .field-label {
-          font-size: 12px;
-          font-weight: 500;
+        .field-label-text {
+          font-size: 0.8rem;
+          font-weight: 600;
           color: #cbd5e1;
           letter-spacing: 0.01em;
         }
 
-        .input-box {
+        .field-input-wrapper {
           position: relative;
           display: flex;
           align-items: center;
         }
 
-        .input-leading-icon {
+        .field-leading-icon {
           position: absolute;
           left: 14px;
-          color: #94a3b8;
+          color: #64748b;
           display: flex;
           align-items: center;
           pointer-events: none;
           transition: color 0.15s ease;
         }
 
-        .luxury-input {
+        .card-text-input {
           width: 100%;
-          height: 45px;
-          background: rgba(4, 14, 10, 0.72);
-          border: 1px solid rgba(212, 175, 55, 0.32);
-          border-radius: 10px;
+          height: 48px;
+          background: rgba(9, 14, 28, 0.75);
+          border: 1px solid rgba(255, 255, 255, 0.14);
+          border-radius: 12px;
           padding: 0 14px 0 42px;
-          color: #f8fafc;
-          font-size: 13.5px;
+          color: #ffffff;
+          font-size: 0.9rem;
           font-family: inherit;
-          box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.4);
-          transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+          transition: all 0.2s ease;
           box-sizing: border-box;
         }
 
-        .luxury-input.has-toggle {
+        .card-text-input.has-action {
           padding-right: 44px;
         }
 
-        .luxury-input::placeholder {
-          color: #52637a;
-          font-size: 13px;
+        .card-text-input::placeholder {
+          color: #475569;
+          font-size: 0.85rem;
         }
 
-        .luxury-input:focus {
+        .card-text-input:focus {
           outline: none;
-          border-color: #e6c97a;
-          background: rgba(6, 18, 14, 0.88);
-          box-shadow:
-            0 0 0 3px rgba(230, 201, 122, 0.22),
-            inset 0 2px 4px rgba(0, 0, 0, 0.4);
+          border-color: #818cf8;
+          background: rgba(12, 19, 38, 0.95);
+          box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.28);
         }
 
-        .input-box:focus-within .input-leading-icon {
-          color: #e6c97a;
+        .field-input-wrapper:focus-within .field-leading-icon {
+          color: #818cf8;
         }
 
-        .password-toggle-btn {
+        .field-toggle-btn {
           position: absolute;
           right: 12px;
           background: none;
           border: none;
-          color: #94a3b8;
+          color: #64748b;
           cursor: pointer;
           padding: 6px;
           display: flex;
@@ -810,62 +837,61 @@ export function LuxuryLoginForm() {
           transition: color 0.15s ease;
         }
 
-        .password-toggle-btn:hover {
-          color: #e6c97a;
+        .field-toggle-btn:hover {
+          color: #cbd5e1;
         }
 
-        /* Remember Me & Forgot Password */
-        .remember-forgot-row {
+        /* Remember & Assistance Row */
+        .remember-assistance-row {
           display: flex;
           align-items: center;
           justify-content: space-between;
-          font-size: 12px;
+          font-size: 0.8rem;
           margin-top: -2px;
-          margin-bottom: 2px;
         }
 
-        .remember-checkbox-label {
+        .checkbox-wrap-label {
           display: flex;
           align-items: center;
-          gap: 7px;
-          color: #a6b0c3;
+          gap: 8px;
+          color: #94a3b8;
           cursor: pointer;
           user-select: none;
         }
 
-        .luxury-checkbox {
-          width: 15px;
-          height: 15px;
+        .indigo-checkbox {
+          width: 16px;
+          height: 16px;
           border-radius: 4px;
-          accent-color: #c9a24b;
+          accent-color: #4f46e5;
           cursor: pointer;
         }
 
-        .forgot-password-link {
+        .forgot-pass-btn {
           background: none;
           border: none;
-          color: #e6c97a;
-          font-size: 12px;
+          color: #818cf8;
+          font-size: 0.8rem;
           font-weight: 500;
           cursor: pointer;
           padding: 0;
           transition: color 0.15s ease, text-decoration 0.15s ease;
         }
 
-        .forgot-password-link:hover {
-          color: #fff2b2;
+        .forgot-pass-btn:hover {
+          color: #a5b4fc;
           text-decoration: underline;
         }
 
-        /* Sign In Securely Button */
-        .btn-gold-submit {
+        /* Submit Button */
+        .login-submit-cta {
           width: 100%;
-          height: 46px;
-          border-radius: 10px;
-          border: 1px solid rgba(255, 255, 255, 0.4);
-          background: linear-gradient(180deg, #f5d77f 0%, #c9a24b 55%, #a88126 100%);
-          color: #0b1410;
-          font-size: 14px;
+          height: 48px;
+          border-radius: 12px;
+          border: 1px solid rgba(255, 255, 255, 0.2);
+          background: linear-gradient(135deg, #4338ca 0%, #4f46e5 50%, #6366f1 100%);
+          color: #ffffff;
+          font-size: 0.92rem;
           font-weight: 700;
           letter-spacing: 0.01em;
           display: flex;
@@ -873,119 +899,105 @@ export function LuxuryLoginForm() {
           justify-content: center;
           gap: 8px;
           cursor: pointer;
-          box-shadow:
-            0 6px 20px rgba(201, 162, 75, 0.45),
-            inset 0 1px 0 rgba(255, 255, 255, 0.6);
-          transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
-          margin-top: 4px;
+          box-shadow: 0 4px 20px rgba(79, 70, 229, 0.42);
+          transition: all 0.2s ease;
+          margin-top: 6px;
         }
 
-        .btn-gold-submit:hover:not(:disabled) {
+        .login-submit-cta:hover:not(:disabled) {
           transform: translateY(-1px);
-          background: linear-gradient(180deg, #fff0b3 0%, #dfbf6e 55%, #bd9433 100%);
-          box-shadow:
-            0 9px 26px rgba(201, 162, 75, 0.6),
-            inset 0 1px 0 rgba(255, 255, 255, 0.7);
+          background: linear-gradient(135deg, #4f46e5 0%, #6366f1 50%, #4f46e5 100%);
+          box-shadow: 0 8px 28px rgba(79, 70, 229, 0.55);
         }
 
-        .btn-gold-submit:active:not(:disabled) {
+        .login-submit-cta:active:not(:disabled) {
           transform: translateY(0);
-          box-shadow:
-            0 3px 12px rgba(201, 162, 75, 0.4),
-            inset 0 1px 0 rgba(255, 255, 255, 0.3);
+          box-shadow: 0 2px 10px rgba(79, 70, 229, 0.35);
         }
 
-        .btn-gold-submit:disabled {
-          opacity: 0.75;
+        .login-submit-cta:disabled {
+          opacity: 0.72;
           cursor: not-allowed;
         }
 
-        .btn-shield-icon {
-          color: #0b1410;
+        .cta-icon {
+          color: #c7d2fe;
         }
 
-        .btn-spinner {
+        .cta-arrow {
+          transition: transform 0.15s ease;
+        }
+
+        .login-submit-cta:hover:not(:disabled) .cta-arrow {
+          transform: translateX(2px);
+        }
+
+        .cta-spinner {
           animation: spin 1s linear infinite;
         }
 
-        /* Register Prompt */
-        .register-prompt-row {
-          text-align: center;
-          margin-top: 14px;
-          font-size: 12.5px;
-          color: #94a3b8;
-        }
-
-        .register-link {
-          color: #e6c97a;
-          font-weight: 600;
-          margin-left: 4px;
-          transition: color 0.15s ease;
-        }
-
-        .register-link:hover {
-          color: #fff2b2;
-          text-decoration: underline;
-        }
-
-        /* Card Footer: Protected Access */
-        .card-footer-protected {
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          text-align: center;
-          margin-top: 18px;
-          user-select: none;
-        }
-
-        .footer-diamond {
-          color: #c9a24b;
-          font-size: 7px;
-          opacity: 0.9;
-          margin-bottom: 7px;
-        }
-
-        .protected-badge-row {
-          display: flex;
-          align-items: center;
-          gap: 6px;
-          color: #e6c97a;
-          margin-bottom: 5px;
-        }
-
-        .protected-shield-icon {
-          color: #e6c97a;
-          filter: drop-shadow(0 1px 4px rgba(230, 201, 122, 0.4));
-        }
-
-        .protected-badge-text {
-          font-size: 11.5px;
-          font-weight: 600;
-          letter-spacing: 0.02em;
-        }
-
-        .footer-compliance-row {
+        /* Register Prompt Box */
+        .registration-prompt-box {
           display: flex;
           align-items: center;
           justify-content: center;
-          flex-wrap: wrap;
           gap: 6px;
-          font-size: 10px;
-          color: #7e8da6;
-          line-height: 1.4;
+          margin-top: 18px;
+          font-size: 0.82rem;
+          color: #94a3b8;
+          flex-wrap: wrap;
+          text-align: center;
         }
 
-        .pipe-sep {
-          color: #3b4d66;
+        .register-now-link {
+          display: inline-flex;
+          align-items: center;
+          gap: 4px;
+          color: #818cf8;
+          font-weight: 600;
+          text-decoration: none;
+          transition: color 0.15s ease;
+        }
+
+        .register-now-link:hover {
+          color: #c7d2fe;
+          text-decoration: underline;
+        }
+
+        /* Card Security Strip */
+        .card-security-strip {
+          margin-top: 20px;
+          padding-top: 16px;
+          border-top: 1px solid rgba(255, 255, 255, 0.08);
+          display: flex;
+          justify-content: center;
+        }
+
+        .security-badge-row {
+          display: flex;
+          align-items: center;
+          gap: 7px;
+          font-size: 0.72rem;
+          color: #64748b;
+          flex-wrap: wrap;
+          justify-content: center;
+        }
+
+        .security-shield-ic {
+          color: #10b981;
+        }
+
+        .dot-sep {
+          color: #334155;
         }
 
         /* ===================================================================
-           LUXURY MODALS (Forgot Password / Assistance)
+           ASSISTANCE MODAL
            =================================================================== */
-        .modal-backdrop-overlay {
+        .modal-root-overlay {
           position: fixed;
           inset: 0;
-          background-color: rgba(3, 8, 6, 0.88);
+          background-color: rgba(3, 7, 18, 0.85);
           backdrop-filter: blur(14px);
           -webkit-backdrop-filter: blur(14px);
           display: flex;
@@ -995,193 +1007,195 @@ export function LuxuryLoginForm() {
           z-index: 100;
         }
 
-        .luxury-modal-card {
+        .modal-glass-container {
           width: 100%;
-          max-width: 440px;
-          background: linear-gradient(160deg, #0e1e17 0%, #07130e 100%);
-          border: 1px solid rgba(212, 175, 55, 0.5);
-          border-radius: 16px;
+          max-width: 450px;
+          background: linear-gradient(165deg, #131c33 0%, #0d1322 100%);
+          border: 1px solid rgba(129, 140, 248, 0.35);
+          border-radius: 20px;
           padding: 24px;
           box-shadow:
             0 25px 60px rgba(0, 0, 0, 0.9),
-            0 0 35px rgba(201, 162, 75, 0.15);
+            0 0 35px rgba(99, 102, 241, 0.15);
           box-sizing: border-box;
+          animation: modalPop 0.22s ease-out;
         }
 
-        .modal-header-row {
+        @keyframes modalPop {
+          from { opacity: 0; transform: scale(0.95); }
+          to { opacity: 1; transform: scale(1); }
+        }
+
+        .modal-top-bar {
           display: flex;
           align-items: flex-start;
           gap: 12px;
-          margin-bottom: 14px;
+          margin-bottom: 16px;
         }
 
         .modal-icon-badge {
-          width: 38px;
-          height: 38px;
-          border-radius: 10px;
-          background: rgba(201, 162, 75, 0.12);
-          border: 1px solid rgba(201, 162, 75, 0.35);
+          width: 40px;
+          height: 40px;
+          border-radius: 12px;
+          background: rgba(99, 102, 241, 0.15);
+          border: 1px solid rgba(129, 140, 248, 0.35);
           display: flex;
           align-items: center;
           justify-content: center;
-          color: #e6c97a;
+          color: #818cf8;
           flex-shrink: 0;
         }
 
-        .modal-title-group {
+        .modal-header-copy {
           flex: 1;
         }
 
-        .modal-title {
-          font-size: 16px;
+        .modal-heading {
+          font-size: 1.05rem;
           font-weight: 700;
-          color: #f8fafc;
+          color: #ffffff;
           margin: 0 0 2px 0;
         }
 
-        .modal-subtitle {
-          font-size: 11.5px;
-          color: #c9a24b;
+        .modal-subheading {
+          font-size: 0.72rem;
+          color: #818cf8;
           font-weight: 600;
           text-transform: uppercase;
           letter-spacing: 0.04em;
-          margin: 0;
         }
 
-        .modal-close-btn {
+        .modal-dismiss-x {
           background: none;
           border: none;
-          color: #7e8da6;
+          color: #64748b;
           cursor: pointer;
           padding: 4px;
           display: flex;
           align-items: center;
           justify-content: center;
-          border-radius: 6px;
+          border-radius: 8px;
         }
 
-        .modal-close-btn:hover {
-          color: #f8fafc;
+        .modal-dismiss-x:hover {
+          color: #ffffff;
         }
 
-        .modal-body {
+        .modal-content-area {
           display: flex;
           flex-direction: column;
           gap: 14px;
           margin-bottom: 20px;
         }
 
-        .modal-text {
-          font-size: 13px;
-          line-height: 1.55;
-          color: #a6b0c3;
+        .modal-intro-text {
+          font-size: 0.84rem;
+          line-height: 1.5;
+          color: #94a3b8;
           margin: 0;
         }
 
-        .modal-steps-box {
-          background-color: rgba(4, 12, 8, 0.85);
-          border: 1px solid rgba(212, 175, 55, 0.25);
-          border-radius: 10px;
-          padding: 12px 14px;
+        .modal-steps-card {
+          background-color: rgba(8, 13, 26, 0.7);
+          border: 1px solid rgba(255, 255, 255, 0.1);
+          border-radius: 12px;
+          padding: 14px;
           display: flex;
           flex-direction: column;
-          gap: 10px;
+          gap: 12px;
         }
 
-        .modal-step-item {
+        .step-row {
           display: flex;
           align-items: flex-start;
           gap: 9px;
-          font-size: 12.5px;
-          color: #f8fafc;
+          font-size: 0.8rem;
+          color: #f1f5f9;
           line-height: 1.45;
         }
 
-        .modal-step-check {
+        .step-check-ic {
           color: #10b981;
           flex-shrink: 0;
-          margin-top: 2px;
+          margin-top: 1px;
         }
 
-        .modal-footer {
+        .modal-action-row {
           display: flex;
           justify-content: flex-end;
         }
 
-        .btn-modal-dismiss {
+        .modal-acknowledge-btn {
           width: 100%;
-          height: 42px;
-          background: linear-gradient(180deg, #e6c97a 0%, #c9a24b 100%);
-          border: 1px solid rgba(255, 255, 255, 0.3);
-          border-radius: 8px;
-          color: #0b1410;
-          font-size: 13.5px;
+          height: 44px;
+          background: linear-gradient(135deg, #4338ca 0%, #4f46e5 100%);
+          border: 1px solid rgba(255, 255, 255, 0.2);
+          border-radius: 10px;
+          color: #ffffff;
+          font-size: 0.86rem;
           font-weight: 700;
           cursor: pointer;
+          transition: background 0.15s ease;
+        }
+
+        .modal-acknowledge-btn:hover {
+          background: linear-gradient(135deg, #4f46e5 0%, #6366f1 100%);
         }
 
         /* ===================================================================
-           ANIMATIONS & MEDIA QUERIES
+           ANIMATIONS & MOBILE RESPONSIVE
            =================================================================== */
-        @keyframes subtleFloat {
-          0%,
-          100% {
-            transform: translateY(0);
-          }
-          50% {
-            transform: translateY(-4px);
-          }
-        }
-
         @keyframes spin {
-          from {
-            transform: rotate(0deg);
-          }
-          to {
-            transform: rotate(360deg);
-          }
+          from { transform: rotate(0deg); }
+          to { transform: rotate(360deg); }
         }
 
-        @media (max-width: 480px) {
-          .luxury-login-root {
-            padding: 32px 12px 24px;
+        @media (max-width: 640px) {
+          .login-viewport-root {
+            padding: 64px 14px 28px;
           }
 
-          .brand-title-row {
-            font-size: 25px;
+          .top-nav-bar {
+            top: 12px;
+            left: 14px;
+            right: 14px;
           }
 
-          .brand-subtitle {
-            font-size: 8.5px;
-            letter-spacing: 0.2em;
+          .login-glass-card {
+            padding: 22px 18px 20px;
+            border-radius: 20px;
           }
 
-          .brand-tagline {
-            font-size: 7.5px;
-            gap: 6px;
+          .greeting-title {
+            font-size: 1.25rem;
           }
 
-          .luxury-card {
-            padding: 24px 18px 20px;
-            border-radius: 16px;
+          .greeting-desc {
+            font-size: 0.78rem;
           }
 
-          .welcome-title {
-            font-size: 22px;
-          }
-
-          .welcome-subtitle {
-            font-size: 12px;
-          }
-
-          .luxury-input {
-            height: 44px;
+          .card-text-input {
+            height: 46px;
             font-size: 16px; /* Prevents auto-zoom on iOS */
           }
 
-          .btn-gold-submit {
-            height: 46px;
-            font-size: 14px;
+          .login-submit-cta {
+            height: 48px;
+          }
+        }
+
+        @media (max-width: 360px) {
+          .brand-name-row {
+            font-size: 1.15rem;
+          }
+
+          .tab-btn {
+            font-size: 0.74rem;
+            padding: 8px 6px;
+          }
+
+          .portal-selector-tabs {
+            grid-template-columns: 1fr;
           }
         }
       `}</style>
