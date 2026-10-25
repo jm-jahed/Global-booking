@@ -17,6 +17,7 @@ import { registerDoctorPublicRoutes } from "./modules/public/doctors-public.rout
 import { registerDoctorQueueRoutes } from "./modules/queue/queue.routes.js";
 import { registerAppointmentRoutes } from "./modules/appointments/appointments.routes.js";
 import { registerPatientRoutes } from "./modules/patients/patients.routes.js";
+import { registerDoctorReportsRoutes } from "./modules/reports/reports.routes.js";
 import { INDUSTRY_CATEGORIES } from "./shared/configuration/industry-categories.js";
 import { validateIndustryCategories } from "./shared/configuration/validate-industry-categories.js";
 
@@ -140,6 +141,9 @@ export function buildApp(customEnv?: Partial<ServerEnvironment>): FastifyInstanc
 
   // 11. Register Patients Directory endpoints
   app.register(registerPatientRoutes);
+
+  // 12. Register Doctor Reports endpoints
+  app.register(registerDoctorReportsRoutes);
 
   return app;
 }

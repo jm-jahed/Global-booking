@@ -9509,12 +9509,15 @@
 .reports-luxury-page-container {
   padding: 24px 28px 60px;
   min-height: 100vh;
+  width: 100%;
+  max-width: 100%;
   background: #050b14;
   color: #ffffff;
   display: flex;
   flex-direction: column;
   gap: 20px;
   box-sizing: border-box;
+  overflow-x: hidden;
 }
 
 /* 1. Header Bar */
@@ -9690,41 +9693,52 @@
   gap: 8px;
   padding: 10px 20px;
   border-radius: 10px;
-  background: linear-gradient(135deg, #f0c978 0%, #d4a046 50%, #b88628 100%);
-  border: 1px solid rgba(255, 255, 255, 0.3);
-  color: #0b1322;
+  background: linear-gradient(135deg, #028FD7 0%, #0277b5 100%);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  color: #ffffff;
   font-size: 13px;
   font-weight: 750;
   cursor: pointer;
-  box-shadow: 0 4px 16px rgba(212, 160, 70, 0.35);
+  box-shadow: 0 4px 16px rgba(2, 143, 215, 0.35);
   transition: all 0.2s ease;
   white-space: nowrap;
 }
 
 .reports-btn-apply:hover {
   transform: translateY(-1px);
-  filter: brightness(1.06);
-  box-shadow: 0 6px 20px rgba(212, 160, 70, 0.5);
+  filter: brightness(1.08);
+  box-shadow: 0 6px 20px rgba(2, 143, 215, 0.55);
+}
+
+.reports-filter-controls-group {
+  display: flex;
+  align-items: center;
+  gap: 12px;
 }
 
 /* 3. Four KPI Metric Cards */
 .reports-kpi-grid {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 16px;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 14px;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .reports-kpi-card {
   position: relative;
   border-radius: 20px;
-  padding: 18px 20px;
+  padding: 16px 16px;
   background: linear-gradient(135deg, rgba(13, 22, 41, 0.75) 0%, rgba(7, 12, 23, 0.95) 100%);
   display: flex;
   align-items: center;
-  gap: 16px;
+  gap: 12px;
   box-shadow: 0 8px 26px rgba(0, 0, 0, 0.38);
   border: 1px solid rgba(255, 255, 255, 0.08);
   transition: transform 0.25s ease, border-color 0.25s ease;
+  min-width: 0;
+  box-sizing: border-box;
+  overflow: hidden;
 }
 
 .reports-kpi-card:hover {
@@ -9998,12 +10012,13 @@
 }
 
 /* Responsive Media Queries */
-@media (max-width: 1024px) {
+@media (max-width: 1280px) {
   .reports-kpi-grid {
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 12px !important;
   }
   .reports-charts-grid {
-    grid-template-columns: 1fr;
+    grid-template-columns: 1fr !important;
   }
 }
 
@@ -10011,41 +10026,129 @@
   .reports-luxury-page-container {
     padding: 14px 14px 84px !important;
     gap: 14px !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
   }
+
+  /* Hide desktop action buttons on mobile header to match mobile reference design */
+  .reports-header-actions .reports-btn-action {
+    display: none !important;
+  }
+
+  .reports-header-row {
+    flex-wrap: nowrap !important;
+    justify-content: space-between !important;
+    gap: 10px !important;
+  }
+
+  .reports-header-left {
+    min-width: 0 !important;
+    gap: 10px !important;
+  }
+
+  .reports-header-icon-badge {
+    width: 42px !important;
+    height: 42px !important;
+    border-radius: 12px !important;
+  }
+
+  .reports-header-title-text {
+    font-size: 20px !important;
+  }
+
+  .reports-header-subtitle-text {
+    font-size: 11.5px !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    max-width: 180px !important;
+  }
+
+  .reports-btn-date-range {
+    padding: 7px 12px !important;
+    font-size: 11.5px !important;
+    border-radius: 9px !important;
+    white-space: nowrap !important;
+  }
+
+  /* Filter Deck: Search full-width, controls in a clean 3-part row */
   .reports-filter-deck {
     flex-direction: column !important;
     align-items: stretch !important;
+    gap: 10px !important;
+    padding: 12px !important;
   }
-  .reports-search-wrap,
-  .reports-select-pill,
-  .reports-btn-apply {
+
+  .reports-search-wrap {
     width: 100% !important;
     min-width: 0 !important;
   }
+
+  .reports-filter-controls-group {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr auto !important;
+    gap: 8px !important;
+    width: 100% !important;
+    align-items: center !important;
+  }
+
+  .reports-select-pill {
+    width: 100% !important;
+    min-width: 0 !important;
+    padding: 8px 10px 8px 10px !important;
+    font-size: 11.5px !important;
+  }
+
+  .reports-btn-apply {
+    padding: 8px 14px !important;
+    font-size: 11.5px !important;
+    width: auto !important;
+    white-space: nowrap !important;
+  }
+
+  /* 4 KPI Cards: ALWAYS 2x2 grid on mobile devices */
   .reports-kpi-grid {
-    grid-template-columns: 1fr 1fr !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
     gap: 10px !important;
   }
+
   .reports-kpi-card {
-    padding: 14px 12px !important;
-    border-radius: 16px !important;
-    gap: 10px !important;
+    padding: 12px 10px !important;
+    border-radius: 14px !important;
+    gap: 8px !important;
+    min-width: 0 !important;
   }
+
   .reports-kpi-icon-orb {
-    width: 40px !important;
-    height: 40px !important;
+    width: 38px !important;
+    height: 38px !important;
   }
+
+  .reports-kpi-label {
+    font-size: 11.5px !important;
+  }
+
   .reports-kpi-value {
-    font-size: 22px !important;
+    font-size: 20px !important;
   }
+
+  .reports-kpi-desc {
+    font-size: 10.5px !important;
+  }
+
+  /* Donut Body on mobile: Keep horizontal or side-by-side */
   .reports-donut-body {
-    flex-direction: column !important;
+    flex-direction: row !important;
+    justify-content: space-around !important;
+    gap: 12px !important;
   }
 }
 
 @media (max-width: 480px) {
+  /* Maintain 2x2 KPI grid on small phones (matching mobile design reference) */
   .reports-kpi-grid {
-    grid-template-columns: 1fr !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
   }
 }
 
@@ -10143,5 +10246,191 @@
     flex-shrink: 0;
     box-shadow: 0 2px 10px rgba(229, 184, 105, 0.3);
     margin-left: auto;
+  }
+}
+
+/* =========================================================================
+   CLINICAL REPORTS PRINT & SAVE PDF STYLES
+   ========================================================================= */
+@media print {
+  /* Page Setup */
+  @page {
+    size: A4 portrait;
+    margin: 12mm 15mm 15mm 15mm;
+  }
+
+  /* Reset layout, background and hide non-printable UI chrome */
+  body,
+  html,
+  .portal-layout-container,
+  .portal-main-wrapper,
+  .portal-main-content,
+  .reports-luxury-page-container {
+    background: #ffffff !important;
+    color: #111827 !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    min-height: auto !important;
+    box-shadow: none !important;
+  }
+
+  .portal-sidebar,
+  .portal-topbar,
+  .portal-bottom-nav,
+  .portal-mobile-backdrop,
+  .reports-header-actions,
+  .reports-filter-deck,
+  .reports-table-meta-group,
+  .reports-table td:last-child,
+  .reports-table th:last-child,
+  .reports-table-header button,
+  .reports-btn-date-range,
+  .reports-btn-action,
+  .reports-header-icon-badge {
+    display: none !important;
+  }
+
+  /* Print Letterhead */
+  .reports-print-only-header {
+    display: block !important;
+    border-bottom: 2px solid #111827 !important;
+    padding-bottom: 12px !important;
+    margin-bottom: 20px !important;
+  }
+
+  .reports-header-title-text {
+    color: #111827 !important;
+    font-size: 22px !important;
+  }
+
+  .reports-header-subtitle-text {
+    color: #4b5563 !important;
+    font-size: 12px !important;
+  }
+
+  /* 4 KPI Grid in Print */
+  .reports-kpi-grid {
+    display: grid !important;
+    grid-template-columns: repeat(4, 1fr) !important;
+    gap: 12px !important;
+    margin-bottom: 20px !important;
+  }
+
+  .reports-kpi-card {
+    background: #f9fafb !important;
+    border: 1px solid #d1d5db !important;
+    box-shadow: none !important;
+    padding: 12px 14px !important;
+    border-radius: 8px !important;
+  }
+
+  .reports-kpi-icon-orb {
+    display: none !important;
+  }
+
+  .reports-kpi-label {
+    color: #4b5563 !important;
+    font-size: 11px !important;
+    font-weight: 700 !important;
+  }
+
+  .reports-kpi-value {
+    color: #111827 !important;
+    font-size: 20px !important;
+    font-weight: 800 !important;
+    margin: 4px 0 !important;
+  }
+
+  .reports-kpi-desc {
+    color: #6b7280 !important;
+    font-size: 10px !important;
+  }
+
+  /* Charts Container in Print */
+  .reports-charts-grid {
+    display: grid !important;
+    grid-template-columns: 3fr 2fr !important;
+    gap: 16px !important;
+    margin-bottom: 20px !important;
+    page-break-inside: avoid !important;
+  }
+
+  .reports-chart-card {
+    background: #ffffff !important;
+    border: 1px solid #d1d5db !important;
+    box-shadow: none !important;
+    padding: 14px !important;
+    border-radius: 8px !important;
+  }
+
+  .reports-chart-title {
+    color: #111827 !important;
+  }
+
+  .trend-legend-item span,
+  .donut-legend-item span {
+    color: #111827 !important;
+  }
+
+  /* Table in Print */
+  .reports-table-card {
+    background: #ffffff !important;
+    border: 1px solid #d1d5db !important;
+    box-shadow: none !important;
+    border-radius: 8px !important;
+    padding: 16px !important;
+    margin-top: 10px !important;
+  }
+
+  .reports-table-header h2 {
+    color: #111827 !important;
+  }
+
+  .reports-table-wrapper {
+    overflow: visible !important;
+  }
+
+  .reports-table {
+    width: 100% !important;
+    border-collapse: collapse !important;
+  }
+
+  .reports-table th {
+    background: #f3f4f6 !important;
+    color: #111827 !important;
+    border-bottom: 2px solid #9ca3af !important;
+    font-size: 11px !important;
+    padding: 8px 10px !important;
+  }
+
+  .reports-table td {
+    border-bottom: 1px solid #e5e7eb !important;
+    color: #111827 !important;
+    font-size: 11px !important;
+    padding: 8px 10px !important;
+    background: #ffffff !important;
+  }
+
+  .reports-table tr {
+    page-break-inside: avoid !important;
+  }
+
+  /* Print Footer */
+  .reports-print-only-footer {
+    display: flex !important;
+    justify-content: space-between !important;
+    margin-top: 24px !important;
+    padding-top: 12px !important;
+    border-top: 1px solid #e5e7eb !important;
+    font-size: 10px !important;
+    color: #6b7280 !important;
+  }
+}
+
+/* Hide print-only elements on screen */
+@media screen {
+  .reports-print-only-header,
+  .reports-print-only-footer {
+    display: none !important;
   }
 }

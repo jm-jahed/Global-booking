@@ -1,13 +1,12 @@
 "use client";
 
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import {
   CalendarPlus,
   Calendar,
   Users,
   Stethoscope,
   FileText,
-  Download,
   Printer,
   Search,
   Filter,
@@ -16,6 +15,8 @@ import {
   ChevronRight,
   Eye,
   CheckCircle2,
+  AlertCircle,
+  RefreshCw,
 } from "lucide-react";
 import {
   getStoredPortalUser,
@@ -23,101 +24,120 @@ import {
   type DoctorProfileRecord,
 } from "@/lib/api/admin-client";
 import {
-  fetchDoctorQueue,
-  type BackendQueueTicket,
-} from "@/lib/api/doctor-queue-client";
-import {
-  fetchDoctorPatients,
-} from "@/lib/api/doctor-patients-client";
+  fetchDoctorReports,
+  type DoctorReportsResponse,
+  type DoctorReportEncounterItem,
+} from "@/lib/api/doctor-reports-client";
 
-interface VisitRecord {
-  id: string;
-  serialNumber: string;
-  mrn: string;
-  patientName: string;
-  phone: string;
-  visitType: "Consultation" | "Follow Up" | "Review";
-  dateTime: string;
-  doctorName: string;
-  service: string;
-  status: "Completed" | "In Progress" | "Scheduled" | "Cancelled";
-  feeAed: number;
+type DateRangePreset = "THIS_MONTH" | "LAST_30" | "LAST_7" | "TODAY" | "CUSTOM";
+
+interface PresetOption {
+  id: DateRangePreset;
+  label: string;
+  getDates: () => { startDate: string; endDate: string; displayLabel: string };
 }
 
-// 62 Realistic Base Historical Clinic Encounters matching reference total
-const SEED_HISTORICAL_VISITS: VisitRecord[] = [
-  { id: "V-101", serialNumber: "01", mrn: "MRN-8821", patientName: "Amina Al-Mansoor", phone: "+971 50 123 4567", visitType: "Consultation", dateTime: "25 Oct 2026, 09:15 AM", doctorName: "Dr Jahedul Islam", service: "General Consultation", status: "Completed", feeAed: 500 },
-  { id: "V-102", serialNumber: "02", mrn: "MRN-8822", patientName: "Tariq Mahmood", phone: "+971 52 876 5432", visitType: "Follow Up", dateTime: "25 Oct 2026, 09:40 AM", doctorName: "Dr Jahedul Islam", service: "Follow-Up Review", status: "Completed", feeAed: 350 },
-  { id: "V-103", serialNumber: "03", mrn: "MRN-8823", patientName: "Fatima Zahra", phone: "+971 55 334 9876", visitType: "Consultation", dateTime: "25 Oct 2026, 10:10 AM", doctorName: "Dr Jahedul Islam", service: "Comprehensive Checkup", status: "Completed", feeAed: 500 },
-  { id: "V-104", serialNumber: "04", mrn: "MRN-8824", patientName: "Rashid Khalifa", phone: "+971 50 998 1234", visitType: "Follow Up", dateTime: "25 Oct 2026, 10:35 AM", doctorName: "Dr Jahedul Islam", service: "Blood Pressure Review", status: "Completed", feeAed: 350 },
-  { id: "V-105", serialNumber: "05", mrn: "MRN-8825", patientName: "Sarah Jenkins", phone: "+971 56 443 2190", visitType: "Review", dateTime: "25 Oct 2026, 11:00 AM", doctorName: "Dr Jahedul Islam", service: "Lab Report Review", status: "Completed", feeAed: 250 },
-  { id: "V-106", serialNumber: "06", mrn: "MRN-8826", patientName: "Omar Farooq", phone: "+971 50 776 5544", visitType: "Consultation", dateTime: "25 Oct 2026, 11:25 AM", doctorName: "Dr Jahedul Islam", service: "General Consultation", status: "Completed", feeAed: 500 },
-  { id: "V-107", serialNumber: "07", mrn: "MRN-8827", patientName: "Mariam Al-Nuaimi", phone: "+971 52 331 8899", visitType: "Consultation", dateTime: "25 Oct 2026, 11:50 AM", doctorName: "Dr Jahedul Islam", service: "Routine Clinical Exam", status: "Completed", feeAed: 500 },
-  { id: "V-108", serialNumber: "08", mrn: "MRN-8828", patientName: "Alexander Wright", phone: "+971 55 667 8901", visitType: "Follow Up", dateTime: "25 Oct 2026, 12:15 PM", doctorName: "Dr Jahedul Islam", service: "Medication Adjustment", status: "Completed", feeAed: 350 },
-  { id: "V-109", serialNumber: "09", mrn: "MRN-8829", patientName: "Noura Al-Zaabi", phone: "+971 50 223 9988", visitType: "Consultation", dateTime: "25 Oct 2026, 12:45 PM", doctorName: "Dr Jahedul Islam", service: "Cardio Health Assessment", status: "Completed", feeAed: 500 },
-  { id: "V-110", serialNumber: "10", mrn: "MRN-8830", patientName: "Zaid Hassan", phone: "+971 56 112 3344", visitType: "Consultation", dateTime: "25 Oct 2026, 01:10 PM", doctorName: "Dr Jahedul Islam", service: "General Consultation", status: "Completed", feeAed: 500 },
-  { id: "V-111", serialNumber: "11", mrn: "MRN-8831", patientName: "Khaled Bin Walid", phone: "+971 50 445 6677", visitType: "Follow Up", dateTime: "24 Oct 2026, 09:30 AM", doctorName: "Dr Jahedul Islam", service: "Post-Therapy Follow-up", status: "Completed", feeAed: 350 },
-  { id: "V-112", serialNumber: "12", mrn: "MRN-8832", patientName: "Laila Al-Attar", phone: "+971 55 889 0011", visitType: "Consultation", dateTime: "24 Oct 2026, 10:00 AM", doctorName: "Dr Jahedul Islam", service: "General Consultation", status: "Completed", feeAed: 500 },
-  { id: "V-113", serialNumber: "13", mrn: "MRN-8833", patientName: "David Miller", phone: "+971 52 778 9900", visitType: "Consultation", dateTime: "24 Oct 2026, 10:30 AM", doctorName: "Dr Jahedul Islam", service: "Clinical Health Exam", status: "Completed", feeAed: 500 },
-  { id: "V-114", serialNumber: "14", mrn: "MRN-8834", patientName: "Huda Al-Qasimi", phone: "+971 50 119 2288", visitType: "Follow Up", dateTime: "24 Oct 2026, 11:15 AM", doctorName: "Dr Jahedul Islam", service: "Follow-Up Review", status: "Completed", feeAed: 350 },
-  { id: "V-115", serialNumber: "15", mrn: "MRN-8835", patientName: "Youssef Ibrahim", phone: "+971 56 332 1100", visitType: "Review", dateTime: "24 Oct 2026, 11:45 AM", doctorName: "Dr Jahedul Islam", service: "Diagnostic Review", status: "Completed", feeAed: 250 },
-  { id: "V-116", serialNumber: "16", mrn: "MRN-8836", patientName: "Rania Nasser", phone: "+971 50 994 3322", visitType: "Consultation", dateTime: "24 Oct 2026, 12:30 PM", doctorName: "Dr Jahedul Islam", service: "General Consultation", status: "Completed", feeAed: 500 },
-  { id: "V-117", serialNumber: "17", mrn: "MRN-8837", patientName: "Hamad Al-Maktoum", phone: "+971 52 554 1122", visitType: "Consultation", dateTime: "23 Oct 2026, 09:20 AM", doctorName: "Dr Jahedul Islam", service: "Executive Checkup", status: "Completed", feeAed: 500 },
-  { id: "V-118", serialNumber: "18", mrn: "MRN-8838", patientName: "Elena Rostova", phone: "+971 55 441 9988", visitType: "Follow Up", dateTime: "23 Oct 2026, 09:50 AM", doctorName: "Dr Jahedul Islam", service: "Follow-Up Review", status: "Completed", feeAed: 350 },
-  { id: "V-119", serialNumber: "19", mrn: "MRN-8839", patientName: "Ahmed Al-Dhaheri", phone: "+971 50 887 6655", visitType: "Consultation", dateTime: "23 Oct 2026, 10:20 AM", doctorName: "Dr Jahedul Islam", service: "General Consultation", status: "Completed", feeAed: 500 },
-  { id: "V-120", serialNumber: "20", mrn: "MRN-8840", patientName: "Khadija Saleh", phone: "+971 56 771 2233", visitType: "Consultation", dateTime: "23 Oct 2026, 11:00 AM", doctorName: "Dr Jahedul Islam", service: "General Consultation", status: "Completed", feeAed: 500 },
-  { id: "V-121", serialNumber: "21", mrn: "MRN-8841", patientName: "George Thomas", phone: "+971 50 332 4455", visitType: "Follow Up", dateTime: "23 Oct 2026, 11:30 AM", doctorName: "Dr Jahedul Islam", service: "Follow-Up Review", status: "Completed", feeAed: 350 },
-  { id: "V-122", serialNumber: "22", mrn: "MRN-8842", patientName: "Noor Al-Sabah", phone: "+971 52 990 1144", visitType: "Consultation", dateTime: "22 Oct 2026, 09:15 AM", doctorName: "Dr Jahedul Islam", service: "General Consultation", status: "Completed", feeAed: 500 },
-  { id: "V-123", serialNumber: "23", mrn: "MRN-8843", patientName: "Ibrahim Khalil", phone: "+971 55 221 4433", visitType: "Consultation", dateTime: "22 Oct 2026, 09:45 AM", doctorName: "Dr Jahedul Islam", service: "General Consultation", status: "Completed", feeAed: 500 },
-  { id: "V-124", serialNumber: "24", mrn: "MRN-8844", patientName: "Sultan Al-Shamsi", phone: "+971 50 665 7788", visitType: "Follow Up", dateTime: "22 Oct 2026, 10:15 AM", doctorName: "Dr Jahedul Islam", service: "Follow-Up Review", status: "Completed", feeAed: 350 },
-  { id: "V-125", serialNumber: "25", mrn: "MRN-8845", patientName: "Jessica Lee", phone: "+971 56 889 3322", visitType: "Consultation", dateTime: "22 Oct 2026, 11:00 AM", doctorName: "Dr Jahedul Islam", service: "General Consultation", status: "Completed", feeAed: 500 },
-  { id: "V-126", serialNumber: "26", mrn: "MRN-8846", patientName: "Majid Al-Falasi", phone: "+971 50 112 9988", visitType: "Follow Up", dateTime: "21 Oct 2026, 09:30 AM", doctorName: "Dr Jahedul Islam", service: "Follow-Up Review", status: "Completed", feeAed: 350 },
-  { id: "V-127", serialNumber: "27", mrn: "MRN-8847", patientName: "Layla Bin Haider", phone: "+971 52 443 5566", visitType: "Consultation", dateTime: "21 Oct 2026, 10:00 AM", doctorName: "Dr Jahedul Islam", service: "General Consultation", status: "Completed", feeAed: 500 },
-  { id: "V-128", serialNumber: "28", mrn: "MRN-8848", patientName: "Bilal Qureshi", phone: "+971 55 778 1122", visitType: "Consultation", dateTime: "21 Oct 2026, 10:45 AM", doctorName: "Dr Jahedul Islam", service: "General Consultation", status: "Completed", feeAed: 500 },
-  { id: "V-129", serialNumber: "29", mrn: "MRN-8849", patientName: "Reem Al-Hashimi", phone: "+971 50 334 2211", visitType: "Follow Up", dateTime: "21 Oct 2026, 11:30 AM", doctorName: "Dr Jahedul Islam", service: "Follow-Up Review", status: "Completed", feeAed: 350 },
-  { id: "V-130", serialNumber: "30", mrn: "MRN-8850", patientName: "Ali Al-Mazrouei", phone: "+971 56 554 9900", visitType: "Consultation", dateTime: "20 Oct 2026, 09:10 AM", doctorName: "Dr Jahedul Islam", service: "General Consultation", status: "Completed", feeAed: 500 },
-  { id: "V-131", serialNumber: "31", mrn: "MRN-8851", patientName: "Mona Al-Otaiba", phone: "+971 50 887 1144", visitType: "Consultation", dateTime: "20 Oct 2026, 09:40 AM", doctorName: "Dr Jahedul Islam", service: "General Consultation", status: "Completed", feeAed: 500 },
-  { id: "V-132", serialNumber: "32", mrn: "MRN-8852", patientName: "Vikram Malhotra", phone: "+971 52 119 3344", visitType: "Follow Up", dateTime: "20 Oct 2026, 10:20 AM", doctorName: "Dr Jahedul Islam", service: "Follow-Up Review", status: "Completed", feeAed: 350 },
-  { id: "V-133", serialNumber: "33", mrn: "MRN-8853", patientName: "Shamsa Al-Mheiri", phone: "+971 55 665 4433", visitType: "Consultation", dateTime: "20 Oct 2026, 11:00 AM", doctorName: "Dr Jahedul Islam", service: "General Consultation", status: "Completed", feeAed: 500 },
-  { id: "V-134", serialNumber: "34", mrn: "MRN-8854", patientName: "Patrick O'Connor", phone: "+971 50 221 8877", visitType: "Consultation", dateTime: "19 Oct 2026, 09:30 AM", doctorName: "Dr Jahedul Islam", service: "General Consultation", status: "Completed", feeAed: 500 },
-  { id: "V-135", serialNumber: "35", mrn: "MRN-8855", patientName: "Ayesha Al-Ketbi", phone: "+971 56 443 0099", visitType: "Follow Up", dateTime: "19 Oct 2026, 10:00 AM", doctorName: "Dr Jahedul Islam", service: "Follow-Up Review", status: "Completed", feeAed: 350 },
-  { id: "V-136", serialNumber: "36", mrn: "MRN-8856", patientName: "Mansoor Al-Blooshi", phone: "+971 50 776 2211", visitType: "Consultation", dateTime: "19 Oct 2026, 10:45 AM", doctorName: "Dr Jahedul Islam", service: "General Consultation", status: "Completed", feeAed: 500 },
-  { id: "V-137", serialNumber: "37", mrn: "MRN-8857", patientName: "Chloe Dupont", phone: "+971 52 334 1199", visitType: "Consultation", dateTime: "18 Oct 2026, 09:15 AM", doctorName: "Dr Jahedul Islam", service: "General Consultation", status: "Completed", feeAed: 500 },
-  { id: "V-138", serialNumber: "38", mrn: "MRN-8858", patientName: "Faisal Al-Kaabi", phone: "+971 55 998 4433", visitType: "Follow Up", dateTime: "18 Oct 2026, 10:00 AM", doctorName: "Dr Jahedul Islam", service: "Follow-Up Review", status: "Completed", feeAed: 350 },
-  { id: "V-139", serialNumber: "39", mrn: "MRN-8859", patientName: "Salma Al-Ghurair", phone: "+971 50 112 5566", visitType: "Consultation", dateTime: "18 Oct 2026, 10:30 AM", doctorName: "Dr Jahedul Islam", service: "General Consultation", status: "Completed", feeAed: 500 },
-  { id: "V-140", serialNumber: "40", mrn: "MRN-8860", patientName: "Marcus Sterling", phone: "+971 56 334 7788", visitType: "Consultation", dateTime: "17 Oct 2026, 09:30 AM", doctorName: "Dr Jahedul Islam", service: "General Consultation", status: "Completed", feeAed: 500 },
-  { id: "V-141", serialNumber: "41", mrn: "MRN-8861", patientName: "Hanan Al-Marzouqi", phone: "+971 50 667 9900", visitType: "Follow Up", dateTime: "17 Oct 2026, 10:15 AM", doctorName: "Dr Jahedul Islam", service: "Follow-Up Review", status: "Completed", feeAed: 350 },
-  { id: "V-142", serialNumber: "42", mrn: "MRN-8862", patientName: "Bader Al-Rumaithi", phone: "+971 52 889 1122", visitType: "Consultation", dateTime: "16 Oct 2026, 09:20 AM", doctorName: "Dr Jahedul Islam", service: "General Consultation", status: "Completed", feeAed: 500 },
-  { id: "V-143", serialNumber: "43", mrn: "MRN-8863", patientName: "Dina Al-Haddad", phone: "+971 55 221 7788", visitType: "Consultation", dateTime: "16 Oct 2026, 10:00 AM", doctorName: "Dr Jahedul Islam", service: "General Consultation", status: "Completed", feeAed: 500 },
-  { id: "V-144", serialNumber: "44", mrn: "MRN-8864", patientName: "Saeed Al-Mansoori", phone: "+971 50 443 6655", visitType: "Follow Up", dateTime: "15 Oct 2026, 09:15 AM", doctorName: "Dr Jahedul Islam", service: "Follow-Up Review", status: "Completed", feeAed: 350 },
-  { id: "V-145", serialNumber: "45", mrn: "MRN-8865", patientName: "Nadia Al-Balooshi", phone: "+971 56 112 8899", visitType: "Consultation", dateTime: "15 Oct 2026, 10:00 AM", doctorName: "Dr Jahedul Islam", service: "General Consultation", status: "Completed", feeAed: 500 },
-  { id: "V-146", serialNumber: "46", mrn: "MRN-8866", patientName: "Arjun Kapoor", phone: "+971 50 778 3344", visitType: "Consultation", dateTime: "14 Oct 2026, 09:30 AM", doctorName: "Dr Jahedul Islam", service: "General Consultation", status: "Completed", feeAed: 500 },
-  { id: "V-147", serialNumber: "47", mrn: "MRN-8867", patientName: "Fatema Al-Dhaheri", phone: "+971 52 334 8877", visitType: "Follow Up", dateTime: "14 Oct 2026, 10:30 AM", doctorName: "Dr Jahedul Islam", service: "Follow-Up Review", status: "Completed", feeAed: 350 },
-  { id: "V-148", serialNumber: "48", mrn: "MRN-8868", patientName: "Kareem Al-Sayed", phone: "+971 55 990 2211", visitType: "Consultation", dateTime: "13 Oct 2026, 09:15 AM", doctorName: "Dr Jahedul Islam", service: "General Consultation", status: "Completed", feeAed: 500 },
-  { id: "V-149", serialNumber: "49", mrn: "MRN-8869", patientName: "Amina Al-Nuaimi", phone: "+971 50 554 1133", visitType: "Consultation", dateTime: "13 Oct 2026, 10:00 AM", doctorName: "Dr Jahedul Islam", service: "General Consultation", status: "Completed", feeAed: 500 },
-  { id: "V-150", serialNumber: "50", mrn: "MRN-8870", patientName: "Liam Johnson", phone: "+971 56 778 0099", visitType: "Follow Up", dateTime: "12 Oct 2026, 09:30 AM", doctorName: "Dr Jahedul Islam", service: "Follow-Up Review", status: "Completed", feeAed: 350 },
-  { id: "V-151", serialNumber: "51", mrn: "MRN-8871", patientName: "Zainab Al-Attas", phone: "+971 50 221 4455", visitType: "Consultation", dateTime: "12 Oct 2026, 10:30 AM", doctorName: "Dr Jahedul Islam", service: "General Consultation", status: "Completed", feeAed: 500 },
-  { id: "V-152", serialNumber: "52", mrn: "MRN-8872", patientName: "Humaid Al-Zaabi", phone: "+971 52 665 3322", visitType: "Consultation", dateTime: "11 Oct 2026, 09:20 AM", doctorName: "Dr Jahedul Islam", service: "General Consultation", status: "Completed", feeAed: 500 },
-  { id: "V-153", serialNumber: "53", mrn: "MRN-8873", patientName: "Samira Al-Bahar", phone: "+971 55 119 8877", visitType: "Follow Up", dateTime: "11 Oct 2026, 10:15 AM", doctorName: "Dr Jahedul Islam", service: "Follow-Up Review", status: "Completed", feeAed: 350 },
-  { id: "V-154", serialNumber: "54", mrn: "MRN-8874", patientName: "Omar Al-Qubaisi", phone: "+971 50 887 5544", visitType: "Consultation", dateTime: "10 Oct 2026, 09:15 AM", doctorName: "Dr Jahedul Islam", service: "General Consultation", status: "Completed", feeAed: 500 },
-  { id: "V-155", serialNumber: "55", mrn: "MRN-8875", patientName: "Maya Haddad", phone: "+971 56 443 1188", visitType: "Consultation", dateTime: "10 Oct 2026, 10:00 AM", doctorName: "Dr Jahedul Islam", service: "General Consultation", status: "Completed", feeAed: 500 },
-  { id: "V-156", serialNumber: "56", mrn: "MRN-8876", patientName: "Abdullah Al-Tenaiji", phone: "+971 50 332 9900", visitType: "Follow Up", dateTime: "09 Oct 2026, 09:30 AM", doctorName: "Dr Jahedul Islam", service: "Follow-Up Review", status: "Completed", feeAed: 350 },
-  { id: "V-157", serialNumber: "57", mrn: "MRN-8877", patientName: "Sara Al-Harmoodi", phone: "+971 52 778 2211", visitType: "Consultation", dateTime: "08 Oct 2026, 09:15 AM", doctorName: "Dr Jahedul Islam", service: "General Consultation", status: "Completed", feeAed: 500 },
-  { id: "V-158", serialNumber: "58", mrn: "MRN-8878", patientName: "Mohamed Al-Kaabi", phone: "+971 55 443 6677", visitType: "Consultation", dateTime: "07 Oct 2026, 10:00 AM", doctorName: "Dr Jahedul Islam", service: "General Consultation", status: "Completed", feeAed: 500 },
-  { id: "V-159", serialNumber: "59", mrn: "MRN-8879", patientName: "Lubna Al-Mansoori", phone: "+971 50 119 4433", visitType: "Follow Up", dateTime: "05 Oct 2026, 09:30 AM", doctorName: "Dr Jahedul Islam", service: "Follow-Up Review", status: "Completed", feeAed: 350 },
-  { id: "V-160", serialNumber: "60", mrn: "MRN-8880", patientName: "Khaled Al-Ghanem", phone: "+971 56 887 2211", visitType: "Consultation", dateTime: "03 Oct 2026, 09:15 AM", doctorName: "Dr Jahedul Islam", service: "General Consultation", status: "Completed", feeAed: 500 },
-  { id: "V-161", serialNumber: "61", mrn: "MRN-8881", patientName: "Noura Al-Basti", phone: "+971 50 334 7788", visitType: "Consultation", dateTime: "02 Oct 2026, 10:00 AM", doctorName: "Dr Jahedul Islam", service: "General Consultation", status: "Completed", feeAed: 500 },
-  { id: "V-162", serialNumber: "62", mrn: "MRN-8882", patientName: "Tariq Al-Shamsi", phone: "+971 52 665 1100", visitType: "Consultation", dateTime: "01 Oct 2026, 09:30 AM", doctorName: "Dr Jahedul Islam", service: "General Consultation", status: "Completed", feeAed: 500 },
+function formatDateDisplay(d: Date): string {
+  const day = String(d.getDate()).padStart(2, "0");
+  const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+  const m = months[d.getMonth()] || "";
+  const y = d.getFullYear();
+  return `${day} ${m} ${y}`;
+}
+
+function formatIsoDateDisplay(isoStr: string): string {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(isoStr)) return isoStr;
+  const parts = isoStr.split("-").map(Number);
+  const m = parts[1] ?? 1;
+  const d = parts[2] ?? 1;
+  const y = parts[0] ?? new Date().getFullYear();
+  const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+  const monthName = months[m - 1] || "";
+  return `${String(d).padStart(2, "0")} ${monthName} ${y}`;
+}
+
+function toIsoDate(d: Date): string {
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
+const PRESET_OPTIONS: PresetOption[] = [
+  {
+    id: "THIS_MONTH",
+    label: "This Month",
+    getDates: () => {
+      const now = new Date();
+      const firstDay = new Date(now.getFullYear(), now.getMonth(), 1);
+      return {
+        startDate: toIsoDate(firstDay),
+        endDate: toIsoDate(now),
+        displayLabel: `${formatDateDisplay(firstDay)} - ${formatDateDisplay(now)}`,
+      };
+    },
+  },
+  {
+    id: "LAST_30",
+    label: "Last 30 Days",
+    getDates: () => {
+      const now = new Date();
+      const past30 = new Date();
+      past30.setDate(now.getDate() - 30);
+      return {
+        startDate: toIsoDate(past30),
+        endDate: toIsoDate(now),
+        displayLabel: `${formatDateDisplay(past30)} - ${formatDateDisplay(now)}`,
+      };
+    },
+  },
+  {
+    id: "LAST_7",
+    label: "Last 7 Days",
+    getDates: () => {
+      const now = new Date();
+      const past7 = new Date();
+      past7.setDate(now.getDate() - 7);
+      return {
+        startDate: toIsoDate(past7),
+        endDate: toIsoDate(now),
+        displayLabel: `${formatDateDisplay(past7)} - ${formatDateDisplay(now)}`,
+      };
+    },
+  },
+  {
+    id: "TODAY",
+    label: "Today",
+    getDates: () => {
+      const now = new Date();
+      return {
+        startDate: toIsoDate(now),
+        endDate: toIsoDate(now),
+        displayLabel: `Today (${formatDateDisplay(now)})`,
+      };
+    },
+  },
 ];
 
 export function ReportsView() {
   const [loading, setLoading] = useState<boolean>(true);
   const [refreshing, setRefreshing] = useState<boolean>(false);
+  const [error, setError] = useState<string | null>(null);
   const [doctorProfile, setDoctorProfile] = useState<DoctorProfileRecord | null>(null);
 
-  // Filter States (Matching reference image)
-  const [dateRange, setDateRange] = useState<string>("01 Oct 2026 - 25 Oct 2026");
+  // Date Range Filter States
+  const [selectedPreset, setSelectedPreset] = useState<DateRangePreset>("THIS_MONTH");
+  const [dateRangeDates, setDateRangeDates] = useState(() => PRESET_OPTIONS[0]!.getDates());
   const [isDateRangeOpen, setIsDateRangeOpen] = useState<boolean>(false);
+
+  // Custom Date Range State
+  const [isCustomMode, setIsCustomMode] = useState<boolean>(false);
+  const [customStartDate, setCustomStartDate] = useState<string>(() => PRESET_OPTIONS[0]!.getDates().startDate);
+  const [customEndDate, setCustomEndDate] = useState<string>(() => PRESET_OPTIONS[0]!.getDates().endDate);
+  const [customDateError, setCustomDateError] = useState<string | null>(null);
+  const dateDropdownRef = useRef<HTMLDivElement>(null);
+
+  // Search & Filter Dropdown States
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [appliedSearch, setAppliedSearch] = useState<string>("");
   const [selectedVisitType, setSelectedVisitType] = useState<string>("ALL");
@@ -129,148 +149,147 @@ export function ReportsView() {
   const [pageSize, setPageSize] = useState<number>(10);
   const [currentPage, setCurrentPage] = useState<number>(1);
 
-  // Visit Records Collection
-  const [allVisits, setAllVisits] = useState<VisitRecord[]>(SEED_HISTORICAL_VISITS);
+  // Genuine Backend Report State
+  const [reportsData, setReportsData] = useState<DoctorReportsResponse | null>(null);
 
-  // Load Real Profile & Data
-  const loadReportsData = useCallback(async (silent = false) => {
-    if (!silent) setLoading(true);
-    else setRefreshing(true);
-
-    try {
-      const [profileRes, queueRes] = await Promise.allSettled([
-        getDoctorProfile().catch(() => null),
-        fetchDoctorQueue().catch(() => null),
-        fetchDoctorPatients({ limit: 100 }).catch(() => null),
-      ]);
-
-      let docName = "Dr Jahedul Islam";
-      if (profileRes.status === "fulfilled" && profileRes.value?.doctor) {
-        setDoctorProfile(profileRes.value.doctor);
-        docName = profileRes.value.doctor.fullName || docName;
-      } else {
-        const stored = getStoredPortalUser();
-        if (stored?.name || stored?.fullName) {
-          docName = stored.fullName || stored.name || docName;
-        }
+  // Click outside listener for date range dropdown
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (dateDropdownRef.current && !dateDropdownRef.current.contains(event.target as Node)) {
+        setIsDateRangeOpen(false);
       }
-
-      // Merge real queue tickets if available
-      if (queueRes.status === "fulfilled" && queueRes.value?.items?.length) {
-        const tickets = queueRes.value.items;
-        const liveConverted: VisitRecord[] = tickets.map((t: BackendQueueTicket, idx: number) => ({
-          id: t.id || `LIVE-${idx}`,
-          serialNumber: String(idx + 1).padStart(2, "0"),
-          mrn: t.patientOprId ? `MRN-${t.patientOprId.slice(-4)}` : `MRN-90${idx + 1}`,
-          patientName: t.patientName || "Attending Patient",
-          phone: t.patientPhone || "+971 50 000 0000",
-          visitType: (t.service?.toLowerCase().includes("follow") ? "Follow Up" : t.service?.toLowerCase().includes("review") ? "Review" : "Consultation") as "Consultation" | "Follow Up" | "Review",
-          dateTime: t.checkInTime ? `Today, ${t.checkInTime}` : "25 Oct 2026, 10:00 AM",
-          doctorName: docName,
-          service: t.service || "General Consultation",
-          status: (t.status === "IN_CONSULTATION" ? "In Progress" : "Completed") as "Completed" | "In Progress" | "Scheduled" | "Cancelled",
-          feeAed: 500,
-        }));
-
-        // Keep 62 records total with live at the top
-        const merged = [...liveConverted, ...SEED_HISTORICAL_VISITS.slice(liveConverted.length)];
-        setAllVisits(merged);
-      }
-    } catch (err) {
-      console.warn("Reports data load:", err);
-    } finally {
-      setLoading(false);
-      setRefreshing(false);
     }
+    if (isDateRangeOpen) {
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [isDateRangeOpen]);
+
+  // Load Real Doctor Profile
+  useEffect(() => {
+    let mounted = true;
+    getDoctorProfile()
+      .then((res) => {
+        if (mounted && res?.doctor) {
+          setDoctorProfile(res.doctor);
+        }
+      })
+      .catch(() => {
+        // Fallback to stored portal identity
+        const stored = getStoredPortalUser();
+        if (mounted && stored) {
+          setDoctorProfile({
+            id: stored.id,
+            doctorId: stored.id,
+            fullName: stored.fullName || stored.name || "Doctor",
+            email: stored.email,
+            phone: "",
+            avatar: "",
+            specialty: "Practitioner",
+            licenseNumber: "",
+            accountStatus: "ACTIVE",
+            approvedAt: "",
+            subscriptionId: "",
+            assignedPatientCount: 0,
+            totalBookingsCount: 0,
+            chamberLocationsSummary: "",
+            yearsOfExperience: 0,
+            medicalDegrees: [],
+            consultationFee: { amountInFils: 50000, currency: "AED", formatted: "AED 500.00" },
+            createdAt: "",
+            updatedAt: "",
+          });
+        }
+      });
+    return () => {
+      mounted = false;
+    };
   }, []);
 
+  // Fetch genuine backend reports
+  const loadReports = useCallback(
+    async (isBackground = false) => {
+      if (isBackground) {
+        setRefreshing(true);
+      } else {
+        setLoading(true);
+      }
+      setError(null);
+
+      try {
+        const response = await fetchDoctorReports({
+          startDate: dateRangeDates.startDate,
+          endDate: dateRangeDates.endDate,
+          search: appliedSearch || undefined,
+          visitType: appliedVisitType,
+          status: appliedStatus,
+          page: currentPage,
+          limit: pageSize,
+        });
+
+        setReportsData(response);
+      } catch (err: any) {
+        console.error("Doctor reports load error:", err);
+        setError(err?.message || "Failed to load clinical reports from backend.");
+        setReportsData(null);
+      } finally {
+        setLoading(false);
+        setRefreshing(false);
+      }
+    },
+    [dateRangeDates, appliedSearch, appliedVisitType, appliedStatus, currentPage, pageSize],
+  );
+
   useEffect(() => {
-    loadReportsData();
-  }, [loadReportsData]);
+    loadReports();
+  }, [loadReports]);
+
+  // Handle Preset Change
+  const handleSelectPreset = (preset: PresetOption) => {
+    setSelectedPreset(preset.id);
+    setIsCustomMode(false);
+    setCustomDateError(null);
+    const dates = preset.getDates();
+    setDateRangeDates(dates);
+    setCustomStartDate(dates.startDate);
+    setCustomEndDate(dates.endDate);
+    setIsDateRangeOpen(false);
+    setCurrentPage(1);
+  };
+
+  // Handle Custom Range Apply
+  const handleApplyCustomRange = () => {
+    if (!customStartDate || !customEndDate) {
+      setCustomDateError("Please select both start and end dates.");
+      return;
+    }
+    if (customStartDate > customEndDate) {
+      setCustomDateError("Start date cannot be after end date.");
+      return;
+    }
+    setCustomDateError(null);
+    setSelectedPreset("CUSTOM");
+    setDateRangeDates({
+      startDate: customStartDate,
+      endDate: customEndDate,
+      displayLabel: `${formatIsoDateDisplay(customStartDate)} - ${formatIsoDateDisplay(customEndDate)}`,
+    });
+    setIsDateRangeOpen(false);
+    setIsCustomMode(false);
+    setCurrentPage(1);
+  };
 
   // Handle Apply Filter
   const handleApplyFilter = () => {
-    setAppliedSearch(searchQuery.trim().toLowerCase());
+    setAppliedSearch(searchQuery.trim());
     setAppliedVisitType(selectedVisitType);
     setAppliedStatus(selectedStatus);
     setCurrentPage(1);
   };
 
-  // Filtered Visits based on applied criteria
-  const filteredVisits = useMemo(() => {
-    return allVisits.filter((v) => {
-      // Search check
-      if (appliedSearch) {
-        const matchesName = v.patientName.toLowerCase().includes(appliedSearch);
-        const matchesPhone = v.phone.toLowerCase().includes(appliedSearch);
-        const matchesMrn = v.mrn.toLowerCase().includes(appliedSearch);
-        if (!matchesName && !matchesPhone && !matchesMrn) return false;
-      }
 
-      // Visit Type check
-      if (appliedVisitType !== "ALL" && v.visitType !== appliedVisitType) {
-        return false;
-      }
-
-      // Status check
-      if (appliedStatus !== "ALL" && v.status !== appliedStatus) {
-        return false;
-      }
-
-      return true;
-    });
-  }, [allVisits, appliedSearch, appliedVisitType, appliedStatus]);
-
-  // Metrics derived (Exact match to reference image numbers when unfiltered)
-  const totalPatientsCount = useMemo(() => {
-    const unique = new Set(filteredVisits.map((v) => v.patientName));
-    return unique.size || 48;
-  }, [filteredVisits]);
-
-  const totalVisitsCount = filteredVisits.length;
-
-  const followUpCount = useMemo(() => {
-    return filteredVisits.filter((v) => v.visitType === "Follow Up").length;
-  }, [filteredVisits]);
-
-  const averageIntervalDays = 12;
-
-  // Visit Type Distribution
-  const consultationCount = useMemo(
-    () => filteredVisits.filter((v) => v.visitType === "Consultation").length,
-    [filteredVisits]
-  );
-  const reviewCount = useMemo(
-    () => filteredVisits.filter((v) => v.visitType === "Review").length,
-    [filteredVisits]
-  );
-
-  const consultationPct = totalVisitsCount > 0 ? Math.round((consultationCount / totalVisitsCount) * 100) : 68;
-  const followUpPct = totalVisitsCount > 0 ? Math.round((followUpCount / totalVisitsCount) * 100) : 29;
-  const reviewPct = totalVisitsCount > 0 ? Math.max(1, 100 - consultationPct - followUpPct) : 3;
-
-  // Pagination calculation
-  const totalPages = Math.ceil(filteredVisits.length / pageSize) || 1;
-  const paginatedVisits = useMemo(() => {
-    const startIndex = (currentPage - 1) * pageSize;
-    return filteredVisits.slice(startIndex, startIndex + pageSize);
-  }, [filteredVisits, currentPage, pageSize]);
-
-  // Export to CSV
-  const handleExportCsv = () => {
-    const headers = ["Serial,MRN,Patient Name,Phone,Visit Type,Date & Time,Doctor,Service,Status,Fee AED"];
-    const rows = filteredVisits.map((v) =>
-      `"${v.serialNumber}","${v.mrn}","${v.patientName}","${v.phone}","${v.visitType}","${v.dateTime}","${v.doctorName}","${v.service}","${v.status}",${v.feeAed}`
-    );
-    const csvContent = "data:text/csv;charset=utf-8," + [headers, ...rows].join("\n");
-    const encodedUri = encodeURI(csvContent);
-    const link = document.createElement("a");
-    link.setAttribute("href", encodedUri);
-    link.setAttribute("download", `patient_reports_${new Date().toISOString().slice(0, 10)}.csv`);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-  };
 
   const handlePrint = () => {
     if (typeof window !== "undefined") {
@@ -291,8 +310,187 @@ export function ReportsView() {
     return gradients[Math.abs(hash) % gradients.length];
   };
 
+  // Dynamic Trend Chart Path Geometry derived from genuine API results
+  const trendGeometry = useMemo(() => {
+    const points = reportsData?.visitTrend || [];
+    if (points.length === 0) {
+      return {
+        pathNewPatients: "M 40,180 L 580,180",
+        areaNewPatients: "M 40,180 L 580,180 Z",
+        pathFollowUp: "M 40,180 L 580,180",
+        areaFollowUp: "M 40,180 L 580,180 Z",
+        dotsNewPatients: [],
+        dotsFollowUp: [],
+        yGridLines: [
+          { val: 10, y: 50 },
+          { val: 5, y: 115 },
+          { val: 0, y: 180 },
+        ],
+        xTicks: [],
+        hasData: false,
+      };
+    }
+
+    const maxCount = Math.max(5, ...points.map((p) => Math.max(p.newPatients, p.followUps, p.totalVisits)));
+    const yMax = Math.ceil(maxCount / 5) * 5;
+
+    const getY = (val: number) => 180 - (val / yMax) * 130;
+    const getX = (index: number) => {
+      if (points.length <= 1) return 310;
+      return 40 + (index / (points.length - 1)) * 540;
+    };
+
+    // Build SVG smooth path strings
+    const newCoords = points.map((p, i) => ({ x: getX(i), y: getY(p.newPatients) }));
+    const followCoords = points.map((p, i) => ({ x: getX(i), y: getY(p.followUps) }));
+
+    const buildPath = (coords: { x: number; y: number }[]) => {
+      if (coords.length === 0) return "M 40,180";
+      if (coords.length === 1) return `M 40,${coords[0]!.y} L 580,${coords[0]!.y}`;
+      let d = `M ${coords[0]!.x.toFixed(1)},${coords[0]!.y.toFixed(1)}`;
+      for (let i = 1; i < coords.length; i++) {
+        const prev = coords[i - 1]!;
+        const curr = coords[i]!;
+        const cp1x = prev.x + (curr.x - prev.x) / 2;
+        const cp1y = prev.y;
+        const cp2x = prev.x + (curr.x - prev.x) / 2;
+        const cp2y = curr.y;
+        d += ` C ${cp1x.toFixed(1)},${cp1y.toFixed(1)} ${cp2x.toFixed(1)},${cp2y.toFixed(1)} ${curr.x.toFixed(1)},${curr.y.toFixed(1)}`;
+      }
+      return d;
+    };
+
+    const pathNewPatients = buildPath(newCoords);
+    const areaNewPatients = `${pathNewPatients} L ${getX(points.length - 1).toFixed(1)},180 L ${getX(0).toFixed(1)},180 Z`;
+
+    const pathFollowUp = buildPath(followCoords);
+    const areaFollowUp = `${pathFollowUp} L ${getX(points.length - 1).toFixed(1)},180 L ${getX(0).toFixed(1)},180 Z`;
+
+    // Filter dots: sample up to 10 dots for clear visual presentation
+    const step = Math.max(1, Math.floor(points.length / 8));
+    const dotsNewPatients = newCoords.filter((_, i) => i % step === 0 || i === points.length - 1);
+    const dotsFollowUp = followCoords.filter((_, i) => i % step === 0 || i === points.length - 1);
+
+    // X-Axis sample ticks
+    const tickStep = Math.max(1, Math.floor(points.length / 5));
+    const xTicks = points
+      .map((p, i) => ({ label: p.displayDate, x: getX(i) }))
+      .filter((_, i) => i % tickStep === 0 || i === points.length - 1);
+
+    const yGridLines = [
+      { val: yMax, y: 50 },
+      { val: Math.round(yMax * 0.66), y: 93 },
+      { val: Math.round(yMax * 0.33), y: 136 },
+      { val: 0, y: 180 },
+    ];
+
+    const hasData = points.some((p) => p.totalVisits > 0);
+
+    return {
+      pathNewPatients,
+      areaNewPatients,
+      pathFollowUp,
+      areaFollowUp,
+      dotsNewPatients,
+      dotsFollowUp,
+      yGridLines,
+      xTicks,
+      hasData,
+    };
+  }, [reportsData]);
+
+  // Donut Arc Calculations
+  const donutArcs = useMemo(() => {
+    const bd = reportsData?.visitTypeBreakdown;
+    const total = reportsData?.summary.totalVisits || 0;
+
+    if (!bd || !bd.hasData || total === 0) {
+      return {
+        hasData: false,
+        consultationDash: "0 389.56",
+        consultationOffset: 0,
+        followUpDash: "0 389.56",
+        followUpOffset: 0,
+        reviewDash: "0 389.56",
+        reviewOffset: 0,
+        consultationPct: 0,
+        followUpPct: 0,
+        reviewPct: 0,
+        consultationCount: 0,
+        followUpCount: 0,
+        reviewCount: 0,
+        totalVisits: 0,
+      };
+    }
+
+    const cDash = (bd.consultationPct / 100) * 389.56;
+    const fDash = (bd.followUpPct / 100) * 389.56;
+    const rDash = (bd.reviewPct / 100) * 389.56;
+
+    const fOffset = -cDash;
+    const rOffset = -(cDash + fDash);
+
+    return {
+      hasData: true,
+      consultationDash: `${Math.max(0, cDash)} 389.56`,
+      consultationOffset: 0,
+      followUpDash: `${Math.max(0, fDash)} 389.56`,
+      followUpOffset: fOffset,
+      reviewDash: `${Math.max(0, rDash)} 389.56`,
+      reviewOffset: rOffset,
+      consultationPct: bd.consultationPct,
+      followUpPct: bd.followUpPct,
+      reviewPct: bd.reviewPct,
+      consultationCount: bd.consultationCount,
+      followUpCount: bd.followUpCount,
+      reviewCount: bd.reviewCount,
+      totalVisits: total,
+    };
+  }, [reportsData]);
+
+  const summary = reportsData?.summary;
+  const encounters = reportsData?.encounters.items || [];
+  const totalEncounters = reportsData?.encounters.total || 0;
+  const totalPages = reportsData?.encounters.totalPages || 1;
+
   return (
     <div className="reports-luxury-page-container">
+      {/* PRINT-ONLY OFFICIAL CLINICAL REPORT LETTERHEAD */}
+      <div className="reports-print-only-header">
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 12 }}>
+          <div>
+            <div style={{ fontSize: 20, fontWeight: 800, color: "#111827", textTransform: "uppercase", letterSpacing: "0.05em" }}>
+              Global Booking Healthcare Network
+            </div>
+            <div style={{ fontSize: 13, color: "#4b5563", fontWeight: 600, marginTop: 2 }}>
+              Official Clinical Consultation &amp; Throughput Report
+            </div>
+          </div>
+          <div style={{ textAlign: "right" }}>
+            <div style={{ fontSize: 14, fontWeight: 700, color: "#111827" }}>
+              {doctorProfile?.fullName || "Doctor"}
+            </div>
+            <div style={{ fontSize: 11.5, color: "#4b5563" }}>
+              {doctorProfile?.specialty || "General Medicine"}
+            </div>
+            {doctorProfile?.licenseNumber && (
+              <div style={{ fontSize: 11, color: "#6b7280" }}>
+                License: {doctorProfile.licenseNumber}
+              </div>
+            )}
+          </div>
+        </div>
+
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", borderTop: "1px solid #e5e7eb", paddingTop: 8, fontSize: 11, color: "#4b5563" }}>
+          <div>
+            <strong>Reporting Window:</strong> {dateRangeDates.displayLabel}
+          </div>
+          <div>
+            <strong>Generated:</strong> {new Date().toLocaleString("en-US", { dateStyle: "medium", timeStyle: "short" })}
+          </div>
+        </div>
+      </div>
+
       {/* 1. TOP HEADER ROW */}
       <header className="reports-header-row" aria-label="Reports Header">
         <div className="reports-header-left">
@@ -302,22 +500,35 @@ export function ReportsView() {
           <div>
             <h1 className="reports-header-title-text">Reports</h1>
             <p className="reports-header-subtitle-text">
-              View patient history, visit records and detailed reports
+              {doctorProfile?.fullName ? `${doctorProfile.fullName} • ` : ""}
+              Authentic patient history, visit records and clinical reporting
             </p>
           </div>
         </div>
 
         <div className="reports-header-actions">
-          {/* Interactive Date Range Dropdown */}
-          <div style={{ position: "relative" }}>
+          {/* Refresh Action */}
+          <button
+            type="button"
+            className="reports-btn-action"
+            onClick={() => loadReports(true)}
+            disabled={loading || refreshing}
+            title="Refresh clinical reports from backend"
+          >
+            <RefreshCw size={15} style={{ color: "#f5c270" }} className={refreshing ? "animate-spin" : ""} />
+            <span>{refreshing ? "Refreshing..." : "Refresh"}</span>
+          </button>
+
+          {/* Interactive Date Range Dropdown with Custom Date Picker */}
+          <div ref={dateDropdownRef} style={{ position: "relative" }}>
             <button
               type="button"
               className="reports-btn-date-range"
               onClick={() => setIsDateRangeOpen(!isDateRangeOpen)}
-              title="Select reporting period"
+              title="Select reporting period or customize dates"
             >
               <Calendar size={15} style={{ color: "#f5c270" }} />
-              <span>{dateRange}</span>
+              <span>{dateRangeDates.displayLabel}</span>
               <ChevronDown size={14} style={{ color: "#94a3b8" }} />
             </button>
 
@@ -331,72 +542,208 @@ export function ReportsView() {
                   background: "linear-gradient(135deg, #0d1629 0%, #080e1b 100%)",
                   border: "1px solid rgba(229, 184, 105, 0.4)",
                   borderRadius: 12,
-                  boxShadow: "0 12px 35px rgba(0, 0, 0, 0.6)",
+                  boxShadow: "0 14px 40px rgba(0, 0, 0, 0.75)",
                   padding: "8px 0",
-                  minWidth: 230,
+                  minWidth: 260,
                 }}
               >
-                {[
-                  "01 Oct 2026 - 25 Oct 2026",
-                  "18 Oct 2026 - 25 Oct 2026",
-                  "26 Sep 2026 - 25 Oct 2026",
-                  "Today (25 Oct 2026)",
-                ].map((range) => (
+                {PRESET_OPTIONS.map((preset) => (
                   <button
-                    key={range}
+                    key={preset.id}
                     type="button"
-                    onClick={() => {
-                      setDateRange(range);
-                      setIsDateRangeOpen(false);
-                    }}
+                    onClick={() => handleSelectPreset(preset)}
                     style={{
                       width: "100%",
                       padding: "9px 16px",
                       textAlign: "left",
-                      background: dateRange === range ? "rgba(229, 184, 105, 0.12)" : "transparent",
-                      color: dateRange === range ? "#f5c270" : "#cbd5e1",
+                      background: selectedPreset === preset.id && !isCustomMode ? "rgba(229, 184, 105, 0.12)" : "transparent",
+                      color: selectedPreset === preset.id && !isCustomMode ? "#f5c270" : "#cbd5e1",
                       border: "none",
                       fontSize: 12.5,
-                      fontWeight: dateRange === range ? 700 : 500,
+                      fontWeight: selectedPreset === preset.id && !isCustomMode ? 700 : 500,
                       cursor: "pointer",
                       display: "flex",
                       alignItems: "center",
                       justifyContent: "space-between",
                     }}
                   >
-                    <span>{range}</span>
-                    {dateRange === range && <CheckCircle2 size={13} style={{ color: "#f5c270" }} />}
+                    <span>{preset.label}</span>
+                    {selectedPreset === preset.id && !isCustomMode && <CheckCircle2 size={13} style={{ color: "#f5c270" }} />}
                   </button>
                 ))}
+
+                <div style={{ height: 1, background: "rgba(255, 255, 255, 0.08)", margin: "6px 0" }} />
+
+                {/* Custom Date Range Toggle & Input Panel */}
+                <div style={{ padding: "4px 14px 8px 14px" }}>
+                  <button
+                    type="button"
+                    onClick={() => setIsCustomMode(!isCustomMode)}
+                    style={{
+                      width: "100%",
+                      background: selectedPreset === "CUSTOM" || isCustomMode ? "rgba(2, 143, 215, 0.15)" : "rgba(255, 255, 255, 0.04)",
+                      border: `1px solid ${selectedPreset === "CUSTOM" || isCustomMode ? "rgba(2, 143, 215, 0.5)" : "rgba(255, 255, 255, 0.1)"}`,
+                      color: selectedPreset === "CUSTOM" || isCustomMode ? "#028FD7" : "#cbd5e1",
+                      borderRadius: 8,
+                      padding: "8px 12px",
+                      fontSize: 12,
+                      fontWeight: 700,
+                      cursor: "pointer",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                      transition: "all 0.2s ease",
+                    }}
+                  >
+                    <span style={{ display: "flex", alignItems: "center", gap: 7 }}>
+                      <Calendar size={13} style={{ color: "#028FD7" }} />
+                      <span>Custom Date Range</span>
+                    </span>
+                    <ChevronDown
+                      size={13}
+                      style={{
+                        transform: isCustomMode ? "rotate(180deg)" : "rotate(0deg)",
+                        transition: "transform 0.2s ease",
+                      }}
+                    />
+                  </button>
+
+                  {isCustomMode && (
+                    <div style={{ marginTop: 10, display: "flex", flexDirection: "column", gap: 9 }}>
+                      <div>
+                        <label style={{ display: "block", fontSize: 11, color: "#94a3b8", marginBottom: 3, fontWeight: 600 }}>
+                          From Date
+                        </label>
+                        <input
+                          type="date"
+                          value={customStartDate}
+                          max={customEndDate || undefined}
+                          onChange={(e) => setCustomStartDate(e.target.value)}
+                          style={{
+                            width: "100%",
+                            background: "rgba(5, 11, 20, 0.95)",
+                            border: "1px solid rgba(2, 143, 215, 0.4)",
+                            color: "#ffffff",
+                            padding: "6px 10px",
+                            borderRadius: 6,
+                            fontSize: 12,
+                            colorScheme: "dark",
+                            outline: "none",
+                            boxSizing: "border-box",
+                          }}
+                        />
+                      </div>
+
+                      <div>
+                        <label style={{ display: "block", fontSize: 11, color: "#94a3b8", marginBottom: 3, fontWeight: 600 }}>
+                          To Date
+                        </label>
+                        <input
+                          type="date"
+                          value={customEndDate}
+                          min={customStartDate || undefined}
+                          onChange={(e) => setCustomEndDate(e.target.value)}
+                          style={{
+                            width: "100%",
+                            background: "rgba(5, 11, 20, 0.95)",
+                            border: "1px solid rgba(2, 143, 215, 0.4)",
+                            color: "#ffffff",
+                            padding: "6px 10px",
+                            borderRadius: 6,
+                            fontSize: 12,
+                            colorScheme: "dark",
+                            outline: "none",
+                            boxSizing: "border-box",
+                          }}
+                        />
+                      </div>
+
+                      {customDateError && (
+                        <div style={{ fontSize: 11, color: "#ef4444", fontWeight: 600 }}>
+                          {customDateError}
+                        </div>
+                      )}
+
+                      <button
+                        type="button"
+                        onClick={handleApplyCustomRange}
+                        style={{
+                          marginTop: 2,
+                          width: "100%",
+                          background: "linear-gradient(135deg, #028FD7 0%, #0277b5 100%)",
+                          color: "#ffffff",
+                          border: "none",
+                          borderRadius: 6,
+                          padding: "8px 12px",
+                          fontSize: 12,
+                          fontWeight: 750,
+                          cursor: "pointer",
+                          boxShadow: "0 3px 12px rgba(2, 143, 215, 0.4)",
+                          transition: "all 0.2s ease",
+                        }}
+                      >
+                        Apply Custom Range
+                      </button>
+                    </div>
+                  )}
+                </div>
               </div>
             )}
           </div>
 
-          {/* Export Report Button */}
-          <button
-            type="button"
-            className="reports-btn-action"
-            onClick={handleExportCsv}
-            title="Export filtered records to CSV"
-          >
-            <Download size={15} style={{ color: "#f5c270" }} />
-            <span>Export Report</span>
-          </button>
-
-          {/* Print Button */}
+          {/* Print / Save PDF Button */}
           <button
             type="button"
             className="reports-btn-action"
             onClick={handlePrint}
-            title="Print report layout"
+            title="Open browser print dialog to print or save PDF"
           >
             <Printer size={15} style={{ color: "#f5c270" }} />
-            <span>Print</span>
+            <span>Print / Save PDF</span>
           </button>
         </div>
       </header>
 
-      {/* 2. FILTER BAR (No Department filter as requested by user) */}
+      {/* Error Alert Banner */}
+      {error && (
+        <div
+          style={{
+            margin: "0 0 16px 0",
+            padding: "12px 16px",
+            borderRadius: 10,
+            background: "rgba(239, 68, 68, 0.12)",
+            border: "1px solid rgba(239, 68, 68, 0.4)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            color: "#fca5a5",
+            fontSize: 13,
+          }}
+        >
+          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            <AlertCircle size={18} style={{ color: "#ef4444", flexShrink: 0 }} />
+            <span>{error}</span>
+          </div>
+          <button
+            type="button"
+            onClick={() => loadReports()}
+            style={{
+              background: "rgba(239, 68, 68, 0.2)",
+              border: "1px solid rgba(239, 68, 68, 0.4)",
+              color: "#ffffff",
+              padding: "4px 12px",
+              borderRadius: 6,
+              cursor: "pointer",
+              fontSize: 12,
+              fontWeight: 600,
+            }}
+          >
+            Retry
+          </button>
+        </div>
+      )}
+
+      {/* 2. FILTER BAR */}
       <section className="reports-filter-deck" aria-label="Report Filters">
         <div className="reports-search-wrap">
           <Search size={16} className="reports-search-icon" />
@@ -412,45 +759,48 @@ export function ReportsView() {
           />
         </div>
 
-        {/* Visit Type Dropdown */}
-        <select
-          className="reports-select-pill"
-          value={selectedVisitType}
-          onChange={(e) => setSelectedVisitType(e.target.value)}
-          aria-label="Filter by visit type"
-        >
-          <option value="ALL">All Visit Types</option>
-          <option value="Consultation">Consultation</option>
-          <option value="Follow Up">Follow Up</option>
-          <option value="Review">Review</option>
-        </select>
+        <div className="reports-filter-controls-group">
+          {/* Visit Type Dropdown */}
+          <select
+            className="reports-select-pill"
+            value={selectedVisitType}
+            onChange={(e) => setSelectedVisitType(e.target.value)}
+            aria-label="Filter by visit type"
+          >
+            <option value="ALL">All Visit Types</option>
+            <option value="Consultation">Consultation</option>
+            <option value="Follow Up">Follow Up</option>
+            <option value="Review">Review</option>
+          </select>
 
-        {/* Status Dropdown */}
-        <select
-          className="reports-select-pill"
-          value={selectedStatus}
-          onChange={(e) => setSelectedStatus(e.target.value)}
-          aria-label="Filter by status"
-        >
-          <option value="ALL">All Status</option>
-          <option value="Completed">Completed</option>
-          <option value="In Progress">In Progress</option>
-          <option value="Scheduled">Scheduled</option>
-        </select>
+          {/* Status Dropdown */}
+          <select
+            className="reports-select-pill"
+            value={selectedStatus}
+            onChange={(e) => setSelectedStatus(e.target.value)}
+            aria-label="Filter by status"
+          >
+            <option value="ALL">All Status</option>
+            <option value="Completed">Completed</option>
+            <option value="In Progress">In Progress</option>
+            <option value="Scheduled">Scheduled</option>
+            <option value="Cancelled">Cancelled</option>
+          </select>
 
-        {/* Apply Filter Button */}
-        <button
-          type="button"
-          className="reports-btn-apply"
-          onClick={handleApplyFilter}
-          title="Apply current search and filter selections"
-        >
-          <Filter size={15} strokeWidth={2.4} />
-          <span>Apply Filter</span>
-        </button>
+          {/* Apply Filter Button - Styled with Brand #028FD7 */}
+          <button
+            type="button"
+            className="reports-btn-apply"
+            onClick={handleApplyFilter}
+            title="Apply current search and filter selections"
+          >
+            <Filter size={15} strokeWidth={2.4} />
+            <span>Apply Filter</span>
+          </button>
+        </div>
       </section>
 
-      {/* 3. FOUR LUXURY GLOWING KPI CARDS (Matching Reference Design) */}
+      {/* 3. FOUR LUXURY GLOWING KPI CARDS */}
       <section className="reports-kpi-grid" aria-label="Key Performance Indicators">
         {/* Card 1: Total Patients */}
         <div className="reports-kpi-card kpi-emerald">
@@ -459,9 +809,10 @@ export function ReportsView() {
           </div>
           <div className="reports-kpi-content">
             <span className="reports-kpi-label">Total Patients</span>
-            <span className="reports-kpi-value">{totalPatientsCount}</span>
-            <span className="reports-kpi-desc">Unique patients in selected period</span>
+            <span className="reports-kpi-value">{loading ? "..." : summary?.totalPatients ?? 0}</span>
+            <span className="reports-kpi-desc">Unique patients attended in period</span>
           </div>
+          <ChevronRight size={18} style={{ color: "#64748b", marginLeft: "auto", flexShrink: 0, opacity: 0.7 }} />
         </div>
 
         {/* Card 2: Total Visits */}
@@ -471,9 +822,10 @@ export function ReportsView() {
           </div>
           <div className="reports-kpi-content">
             <span className="reports-kpi-label">Total Visits</span>
-            <span className="reports-kpi-value">{totalVisitsCount}</span>
-            <span className="reports-kpi-desc">Completed visits (all types)</span>
+            <span className="reports-kpi-value">{loading ? "..." : summary?.totalVisits ?? 0}</span>
+            <span className="reports-kpi-desc">Completed clinical visits</span>
           </div>
+          <ChevronRight size={18} style={{ color: "#64748b", marginLeft: "auto", flexShrink: 0, opacity: 0.7 }} />
         </div>
 
         {/* Card 3: Follow Up Visits */}
@@ -483,9 +835,10 @@ export function ReportsView() {
           </div>
           <div className="reports-kpi-content">
             <span className="reports-kpi-label">Follow Up Visits</span>
-            <span className="reports-kpi-value">{followUpCount}</span>
-            <span className="reports-kpi-desc">Patients with follow-up</span>
+            <span className="reports-kpi-value">{loading ? "..." : summary?.followUpVisits ?? 0}</span>
+            <span className="reports-kpi-desc">Return patient encounters</span>
           </div>
+          <ChevronRight size={18} style={{ color: "#64748b", marginLeft: "auto", flexShrink: 0, opacity: 0.7 }} />
         </div>
 
         {/* Card 4: Average Visit Interval */}
@@ -495,15 +848,26 @@ export function ReportsView() {
           </div>
           <div className="reports-kpi-content">
             <span className="reports-kpi-label">Average Visit Interval</span>
-            <span className="reports-kpi-value">{averageIntervalDays} days</span>
-            <span className="reports-kpi-desc">Between visits (approx)</span>
+            <span className="reports-kpi-value">
+              {loading
+                ? "..."
+                : summary?.hasSufficientIntervalData && summary.averageIntervalDays !== null
+                ? `${summary.averageIntervalDays} Days`
+                : "N/A"}
+            </span>
+            <span className="reports-kpi-desc">
+              {summary?.hasSufficientIntervalData
+                ? "Average return days between visits"
+                : "Insufficient repeat visits in period"}
+            </span>
           </div>
+          <ChevronRight size={18} style={{ color: "#64748b", marginLeft: "auto", flexShrink: 0, opacity: 0.7 }} />
         </div>
       </section>
 
-      {/* 4. CHARTS SECTION (Visit Trend & Visit Type - Department Chart Omitted) */}
+      {/* 4. CHARTS SECTION (Visit Trend & Visit Type) */}
       <section className="reports-charts-grid" aria-label="Visual Analytics">
-        {/* Chart 1: Visit Trend (Wave Spline Area Chart) */}
+        {/* Chart 1: Visit Trend (Real Continuous Geometry) */}
         <div className="reports-chart-card">
           <div className="reports-chart-header">
             <h2 className="reports-chart-title">Visit Trend</h2>
@@ -549,13 +913,7 @@ export function ReportsView() {
               </defs>
 
               {/* Grid Lines & Y-Axis Labels */}
-              {[
-                { val: 20, y: 20 },
-                { val: 15, y: 60 },
-                { val: 10, y: 100 },
-                { val: 5, y: 140 },
-                { val: 0, y: 180 },
-              ].map((line) => (
+              {trendGeometry.yGridLines.map((line) => (
                 <g key={line.val}>
                   <text
                     x="8"
@@ -580,20 +938,14 @@ export function ReportsView() {
               ))}
 
               {/* AREA 1: New Patients Filled Gradient Area */}
-              <path
-                d="M 40,140 C 90,145 130,120 180,110 C 230,100 270,125 320,105 C 370,85 410,130 460,110 C 510,90 550,60 580,50 L 580,180 L 40,180 Z"
-                fill="url(#trendEmeraldGrad)"
-              />
+              <path d={trendGeometry.areaNewPatients} fill="url(#trendEmeraldGrad)" />
 
               {/* AREA 2: Follow Up Filled Gradient Area */}
-              <path
-                d="M 40,165 C 90,160 130,170 180,150 C 230,130 270,145 320,135 C 370,125 410,155 460,140 C 510,125 550,110 580,100 L 580,180 L 40,180 Z"
-                fill="url(#trendCyanGrad)"
-              />
+              <path d={trendGeometry.areaFollowUp} fill="url(#trendCyanGrad)" />
 
               {/* CURVE 1: New Patients Emerald Wave Line */}
               <path
-                d="M 40,140 C 90,145 130,120 180,110 C 230,100 270,125 320,105 C 370,85 410,130 460,110 C 510,90 550,60 580,50"
+                d={trendGeometry.pathNewPatients}
                 fill="none"
                 stroke="#10b981"
                 strokeWidth="2.5"
@@ -602,7 +954,7 @@ export function ReportsView() {
 
               {/* CURVE 2: Follow Up Cyan Wave Line */}
               <path
-                d="M 40,165 C 90,160 130,170 180,150 C 230,130 270,145 320,135 C 370,125 410,155 460,140 C 510,125 550,110 580,100"
+                d={trendGeometry.pathFollowUp}
                 fill="none"
                 stroke="#38bdf8"
                 strokeWidth="2.5"
@@ -610,20 +962,11 @@ export function ReportsView() {
               />
 
               {/* Glowing Data Dots on Emerald Line */}
-              {[
-                { cx: 40, cy: 140 },
-                { cx: 90, cy: 143 },
-                { cx: 140, cy: 125 },
-                { cx: 210, cy: 104 },
-                { cx: 320, cy: 105 },
-                { cx: 420, cy: 122 },
-                { cx: 490, cy: 98 },
-                { cx: 580, cy: 50 },
-              ].map((dot, i) => (
+              {trendGeometry.dotsNewPatients.map((dot, i) => (
                 <circle
                   key={`em-${i}`}
-                  cx={dot.cx}
-                  cy={dot.cy}
+                  cx={dot.x}
+                  cy={dot.y}
                   r="3.5"
                   fill="#10b981"
                   stroke="#050b14"
@@ -633,19 +976,11 @@ export function ReportsView() {
               ))}
 
               {/* Glowing Data Dots on Cyan Line */}
-              {[
-                { cx: 40, cy: 165 },
-                { cx: 120, cy: 168 },
-                { cx: 200, cy: 140 },
-                { cx: 300, cy: 138 },
-                { cx: 390, cy: 130 },
-                { cx: 480, cy: 135 },
-                { cx: 580, cy: 100 },
-              ].map((dot, i) => (
+              {trendGeometry.dotsFollowUp.map((dot, i) => (
                 <circle
                   key={`cy-${i}`}
-                  cx={dot.cx}
-                  cy={dot.cy}
+                  cx={dot.x}
+                  cy={dot.y}
                   r="3.5"
                   fill="#38bdf8"
                   stroke="#050b14"
@@ -655,16 +990,9 @@ export function ReportsView() {
               ))}
 
               {/* X-Axis Date Labels */}
-              {[
-                { label: "01 Oct", x: 40 },
-                { label: "05 Oct", x: 145 },
-                { label: "10 Oct", x: 250 },
-                { label: "15 Oct", x: 360 },
-                { label: "20 Oct", x: 470 },
-                { label: "25 Oct", x: 575 },
-              ].map((tick) => (
+              {trendGeometry.xTicks.map((tick) => (
                 <text
-                  key={tick.label}
+                  key={tick.label + tick.x}
                   x={tick.x}
                   y="196"
                   textAnchor="middle"
@@ -677,6 +1005,34 @@ export function ReportsView() {
                 </text>
               ))}
             </svg>
+
+            {/* Empty state overlay if zero visits */}
+            {!trendGeometry.hasData && !loading && (
+              <div
+                style={{
+                  position: "absolute",
+                  inset: "30px 40px 30px 40px",
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  background: "rgba(5, 11, 20, 0.75)",
+                  backdropFilter: "blur(4px)",
+                  borderRadius: 10,
+                  border: "1px dashed rgba(255, 255, 255, 0.1)",
+                  color: "#94a3b8",
+                  fontSize: 12.5,
+                  fontWeight: 600,
+                  textAlign: "center",
+                  padding: 16,
+                }}
+              >
+                <span>No consultation activity recorded in this period.</span>
+                <span style={{ fontSize: 11, color: "#64748b", marginTop: 4 }}>
+                  Completed queue tickets and appointments will populate this curve.
+                </span>
+              </div>
+            )}
           </div>
         </div>
 
@@ -700,56 +1056,66 @@ export function ReportsView() {
                   strokeWidth="20"
                 />
 
-                {/* Consultation Arc (68% -> circumference 389.56) */}
-                <circle
-                  cx="80"
-                  cy="80"
-                  r="62"
-                  fill="transparent"
-                  stroke="#10b981"
-                  strokeWidth="20"
-                  strokeDasharray={`${(consultationPct / 100) * 389.56} 389.56`}
-                  strokeDashoffset="0"
-                  strokeLinecap="round"
-                  style={{
-                    filter: "drop-shadow(0 0 6px rgba(16, 185, 129, 0.5))",
-                    transition: "stroke-dasharray 0.8s ease",
-                  }}
-                />
+                {donutArcs.hasData && (
+                  <>
+                    {/* Consultation Arc */}
+                    {donutArcs.consultationPct > 0 && (
+                      <circle
+                        cx="80"
+                        cy="80"
+                        r="62"
+                        fill="transparent"
+                        stroke="#10b981"
+                        strokeWidth="20"
+                        strokeDasharray={donutArcs.consultationDash}
+                        strokeDashoffset={donutArcs.consultationOffset}
+                        strokeLinecap="round"
+                        style={{
+                          filter: "drop-shadow(0 0 6px rgba(16, 185, 129, 0.5))",
+                          transition: "stroke-dasharray 0.8s ease",
+                        }}
+                      />
+                    )}
 
-                {/* Follow Up Arc (29%) */}
-                <circle
-                  cx="80"
-                  cy="80"
-                  r="62"
-                  fill="transparent"
-                  stroke="#38bdf8"
-                  strokeWidth="20"
-                  strokeDasharray={`${(followUpPct / 100) * 389.56} 389.56`}
-                  strokeDashoffset={`-${(consultationPct / 100) * 389.56 + 8}`}
-                  strokeLinecap="round"
-                  style={{
-                    filter: "drop-shadow(0 0 6px rgba(56, 189, 248, 0.5))",
-                    transition: "stroke-dasharray 0.8s ease",
-                  }}
-                />
+                    {/* Follow Up Arc */}
+                    {donutArcs.followUpPct > 0 && (
+                      <circle
+                        cx="80"
+                        cy="80"
+                        r="62"
+                        fill="transparent"
+                        stroke="#38bdf8"
+                        strokeWidth="20"
+                        strokeDasharray={donutArcs.followUpDash}
+                        strokeDashoffset={donutArcs.followUpOffset}
+                        strokeLinecap="round"
+                        style={{
+                          filter: "drop-shadow(0 0 6px rgba(56, 189, 248, 0.5))",
+                          transition: "stroke-dasharray 0.8s ease",
+                        }}
+                      />
+                    )}
 
-                {/* Review Arc (3%) */}
-                <circle
-                  cx="80"
-                  cy="80"
-                  r="62"
-                  fill="transparent"
-                  stroke="#a855f7"
-                  strokeWidth="20"
-                  strokeDasharray={`${(reviewPct / 100) * 389.56} 389.56`}
-                  strokeDashoffset={`-${((consultationPct + followUpPct) / 100) * 389.56 + 14}`}
-                  strokeLinecap="round"
-                  style={{
-                    filter: "drop-shadow(0 0 6px rgba(168, 85, 247, 0.5))",
-                    transition: "stroke-dasharray 0.8s ease",
-                  }}
-                />
+                    {/* Review Arc */}
+                    {donutArcs.reviewPct > 0 && (
+                      <circle
+                        cx="80"
+                        cy="80"
+                        r="62"
+                        fill="transparent"
+                        stroke="#a855f7"
+                        strokeWidth="20"
+                        strokeDasharray={donutArcs.reviewDash}
+                        strokeDashoffset={donutArcs.reviewOffset}
+                        strokeLinecap="round"
+                        style={{
+                          filter: "drop-shadow(0 0 6px rgba(168, 85, 247, 0.5))",
+                          transition: "stroke-dasharray 0.8s ease",
+                        }}
+                      />
+                    )}
+                  </>
+                )}
               </svg>
 
               {/* Center Metric */}
@@ -765,7 +1131,7 @@ export function ReportsView() {
                 }}
               >
                 <span style={{ fontSize: 28, fontWeight: 800, color: "#ffffff", lineHeight: 1 }}>
-                  {totalVisitsCount}
+                  {loading ? "..." : donutArcs.totalVisits}
                 </span>
                 <span style={{ fontSize: 11, color: "#94a3b8", fontWeight: 600, marginTop: 4 }}>
                   Total Visits
@@ -781,7 +1147,7 @@ export function ReportsView() {
                   <span style={{ color: "#ffffff" }}>Consultation</span>
                 </div>
                 <span style={{ color: "#94a3b8", fontWeight: 700 }}>
-                  {consultationCount} ({consultationPct}%)
+                  {donutArcs.consultationCount} ({donutArcs.consultationPct}%)
                 </span>
               </div>
 
@@ -791,7 +1157,7 @@ export function ReportsView() {
                   <span style={{ color: "#ffffff" }}>Follow Up</span>
                 </div>
                 <span style={{ color: "#94a3b8", fontWeight: 700 }}>
-                  {followUpCount} ({followUpPct}%)
+                  {donutArcs.followUpCount} ({donutArcs.followUpPct}%)
                 </span>
               </div>
 
@@ -801,7 +1167,7 @@ export function ReportsView() {
                   <span style={{ color: "#ffffff" }}>Review</span>
                 </div>
                 <span style={{ color: "#94a3b8", fontWeight: 700 }}>
-                  {reviewCount} ({reviewPct}%)
+                  {donutArcs.reviewCount} ({donutArcs.reviewPct}%)
                 </span>
               </div>
             </div>
@@ -809,7 +1175,7 @@ export function ReportsView() {
         </div>
       </section>
 
-      {/* 5. PATIENT VISIT HISTORY (ALL RECORDS) TABLE */}
+      {/* 5. PATIENT VISIT HISTORY TABLE */}
       <section className="reports-table-card" aria-label="Patient Visit History">
         <div className="reports-table-header">
           <div className="reports-table-title-group">
@@ -821,8 +1187,7 @@ export function ReportsView() {
 
           <div className="reports-table-meta-group">
             <span>
-              Total Records:{" "}
-              <strong style={{ color: "#ffffff" }}>{filteredVisits.length}</strong>
+              Total Records: <strong style={{ color: "#ffffff" }}>{totalEncounters}</strong>
             </span>
 
             <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
@@ -856,12 +1221,20 @@ export function ReportsView() {
                 <th>Date &amp; Time</th>
                 <th>Doctor / Service</th>
                 <th>Status</th>
-                <th style={{ textAlign: "right" }}>Actions</th>
               </tr>
             </thead>
             <tbody>
-              {paginatedVisits.length > 0 ? (
-                paginatedVisits.map((visit, index) => {
+              {loading ? (
+                <tr>
+                  <td colSpan={6} style={{ textAlign: "center", padding: "40px 20px", color: "#8e9fb5" }}>
+                    <div style={{ display: "inline-flex", alignItems: "center", gap: 8 }}>
+                      <RefreshCw size={16} className="animate-spin" style={{ color: "#f5c270" }} />
+                      <span>Loading clinical encounter records from database...</span>
+                    </div>
+                  </td>
+                </tr>
+              ) : encounters.length > 0 ? (
+                encounters.map((visit: DoctorReportEncounterItem, index: number) => {
                   const recordIndex = (currentPage - 1) * pageSize + index + 1;
                   return (
                     <tr key={visit.id}>
@@ -970,12 +1343,16 @@ export function ReportsView() {
                                   ? "#10b981"
                                   : visit.status === "In Progress"
                                   ? "#38bdf8"
+                                  : visit.status === "Cancelled"
+                                  ? "#ef4444"
                                   : "#f59e0b",
                               boxShadow: `0 0 8px ${
                                 visit.status === "Completed"
                                   ? "#10b981"
                                   : visit.status === "In Progress"
                                   ? "#38bdf8"
+                                  : visit.status === "Cancelled"
+                                  ? "#ef4444"
                                   : "#f59e0b"
                               }`,
                             }}
@@ -989,6 +1366,8 @@ export function ReportsView() {
                                   ? "#10b981"
                                   : visit.status === "In Progress"
                                   ? "#38bdf8"
+                                  : visit.status === "Cancelled"
+                                  ? "#ef4444"
                                   : "#f59e0b",
                             }}
                           >
@@ -996,52 +1375,21 @@ export function ReportsView() {
                           </span>
                         </div>
                       </td>
-
-                      {/* Action */}
-                      <td style={{ textAlign: "right" }}>
-                        <div style={{ display: "inline-flex", alignItems: "center", gap: 8 }}>
-                          <button
-                            type="button"
-                            title="View visit summary"
-                            style={{
-                              background: "rgba(255, 255, 255, 0.05)",
-                              border: "1px solid rgba(255, 255, 255, 0.1)",
-                              borderRadius: 8,
-                              padding: "6px 8px",
-                              color: "#cbd5e1",
-                              cursor: "pointer",
-                              display: "flex",
-                              alignItems: "center",
-                            }}
-                          >
-                            <Eye size={14} />
-                          </button>
-                          <button
-                            type="button"
-                            title="Print encounter receipt"
-                            onClick={handlePrint}
-                            style={{
-                              background: "rgba(255, 255, 255, 0.05)",
-                              border: "1px solid rgba(255, 255, 255, 0.1)",
-                              borderRadius: 8,
-                              padding: "6px 8px",
-                              color: "#f5c270",
-                              cursor: "pointer",
-                              display: "flex",
-                              alignItems: "center",
-                            }}
-                          >
-                            <Printer size={14} />
-                          </button>
-                        </div>
-                      </td>
                     </tr>
                   );
                 })
               ) : (
                 <tr>
-                  <td colSpan={7} style={{ textAlign: "center", padding: "40px 20px", color: "#8e9fb5" }}>
-                    No patient records matching your current filter.
+                  <td colSpan={6} style={{ textAlign: "center", padding: "48px 20px", color: "#8e9fb5" }}>
+                    <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 6 }}>
+                      <CalendarPlus size={28} style={{ color: "#64748b", opacity: 0.5 }} />
+                      <span style={{ fontSize: 13.5, fontWeight: 700, color: "#cbd5e1" }}>
+                        No clinical visit records found.
+                      </span>
+                      <span style={{ fontSize: 12, color: "#64748b" }}>
+                        There are no completed consultations matching your selected date range and filters.
+                      </span>
+                    </div>
                   </td>
                 </tr>
               )}
@@ -1065,19 +1413,19 @@ export function ReportsView() {
           <div>
             Showing{" "}
             <strong style={{ color: "#ffffff" }}>
-              {filteredVisits.length > 0 ? (currentPage - 1) * pageSize + 1 : 0}
+              {totalEncounters > 0 ? (currentPage - 1) * pageSize + 1 : 0}
             </strong>{" "}
             to{" "}
             <strong style={{ color: "#ffffff" }}>
-              {Math.min(currentPage * pageSize, filteredVisits.length)}
+              {Math.min(currentPage * pageSize, totalEncounters)}
             </strong>{" "}
-            of <strong style={{ color: "#ffffff" }}>{filteredVisits.length}</strong> records
+            of <strong style={{ color: "#ffffff" }}>{totalEncounters}</strong> records
           </div>
 
           <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
             <button
               type="button"
-              disabled={currentPage <= 1}
+              disabled={currentPage <= 1 || loading}
               onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
               style={{
                 display: "inline-flex",
@@ -1155,7 +1503,7 @@ export function ReportsView() {
 
             <button
               type="button"
-              disabled={currentPage >= totalPages}
+              disabled={currentPage >= totalPages || loading}
               onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
               style={{
                 display: "inline-flex",
@@ -1177,6 +1525,12 @@ export function ReportsView() {
           </div>
         </div>
       </section>
+
+      {/* PRINT-ONLY OFFICIAL FOOTER */}
+      <div className="reports-print-only-footer">
+        <span>Confidential Clinical Analytics Document • Generated securely via Global Booking Portal</span>
+        <span>Doctor ID: {doctorProfile?.doctorId || "DOC"} • Page 1 of 1</span>
+      </div>
     </div>
   );
 }
