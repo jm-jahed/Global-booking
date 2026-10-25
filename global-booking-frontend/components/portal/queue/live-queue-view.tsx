@@ -650,71 +650,51 @@ export function LiveQueueView() {
         </div>
       )}
 
-      {/* TOP HEADER: Luxury Premium Live Queue Deck */}
-      <section className="live-queue-header-deck" aria-label="Live Queue Header">
-        <div className="live-queue-header-main-row">
-          <div className="live-queue-brand-group">
-            {/* Glowing circular concentric beacon icon */}
-            <div className="live-queue-beacon-circle">
-              <div className="live-queue-beacon-inner">
-                <Radio size={24} style={{ color: "#f5c270" }} />
-              </div>
-              <span className="live-queue-live-dot" title="Real-time synchronized" />
-            </div>
-            <div className="live-queue-title-wrap">
-              <div className="live-queue-badge-row">
-                <span className="live-queue-status-tag">
-                  <span className="live-pulsing-dot" />
-                  ACTIVE ROSTER
-                </span>
-              </div>
-              <div className="live-queue-title-row">
-                <h1 className="live-queue-title-text">
-                  Live Queue Management
-                </h1>
-                <ChevronRight size={18} className="live-queue-title-chevron text-gold" />
-              </div>
-              <p className="live-queue-subtitle-text">
-                Real-time patient queue, live token call &amp; serial tracking
-              </p>
-            </div>
+      {/* TOP ACTIONS BAR (Clean & compact header without bulky banner) */}
+      <section
+        className="live-queue-actions-deck"
+        aria-label="Queue Actions"
+        style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "flex-end",
+          gap: 12,
+          marginBottom: 14,
+          flexWrap: "wrap",
+        }}
+      >
+        <button
+          type="button"
+          className="btn-luxury-sync"
+          onClick={handleManualSync}
+          title="Sync live queue with latest database records"
+        >
+          <RefreshCw size={15} className={isSyncing ? "spin-animation" : ""} style={{ color: "#38bdf8" }} />
+          <span>Sync Queue</span>
+        </button>
+
+        <button
+          type="button"
+          className="btn-luxury-tv"
+          onClick={() => setIsTvDisplayOpen(true)}
+          title="Open Waiting Room Live TV Display"
+        >
+          <Tv size={15} style={{ color: "#38bdf8" }} />
+          <span>Open TV Display</span>
+        </button>
+
+        <button
+          type="button"
+          className="btn-luxury-new-ticket"
+          onClick={() => setIsNewTicketOpen(true)}
+          title="New Patient Appointment"
+        >
+          <CalendarPlus size={18} strokeWidth={2.4} style={{ flexShrink: 0, color: "#ffffff" }} />
+          <div className="btn-luxury-new-ticket-text" style={{ color: "#ffffff" }}>
+            <span>New Patient</span>
+            <span>Appointment</span>
           </div>
-        </div>
-
-        <div className="live-queue-actions-deck">
-          <button
-            type="button"
-            className="btn-luxury-sync"
-            onClick={handleManualSync}
-            title="Sync live queue with latest database records"
-          >
-            <RefreshCw size={15} className={isSyncing ? "spin-animation" : ""} style={{ color: "#38bdf8" }} />
-            <span>Sync Queue</span>
-          </button>
-
-          <button
-            type="button"
-            className="btn-luxury-tv"
-            onClick={() => setIsTvDisplayOpen(true)}
-            title="Open Waiting Room Live TV Display"
-          >
-            <Tv size={15} style={{ color: "#38bdf8" }} />
-            <span>Open TV Display</span>
-          </button>
-
-          <button
-            type="button"
-            className="btn-luxury-new-ticket"
-            onClick={() => setIsNewTicketOpen(true)}
-            title="New Patient Appointment"
-          >
-            <CalendarPlus size={18} strokeWidth={2.4} style={{ flexShrink: 0, color: "#180e02" }} />
-            <div className="btn-luxury-new-ticket-text">
-              <span>New Patient</span>
-              <span>Appointment</span>
-            </div>
-          </button>
-        </div>
+        </button>
       </section>
 
       {/* Network / API Error Notice Banner */}

@@ -7838,20 +7838,24 @@
   gap: 9px;
   padding: 10px 22px;
   border-radius: 11px;
-  background: linear-gradient(135deg, #fce09c 0%, #e5b869 45%, #b88628 100%);
-  border: 1px solid rgba(255, 255, 255, 0.35);
-  color: #070d18;
+  background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 50%, #0369a1 100%) !important;
+  border: 1px solid rgba(186, 230, 253, 0.45) !important;
+  color: #ffffff !important;
   font-size: 13.5px;
   font-weight: 750;
   letter-spacing: -0.01em;
   cursor: pointer;
   box-shadow:
-    0 6px 20px rgba(229, 184, 105, 0.35),
-    0 0 28px rgba(229, 184, 105, 0.18),
-    inset 0 1px 1px rgba(255, 255, 255, 0.6);
+    0 6px 20px rgba(2, 132, 199, 0.45),
+    0 0 28px rgba(14, 165, 233, 0.3),
+    inset 0 1px 1px rgba(255, 255, 255, 0.65) !important;
   transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
   position: relative;
   overflow: hidden;
+}
+
+.btn-luxury-new-ticket * {
+  color: #ffffff !important;
 }
 
 .btn-luxury-new-ticket::after {
@@ -7868,15 +7872,21 @@
 
 .btn-luxury-new-ticket:hover {
   transform: translateY(-2px);
+  background: linear-gradient(135deg, #38bdf8 0%, #0284c7 50%, #0284c7 100%) !important;
   box-shadow:
-    0 8px 26px rgba(229, 184, 105, 0.5),
-    0 0 36px rgba(229, 184, 105, 0.3),
-    inset 0 1px 1px rgba(255, 255, 255, 0.8);
-  filter: brightness(1.04);
+    0 8px 26px rgba(2, 132, 199, 0.6),
+    0 0 36px rgba(14, 165, 233, 0.45),
+    inset 0 1px 1px rgba(255, 255, 255, 0.85) !important;
+  filter: brightness(1.08);
 }
 
 .btn-luxury-new-ticket:hover::after {
   left: 130%;
+}
+
+.btn-luxury-new-ticket:active {
+  transform: translateY(0);
+  filter: brightness(0.96);
 }
 
 @media (max-width: 640px) {
