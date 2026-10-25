@@ -10049,3 +10049,99 @@
   }
 }
 
+/* ==========================================================================
+   DASHBOARD MOBILE SPECIFIC STYLES & TOPBAR RESPONSIVENESS
+   ========================================================================== */
+.dashboard-mobile-actions-deck {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  /* Hide the topbar user profile card on mobile (explicit user requirement) */
+  .topbar-user-profile {
+    display: none !important;
+  }
+
+  /* Adjust padding for dashboard container on mobile */
+  .dashboard-page-container {
+    padding: 36px 14px 84px !important;
+    gap: 14px !important;
+  }
+
+  /* Hide the large desktop welcome banner on mobile */
+  .dashboard-desktop-header {
+    display: none !important;
+  }
+
+  /* 3-Pill Mobile Action Deck: Date Pill, Refresh, Issue OPD Token */
+  .dashboard-mobile-actions-deck {
+    display: flex !important;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+    margin-top: 4px;
+    margin-bottom: 6px;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: 4px;
+  }
+
+  .dashboard-mobile-pill-date {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 7px 12px;
+    border-radius: 12px;
+    background: rgba(11, 19, 37, 0.95);
+    border: 1px solid rgba(229, 184, 105, 0.35);
+    color: #ffffff;
+    font-size: 11px;
+    font-weight: 700;
+    cursor: pointer;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+
+  .dashboard-mobile-pill-badge {
+    background: rgba(229, 184, 105, 0.15);
+    color: #e5b869;
+    padding: 2px 6px;
+    border-radius: 6px;
+    font-size: 10px;
+    font-weight: 700;
+  }
+
+  .dashboard-mobile-pill-refresh {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 7px 12px;
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    color: #cbd5e1;
+    font-size: 11px;
+    font-weight: 600;
+    cursor: pointer;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+
+  .dashboard-mobile-pill-token {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 7px 14px;
+    border-radius: 12px;
+    background: linear-gradient(135deg, #e5b869 0%, #b88628 100%);
+    color: #060b13;
+    font-size: 11px;
+    font-weight: 800;
+    border: none;
+    cursor: pointer;
+    white-space: nowrap;
+    flex-shrink: 0;
+    box-shadow: 0 2px 10px rgba(229, 184, 105, 0.3);
+    margin-left: auto;
+  }
+}

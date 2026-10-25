@@ -19,6 +19,7 @@ import {
   Copy,
   Check,
   ChevronRight,
+  ChevronDown,
   Ticket,
   Users,
   Calendar,
@@ -95,9 +96,10 @@ export function DashboardView() {
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [copiedLink, setCopiedLink] = useState(false);
 
-  // Modals
+  // Modals & Mobile Date Popover
   const [isTicketModalOpen, setIsTicketModalOpen] = useState(false);
   const [isPatientModalOpen, setIsPatientModalOpen] = useState(false);
+  const [isMobileDateOpen, setIsMobileDateOpen] = useState(false);
 
   // Primary chamber information & authoritative IANA timezone
   const primaryChamber = doctorProfile?.chambers?.[0] || {
@@ -146,6 +148,28 @@ export function DashboardView() {
     window.addEventListener("portal_date_change", handlePortalDateChange);
     return () => window.removeEventListener("portal_date_change", handlePortalDateChange);
   }, [selectedDateKey]);
+
+  // Formatted date info for display and mobile widget
+  const dateInfo = useMemo(() => {
+    return formatPortalDateInfo(selectedDateKey);
+  }, [selectedDateKey]);
+
+  const handlePrevDay = () => {
+    const prev = shiftDateIso(selectedDateKey, -1);
+    setSelectedDateKey(prev);
+    setStoredPortalDate(prev);
+  };
+
+  const handleNextDay = () => {
+    const next = shiftDateIso(selectedDateKey, 1);
+    setSelectedDateKey(next);
+    setStoredPortalDate(next);
+  };
+
+  const handleResetToday = () => {
+    setSelectedDateKey(chamberTodayDateKey);
+    setStoredPortalDate(chamberTodayDateKey);
+  };
 
   // Load all authentic live clinical data from backend for selected date
   const loadDashboardData = useCallback(async (isSilent = false) => {
@@ -422,6 +446,7 @@ export function DashboardView() {
 
       {/* 1. TOP HEADER & GREETING BAR */}
       <section
+        className="dashboard-desktop-header"
         style={{
           display: "flex",
           alignItems: "center",
@@ -594,6 +619,44 @@ export function DashboardView() {
         </div>
       </section>
 
+      {/* Mobile Action Deck: Date Selector Pill, Refresh, Quick Issue OPD Token */}
+      <div className="dashboard-mobile-actions-deck">
+        <button
+          type="button"
+          onClick={() => {
+            const next = shiftDateIso(selectedDateKey, 1);
+            setSelectedDateKey(next);
+            setStoredPortalDate(next);
+          }}
+          className="dashboard-mobile-pill-date"
+        >
+          <Calendar size={13} color="#e5b869" />
+          <span>{dateInfo.formattedDate}</span>
+          <span className="dashboard-mobile-pill-badge">{dateInfo.isToday ? "Today" : dateInfo.dayOfWeek}</span>
+          <ChevronDown size={13} color="#8e9fb5" />
+        </button>
+
+        <button
+          type="button"
+          onClick={() => loadDashboardData(true)}
+          disabled={refreshing}
+          className="dashboard-mobile-pill-refresh"
+        >
+          <RefreshCw size={13} className={refreshing ? "animate-spin text-gold" : ""} />
+          <span>{refreshing ? "..." : "Refresh"}</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setIsTicketModalOpen(true)}
+          className="dashboard-mobile-pill-token"
+        >
+          <Ticket size={14} />
+          <span>Issue OPD Token</span>
+          <ChevronRight size={13} />
+        </button>
+      </div>
+
       {/* 2. REAL-TIME 4-CARD KPI METRICS GRID (Exact match to reference luxury design) */}
       <section className="queue-kpi-grid" aria-label="Clinical KPI Metrics">
         {/* Card 1: LIVE OPD (Gold Glowing Card) */}
@@ -720,16 +783,16 @@ export function DashboardView() {
         </Link>
       </section>
 
-      {/* 3. MAIN DASHBOARD CONTENT: 2-COLUMN OPERATIONAL LAYOUT */}
+      {/* 3. MAIN DASHBOARD CONTENT: OPERATIONAL STREAM */}
       <section
         style={{
-          display: "grid",
-          gridTemplateColumns: "minmax(0, 1.8fr) minmax(320px, 1fr)",
+          display: "flex",
+          flexDirection: "column",
           gap: 24,
-          alignItems: "start",
+          width: "100%",
         }}
       >
-        {/* LEFT COLUMN: REAL-TIME OPERATIONAL STREAM (TABS) */}
+        {/* OPERATIONAL STREAM (TABS) */}
         <article
           style={{
             background: "#0b1325",
@@ -1449,426 +1512,6 @@ export function DashboardView() {
             </div>
           )}
         </article>
-
-        {/* RIGHT COLUMN: CLINICAL COMMAND WIDGETS */}
-        <aside style={{ display: "flex", flexDirection: "column", gap: 20 }}>
-          {/* Widget 1: Queue Control Box (Exact Reference Match) */}
-          <div
-            style={{
-              background: "linear-gradient(135deg, rgba(11, 19, 37, 0.95) 0%, rgba(7, 12, 23, 0.98) 100%)",
-              border: "1px solid rgba(229, 184, 105, 0.4)",
-              borderRadius: 18,
-              padding: 20,
-              boxShadow: "0 8px 30px rgba(0, 0, 0, 0.4)",
-              display: "flex",
-              flexDirection: "column",
-              gap: 16,
-            }}
-          >
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                <div
-                  style={{
-                    width: 32,
-                    height: 32,
-                    borderRadius: "50%",
-                    background: "rgba(229, 184, 105, 0.15)",
-                    border: "1px solid rgba(229, 184, 105, 0.4)",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    color: "#e5b869",
-                  }}
-                >
-                  <Tv size={15} />
-                </div>
-                <h3 style={{ margin: 0, fontSize: 16, fontWeight: 800, color: "#ffffff", letterSpacing: "0.02em" }}>
-                  Queue Control
-                </h3>
-              </div>
-              <Link
-                href="/live-queue"
-                style={{
-                  fontSize: 12,
-                  fontWeight: 700,
-                  color: "#94a3b8",
-                  textDecoration: "none",
-                  display: "inline-flex",
-                  alignItems: "center",
-                  gap: 4,
-                  background: "rgba(255, 255, 255, 0.05)",
-                  padding: "4px 10px",
-                  borderRadius: 8,
-                  border: "1px solid rgba(255, 255, 255, 0.1)",
-                }}
-              >
-                <span>View All</span>
-                <ChevronRight size={13} />
-              </Link>
-            </div>
-
-            {/* Next Patient Card with Primary Badge (Exact Reference Match) */}
-            <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "space-between",
-                padding: "12px 14px",
-                borderRadius: 14,
-                background: "rgba(229, 184, 105, 0.06)",
-                border: "1px solid rgba(229, 184, 105, 0.3)",
-                gap: 12,
-              }}
-            >
-              <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                <div
-                  style={{
-                    width: 40,
-                    height: 40,
-                    borderRadius: "50%",
-                    background: "rgba(229, 184, 105, 0.2)",
-                    border: "1.5px solid rgba(229, 184, 105, 0.6)",
-                    color: "#e5b869",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    flexShrink: 0,
-                  }}
-                >
-                  <Users size={18} />
-                </div>
-                <div>
-                  <div style={{ fontSize: 11, color: "#94a3b8", fontWeight: 700 }}>Next Patient</div>
-                  <div style={{ fontSize: 14, fontWeight: 800, color: "#ffffff" }}>
-                    {waitingTickets[0] ? `${waitingTickets[0].ticketNumber} ${waitingTickets[0].patientName}` : "No patient waiting"}
-                  </div>
-                </div>
-              </div>
-              <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                <span
-                  style={{
-                    padding: "3px 8px",
-                    borderRadius: 6,
-                    background: "rgba(229, 184, 105, 0.2)",
-                    color: "#e5b869",
-                    fontSize: 10,
-                    fontWeight: 800,
-                    letterSpacing: "0.05em",
-                  }}
-                >
-                  PRIMARY
-                </span>
-                <ChevronRight size={16} color="#e5b869" />
-              </div>
-            </div>
-
-            {/* Now Serving Big Display */}
-            <div
-              style={{
-                background: "rgba(229, 184, 105, 0.08)",
-                border: "1px solid rgba(229, 184, 105, 0.25)",
-                borderRadius: 14,
-                padding: "16px",
-                textAlign: "center",
-              }}
-            >
-              <span style={{ fontSize: 11, color: "#8e9fb5", textTransform: "uppercase", fontWeight: 700 }}>
-                Currently Inside Chamber
-              </span>
-              <div
-                style={{
-                  fontSize: 36,
-                  fontWeight: 900,
-                  color: "#e5b869",
-                  letterSpacing: "-0.02em",
-                  margin: "4px 0",
-                }}
-              >
-                {servingTicket ? servingTicket.ticketNumber : "IDLE"}
-              </div>
-              <div style={{ fontSize: 13, fontWeight: 600, color: "#ffffff" }}>
-                {servingTicket ? servingTicket.patientName : "Ready for next patient"}
-              </div>
-            </div>
-
-            {/* Next in Line Preview */}
-            <div
-              style={{
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "center",
-                padding: "10px 14px",
-                borderRadius: 10,
-                background: "rgba(255, 255, 255, 0.03)",
-                border: "1px solid rgba(255, 255, 255, 0.06)",
-                fontSize: 12,
-              }}
-            >
-              <span style={{ color: "#8e9fb5" }}>Next in Line:</span>
-              <span style={{ color: "#38bdf8", fontWeight: 700 }}>
-                {waitingTickets[0] ? `${waitingTickets[0].ticketNumber} — ${waitingTickets[0].patientName}` : "None waiting"}
-              </span>
-            </div>
-
-            <div
-              style={{
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "center",
-                padding: "10px 14px",
-                borderRadius: 10,
-                background: "rgba(255, 255, 255, 0.03)",
-                border: "1px solid rgba(255, 255, 255, 0.06)",
-                fontSize: 12,
-              }}
-            >
-              <span style={{ color: "#8e9fb5" }}>Est. Waiting Time:</span>
-              <span style={{ color: "#ffffff", fontWeight: 700 }}>
-                {waitingTickets.length > 0 ? `${waitingTickets.length * 12} mins` : "0 min"}
-              </span>
-            </div>
-
-            <Link
-              href="/live-queue"
-              style={{
-                width: "100%",
-                padding: "10px 0",
-                textAlign: "center",
-                borderRadius: 10,
-                background: "linear-gradient(135deg, #e5b869 0%, #b88628 100%)",
-                color: "#060b13",
-                fontWeight: 700,
-                fontSize: 13,
-                textDecoration: "none",
-                display: "block",
-                boxShadow: "0 4px 15px rgba(229, 184, 105, 0.25)",
-              }}
-            >
-              Open Full Live OPD Station &rarr;
-            </Link>
-          </div>
-
-          {/* Widget 2: Doctor Public Profile & Real Scannable QR Code */}
-          <div
-            style={{
-              background: "#0b1325",
-              border: "1px solid rgba(255, 255, 255, 0.08)",
-              borderRadius: 18,
-              padding: 22,
-              boxShadow: "0 8px 30px rgba(0, 0, 0, 0.35)",
-              display: "flex",
-              flexDirection: "column",
-              gap: 16,
-            }}
-          >
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                <QrCode size={18} color="#e5b869" />
-                <h3 style={{ margin: 0, fontSize: 14, fontWeight: 700, color: "#ffffff" }}>
-                  Instant Patient Booking QR
-                </h3>
-              </div>
-            </div>
-
-            <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
-              {/* Genuine ISO/IEC 18004 Generated QR SVG */}
-              <div
-                style={{
-                  width: 90,
-                  height: 90,
-                  minWidth: 90,
-                  borderRadius: 12,
-                  background: "#ffffff",
-                  padding: 6,
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  boxShadow: "0 4px 15px rgba(0, 0, 0, 0.3)",
-                }}
-              >
-                {qrSvgMarkup ? (
-                  <div
-                    dangerouslySetInnerHTML={{
-                      __html: qrSvgMarkup.replace('width="104"', 'width="78"').replace('height="104"', 'height="78"'),
-                    }}
-                  />
-                ) : (
-                  <QrCode size={50} color="#000000" />
-                )}
-              </div>
-
-              <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-                <div style={{ fontSize: 13, fontWeight: 700, color: "#ffffff" }}>
-                  Scan for Walk-in or Web Booking
-                </div>
-                <div style={{ fontSize: 12, color: "#8e9fb5" }}>
-                  Patients scan this QR to book appointments or check in.
-                </div>
-                <div style={{ fontSize: 12, color: "#e5b869", fontWeight: 700, marginTop: 2 }}>
-                  Fee: {doctorProfile?.consultationFee?.formatted || "AED 500.00"}
-                </div>
-              </div>
-            </div>
-
-            {/* Copy / Open Public Link Buttons */}
-            <div style={{ display: "flex", gap: 8 }}>
-              <button
-                type="button"
-                onClick={handleCopyBookingLink}
-                style={{
-                  flex: 1,
-                  display: "inline-flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  gap: 6,
-                  padding: "8px 12px",
-                  borderRadius: 10,
-                  background: copiedLink ? "rgba(16, 185, 129, 0.2)" : "rgba(255, 255, 255, 0.05)",
-                  border: copiedLink ? "1px solid #10b981" : "1px solid rgba(255, 255, 255, 0.12)",
-                  color: copiedLink ? "#10b981" : "#ffffff",
-                  fontSize: 12,
-                  fontWeight: 600,
-                  cursor: "pointer",
-                }}
-              >
-                {copiedLink ? <Check size={14} /> : <Copy size={14} />}
-                <span>{copiedLink ? "Copied!" : "Copy Link"}</span>
-              </button>
-
-              <Link
-                href={`/dr/${doctorSlug}`}
-                target="_blank"
-                style={{
-                  flex: 1,
-                  display: "inline-flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  gap: 6,
-                  padding: "8px 12px",
-                  borderRadius: 10,
-                  background: "rgba(229, 184, 105, 0.12)",
-                  border: "1px solid rgba(229, 184, 105, 0.3)",
-                  color: "#e5b869",
-                  fontSize: 12,
-                  fontWeight: 700,
-                  textDecoration: "none",
-                }}
-              >
-                <span>View Page</span>
-                <ExternalLink size={13} />
-              </Link>
-            </div>
-          </div>
-
-          {/* Widget 3: Quick Navigation Shortcuts */}
-          <div
-            style={{
-              background: "#0b1325",
-              border: "1px solid rgba(255, 255, 255, 0.08)",
-              borderRadius: 18,
-              padding: 20,
-              display: "flex",
-              flexDirection: "column",
-              gap: 10,
-            }}
-          >
-            <div style={{ fontSize: 12, fontWeight: 700, color: "#8e9fb5", textTransform: "uppercase", letterSpacing: "0.04em", marginBottom: 4 }}>
-              Fast Clinical Portals
-            </div>
-
-            <Link
-              href="/live-queue"
-              style={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "space-between",
-                padding: "10px 14px",
-                borderRadius: 10,
-                background: "rgba(255, 255, 255, 0.02)",
-                border: "1px solid rgba(255, 255, 255, 0.06)",
-                color: "#ffffff",
-                textDecoration: "none",
-                fontSize: 13,
-                fontWeight: 600,
-              }}
-            >
-              <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                <Tv size={16} color="#e5b869" />
-                <span>Live OPD Queue Manager</span>
-              </div>
-              <ChevronRight size={15} color="#64748b" />
-            </Link>
-
-            <Link
-              href={ROUTES.patients}
-              style={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "space-between",
-                padding: "10px 14px",
-                borderRadius: 10,
-                background: "rgba(255, 255, 255, 0.02)",
-                border: "1px solid rgba(255, 255, 255, 0.06)",
-                color: "#ffffff",
-                textDecoration: "none",
-                fontSize: 13,
-                fontWeight: 600,
-              }}
-            >
-              <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                <Users2 size={16} color="#38bdf8" />
-                <span>Patient Registry & Visits</span>
-              </div>
-              <ChevronRight size={15} color="#64748b" />
-            </Link>
-
-            <Link
-              href={ROUTES.appointments}
-              style={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "space-between",
-                padding: "10px 14px",
-                borderRadius: 10,
-                background: "rgba(255, 255, 255, 0.02)",
-                border: "1px solid rgba(255, 255, 255, 0.06)",
-                color: "#ffffff",
-                textDecoration: "none",
-                fontSize: 13,
-                fontWeight: 600,
-              }}
-            >
-              <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                <CalendarDays size={16} color="#818cf8" />
-                <span>Appointment Schedule</span>
-              </div>
-              <ChevronRight size={15} color="#64748b" />
-            </Link>
-
-            <Link
-              href={ROUTES.settings}
-              style={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "space-between",
-                padding: "10px 14px",
-                borderRadius: 10,
-                background: "rgba(255, 255, 255, 0.02)",
-                border: "1px solid rgba(255, 255, 255, 0.06)",
-                color: "#ffffff",
-                textDecoration: "none",
-                fontSize: 13,
-                fontWeight: 600,
-              }}
-            >
-              <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                <Stethoscope size={16} color="#10b981" />
-                <span>Chamber & Profile Settings</span>
-              </div>
-              <ChevronRight size={15} color="#64748b" />
-            </Link>
-          </div>
-        </aside>
       </section>
 
       {/* 4. MODALS */}
