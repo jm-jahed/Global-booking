@@ -10,6 +10,10 @@ const loginAttemptMap = new Map<string, { attempts: number; resetAt: number }>()
 const MAX_LOGIN_ATTEMPTS = 5;
 const RATE_LIMIT_WINDOW_MS = 60_000; // 1 minute
 
+// 30 Days Token Expiration and Session Cookie Lifetime (requested by user)
+export const SESSION_EXPIRY_STRING = "30d";
+export const SESSION_MAX_AGE_SECONDS = 30 * 24 * 60 * 60; // 2,592,000 seconds (30 days)
+
 /**
  * Prunes expired entries from login attempt tracker to prevent memory leak.
  */
@@ -121,7 +125,7 @@ export async function registerAuthRoutes(app: FastifyInstance): Promise<void> {
           permissions: adminRecord.permissions,
         };
 
-        const token = app.jwt.sign(sessionPayload, { expiresIn: "24h" });
+        const token = app.jwt.sign(sessionPayload, { expiresIn: SESSION_EXPIRY_STRING });
         const isProduction = process.env.NODE_ENV === "production";
 
         // Set signed HTTP-only session cookie
@@ -131,7 +135,7 @@ export async function registerAuthRoutes(app: FastifyInstance): Promise<void> {
           secure: isProduction,
           sameSite: "lax",
           signed: true,
-          maxAge: 86400, // 24 hours
+          maxAge: SESSION_MAX_AGE_SECONDS,
         });
 
         // Update last login timestamp asynchronously
@@ -181,7 +185,7 @@ export async function registerAuthRoutes(app: FastifyInstance): Promise<void> {
           permissions: ["VIEW_DOCTORS"],
         };
 
-        const token = app.jwt.sign(sessionPayload, { expiresIn: "24h" });
+        const token = app.jwt.sign(sessionPayload, { expiresIn: SESSION_EXPIRY_STRING });
         const isProduction = process.env.NODE_ENV === "production";
 
         reply.setCookie(ADMIN_COOKIE_NAME, token, {
@@ -190,7 +194,7 @@ export async function registerAuthRoutes(app: FastifyInstance): Promise<void> {
           secure: isProduction,
           sameSite: "lax",
           signed: true,
-          maxAge: 86400, // 24 hours
+          maxAge: SESSION_MAX_AGE_SECONDS,
         });
 
         const nowIso = new Date().toISOString();
@@ -256,7 +260,7 @@ export async function registerAuthRoutes(app: FastifyInstance): Promise<void> {
           permissions: ["VIEW_HOSPITALS"],
         };
 
-        const token = app.jwt.sign(sessionPayload, { expiresIn: "24h" });
+        const token = app.jwt.sign(sessionPayload, { expiresIn: SESSION_EXPIRY_STRING });
         const isProduction = process.env.NODE_ENV === "production";
 
         reply.setCookie(ADMIN_COOKIE_NAME, token, {
@@ -265,7 +269,7 @@ export async function registerAuthRoutes(app: FastifyInstance): Promise<void> {
           secure: isProduction,
           sameSite: "lax",
           signed: true,
-          maxAge: 86400, // 24 hours
+          maxAge: SESSION_MAX_AGE_SECONDS,
         });
 
         const nowIso = new Date().toISOString();
