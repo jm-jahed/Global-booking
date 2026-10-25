@@ -209,7 +209,7 @@ export async function registerAppointmentRoutes(app: FastifyInstance): Promise<v
         chamber = doctor.chambers?.[0] || {
           id: "chamber-primary",
           facilityName: doctor.chamberLocationsSummary || "Primary Consultation Chamber",
-          city: "Dubai",
+          city: "",
           timezone: "Asia/Dubai",
         };
       }

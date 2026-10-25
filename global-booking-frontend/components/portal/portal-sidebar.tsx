@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { createPortal } from "react-dom";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import {
@@ -326,6 +327,11 @@ export function PortalSidebar({
   const [isQrModalOpen, setIsQrModalOpen] = useState(false);
   const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
   const [copiedLink, setCopiedLink] = useState(false);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   // Synchronize authenticated session state
   useEffect(() => {
@@ -530,6 +536,7 @@ export function PortalSidebar({
                   <button
                     type="button"
                     onClick={() => {
+                      onClose?.();
                       if (item.actionKey === "LOGOUT") {
                         setIsLogoutModalOpen(true);
                       } else if (item.actionKey === "QR_CODE") {
@@ -639,7 +646,7 @@ export function PortalSidebar({
               ? "Departments, Chambers & Live OPD Roster"
               : isStaff
               ? "Reception Desk • Phone Booking Active"
-              : "DHA & HIPAA Compliant • Practice Online"}
+              : "HIPAA Compliant • Practice Online"}
           </p>
         </div>
       </div>
@@ -652,8 +659,8 @@ export function PortalSidebar({
       />
 
 
-      {/* MODAL 2: LOGOUT CONFIRMATION */}
-      {isLogoutModalOpen && (
+      {/* MODAL 2: LOGOUT CONFIRMATION (PORTALED TO BODY) */}
+      {mounted && isLogoutModalOpen && createPortal(
         <div
           style={{
             position: "fixed",
@@ -663,7 +670,7 @@ export function PortalSidebar({
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
-            zIndex: 1000,
+            zIndex: 99999,
             padding: 20,
           }}
         >
@@ -740,7 +747,8 @@ export function PortalSidebar({
               </button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </aside>
   );

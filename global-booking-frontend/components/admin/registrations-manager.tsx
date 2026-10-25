@@ -68,7 +68,7 @@ export function RegistrationsManager() {
 
     if (reg.accountType === "DOCTOR") {
       const input = prompt(
-        `Approve Doctor ${reg.applicantName}:\nPlease specify consultation fee in AED:`,
+        `Approve Doctor ${reg.applicantName}:\nPlease specify consultation fee:`,
         "500",
       );
       if (input === null) {
@@ -76,14 +76,14 @@ export function RegistrationsManager() {
       }
       const parsed = parseFloat(input);
       if (isNaN(parsed) || parsed < 0) {
-        alert("Please enter a valid consultation fee amount (minimum 0 AED).");
+        alert("Please enter a valid consultation fee amount (minimum 0).");
         return;
       }
       consultationFeeAed = parsed;
     } else {
       if (
         !confirm(
-          `Are you sure you want to approve ${reg.applicantName || reg.institutionName} as an authorized ${reg.accountType}? This will create a real database account with a 14-day trial in AED.`,
+          `Are you sure you want to approve ${reg.applicantName || reg.institutionName} as an authorized ${reg.accountType}? This will create a real database account with a 14-day trial.`,
         )
       ) {
         return;
@@ -175,7 +175,7 @@ export function RegistrationsManager() {
             </span>
           </div>
           <p style={{ margin: 0, fontSize: 14, color: "#94a3b8" }}>
-            Real-time verification queue for healthcare providers. Approved accounts instantly persist in MongoDB Atlas with a 14-day AED trial.
+            Real-time verification queue for healthcare providers. Approved accounts instantly persist in MongoDB Atlas with a 14-day trial.
           </p>
         </div>
 
@@ -439,7 +439,7 @@ export function RegistrationsManager() {
                       </span>
                     ) : (
                       <span>
-                        Facility: <strong style={{ color: "#fff" }}>{reg.facilityDetails?.facilityType || "General Hospital"}</strong> | City: <strong style={{ color: "#fff" }}>{reg.facilityDetails?.location?.city || "Dubai"}</strong>
+                        Facility: <strong style={{ color: "#fff" }}>{reg.facilityDetails?.facilityType || "General Hospital"}</strong> | City: <strong style={{ color: "#fff" }}>{reg.facilityDetails?.location?.city || "Not specified"}</strong>
                       </span>
                     )}
                     {reg.documents?.length > 0 && (
@@ -837,7 +837,7 @@ export function RegistrationsManager() {
               Account Successfully Created!
             </h3>
             <p style={{ fontSize: 14, color: "#94a3b8", margin: "0 0 20px" }}>
-              <strong>{approvedResult.registration.applicantName}</strong> has been approved. A real database record and a 14-day AED trial subscription have been initialized in MongoDB Atlas.
+              <strong>{approvedResult.registration.applicantName}</strong> has been approved. A real database record and a 14-day trial subscription have been initialized in MongoDB Atlas.
             </p>
 
             <div
@@ -857,7 +857,6 @@ export function RegistrationsManager() {
               <div><strong>Account ID:</strong> <code style={{ color: "#e5b869" }}>{approvedResult.createdAccount?.accountId}</code></div>
               <div><strong>Entity ID:</strong> <code style={{ color: "#38bdf8" }}>{approvedResult.createdAccount?.entityId}</code></div>
               <div><strong>Status:</strong> <span style={{ color: "#10b981" }}>TRIAL (14 Days)</span></div>
-              <div><strong>Currency:</strong> <span style={{ color: "#fff" }}>AED</span></div>
               
               <div style={{ marginTop: 8 }}>
                 <strong>Secure Invitation Token:</strong>

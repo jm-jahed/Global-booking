@@ -48,9 +48,9 @@ export function HospitalsManager() {
     phone: "",
     facilityType: "GENERAL_HOSPITAL",
     licenseNumber: "",
-    city: "Dubai",
-    emirateOrState: "Dubai",
-    addressLine1: "Healthcare City Phase 2",
+    city: "",
+    emirateOrState: "",
+    addressLine1: "",
     departments: ["General Medicine", "Emergency Care"],
     bedCapacity: 120,
     emergencyUnitAvailable: true,
@@ -110,7 +110,7 @@ export function HospitalsManager() {
       setSubmitting(true);
       const res = await createHospital({
         ...formData,
-        licenseNumber: formData.licenseNumber || `DHA-HSP-${Date.now().toString().slice(-6)}`,
+        licenseNumber: formData.licenseNumber || `HSP-${Date.now().toString().slice(-6)}`,
         departments: ["General Medicine", "Emergency Care"],
       });
       setCreatedResult(res);
@@ -122,9 +122,9 @@ export function HospitalsManager() {
         phone: "",
         facilityType: "GENERAL_HOSPITAL",
         licenseNumber: "",
-        city: "Dubai",
-        emirateOrState: "Dubai",
-        addressLine1: "Healthcare City Phase 2",
+        city: "",
+        emirateOrState: "",
+        addressLine1: "",
         departments: ["General Medicine", "Emergency Care"],
         bedCapacity: 120,
         emergencyUnitAvailable: true,
@@ -460,7 +460,7 @@ export function HospitalsManager() {
                   </div>
                   <div>
                     <span style={{ color: "#94a3b8", display: "block" }}>City</span>
-                    <strong style={{ color: "#fff" }}>{hsp.city || "Dubai"}</strong>
+                    <strong style={{ color: "#fff" }}>{hsp.city || "Not specified"}</strong>
                   </div>
                   <div>
                     <span style={{ color: "#94a3b8", display: "block" }}>Bed Capacity</span>
@@ -595,7 +595,7 @@ export function HospitalsManager() {
                     required
                     value={formData.institutionName}
                     onChange={(e) => setFormData({ ...formData, institutionName: e.target.value })}
-                    placeholder="e.g. Dubai Memorial Hospital"
+                    placeholder="e.g. City General Hospital & Medical Center"
                     style={{
                       width: "100%",
                       background: "rgba(0,0,0,0.4)",
@@ -618,7 +618,7 @@ export function HospitalsManager() {
                     required
                     value={formData.email}
                     onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                    placeholder="admin@memorial-hospital.ae"
+                    placeholder="admin@hospital-domain.com"
                     style={{
                       width: "100%",
                       background: "rgba(0,0,0,0.4)",
@@ -723,7 +723,7 @@ export function HospitalsManager() {
                     required
                     value={formData.phone}
                     onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                    placeholder="+971 4 345 6789"
+                    placeholder="e.g. +1 555 345 6789"
                     style={{
                       width: "100%",
                       background: "rgba(0,0,0,0.4)",
@@ -949,7 +949,7 @@ export function HospitalsManager() {
               <div><strong>Account ID:</strong> <code style={{ color: "#e5b869" }}>{createdResult.hospital?.id}</code></div>
               <div><strong>Hospital ID:</strong> <code style={{ color: "#38bdf8" }}>{createdResult.hospital?.hospitalId}</code></div>
               <div><strong>Status:</strong> <span style={{ color: "#10b981" }}>{createdResult.hospital?.accountStatus}</span></div>
-              <div><strong>Subscription:</strong> <span style={{ color: "#fff" }}>{createdResult.subscription?.planName} (AED)</span></div>
+              <div><strong>Subscription:</strong> <span style={{ color: "#fff" }}>{createdResult.subscription?.planName}</span></div>
 
               {createdResult.credentials && (
                 <div

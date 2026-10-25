@@ -317,7 +317,7 @@ export async function registerDoctorPortalRoutes(app: FastifyInstance): Promise<
           return reply.status(400).send({
             statusCode: 400,
             error: "Bad Request",
-            message: "Consultation fee must be a valid amount between 0 and 50,000 AED.",
+            message: "Consultation fee must be a valid amount between 0 and 50,000.",
           });
         }
         const newFee: MoneyAmount = formatAedAmount(fee);

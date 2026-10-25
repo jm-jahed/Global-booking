@@ -38,6 +38,13 @@ interface CreateHospitalBody {
   city?: string | undefined;
   emirateOrState?: string | undefined;
   addressLine1?: string | undefined;
+  country?: string | undefined;
+  location?: {
+    addressLine1?: string | undefined;
+    city?: string | undefined;
+    stateOrEmirate?: string | undefined;
+    country?: string | undefined;
+  } | undefined;
   departments?: string[] | undefined;
   bedCapacity?: number | undefined;
   emergencyUnitAvailable?: boolean | undefined;
@@ -174,9 +181,11 @@ export async function registerHospitalRoutes(app: FastifyInstance): Promise<void
         phone,
         facilityType = "GENERAL_HOSPITAL",
         licenseNumber,
-        city = "Dubai",
-        emirateOrState = "Dubai",
-        addressLine1 = "Healthcare City Phase 2",
+        city = "",
+        emirateOrState = "",
+        addressLine1 = "",
+        country = "",
+        location: bodyLocation,
         departments = ["General Medicine", "Emergency Care"],
         bedCapacity = 100,
         emergencyUnitAvailable = true,
@@ -211,7 +220,7 @@ export async function registerHospitalRoutes(app: FastifyInstance): Promise<void
       const normalizedLicense =
         licenseNumber && licenseNumber.trim()
           ? licenseNumber.trim().toUpperCase()
-          : `DHA-HSP-${Date.now().toString().slice(-6)}`;
+          : `HSP-${Date.now().toString().slice(-6)}`;
 
       const hspCol = mongoAdapter.getHospitalCollection();
 
@@ -284,16 +293,16 @@ export async function registerHospitalRoutes(app: FastifyInstance): Promise<void
         affiliatedDoctorCount: 0,
         outpatientPatientCount: 0,
         totalAppointmentsCount: 0,
-        city: city.trim(),
-        emirateOrState: emirateOrState.trim(),
+        city: (city || "").trim(),
+        emirateOrState: (emirateOrState || "").trim(),
         departments: deptList,
         bedCapacity: Number(bedCapacity) || 50,
         emergencyUnitAvailable: Boolean(emergencyUnitAvailable),
         location: {
-          addressLine1: addressLine1.trim(),
-          city: city.trim(),
-          stateOrEmirate: emirateOrState.trim(),
-          country: "United Arab Emirates",
+          addressLine1: (addressLine1 || bodyLocation?.addressLine1 || "").trim(),
+          city: (city || bodyLocation?.city || "").trim(),
+          stateOrEmirate: (emirateOrState || bodyLocation?.stateOrEmirate || "").trim(),
+          country: (country || bodyLocation?.country || "").trim(),
         },
         invitationTokenHash,
         invitationTokenExpiresAt: tokenExpiresAt,

@@ -36,9 +36,7 @@ import {
  */
 export function createSafeAEDAmount(aedValue: number): MoneyAmount {
   const integerFils = Math.round(aedValue * 100);
-  const formatted = new Intl.NumberFormat("en-AE", {
-    style: "currency",
-    currency: "AED",
+  const formatted = new Intl.NumberFormat("en-US", {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   }).format(integerFils / 100);

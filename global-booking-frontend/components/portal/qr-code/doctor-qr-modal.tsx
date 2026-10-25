@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
+import { createPortal } from "react-dom";
 import Link from "next/link";
 import {
   QrCode,
@@ -30,11 +31,16 @@ export interface DoctorQrModalProps {
 type ViewMode = "BOTH" | "PORTFOLIO" | "BOOKING";
 
 export function DoctorQrModal({ isOpen, onClose, initialProfile }: DoctorQrModalProps) {
+  const [mounted, setMounted] = useState(false);
   const [viewMode, setViewMode] = useState<ViewMode>("BOTH");
   const [profile, setProfile] = useState<DoctorProfileRecord | null>(initialProfile || null);
   const [loading, setLoading] = useState(!initialProfile);
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   // Fetch doctor profile if not provided
   useEffect(() => {
@@ -55,7 +61,7 @@ export function DoctorQrModal({ isOpen, onClose, initialProfile }: DoctorQrModal
     }
   }, [isOpen, profile]);
 
-  if (!isOpen) return null;
+  if (!isOpen || !mounted) return null;
 
   // Determine correct public frontend origin dynamically from runtime browser origin
   const rawOrigin =
@@ -141,7 +147,7 @@ export function DoctorQrModal({ isOpen, onClose, initialProfile }: DoctorQrModal
     window.print();
   };
 
-  return (
+  return createPortal(
     <div
       className="qr-modal-overlay"
       style={{
@@ -152,7 +158,7 @@ export function DoctorQrModal({ isOpen, onClose, initialProfile }: DoctorQrModal
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
-        zIndex: 1000,
+        zIndex: 99999,
         padding: "20px 16px",
       }}
       onClick={onClose}
@@ -234,7 +240,7 @@ export function DoctorQrModal({ isOpen, onClose, initialProfile }: DoctorQrModal
             </div>
           </div>
 
-          <div className="no-print" style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          <div className="no-print qr-modal-header-actions" style={{ display: "flex", alignItems: "center", gap: 10 }}>
             {hasConfiguredSlug && (
               <button
                 type="button"
@@ -935,6 +941,7 @@ export function DoctorQrModal({ isOpen, onClose, initialProfile }: DoctorQrModal
           }
         }
       `}</style>
-    </div>
+    </div>,
+    document.body
   );
 }

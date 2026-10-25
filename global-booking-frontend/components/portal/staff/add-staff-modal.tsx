@@ -72,7 +72,7 @@ export function AddStaffModal({ isOpen, onClose, onAddStaff, chambers }: AddStaf
       id: `staff-${Date.now()}`,
       name: name.trim(),
       email: email.trim().toLowerCase(),
-      phone: phone.trim() || "+971 50 123 4567",
+      phone: phone.trim() || "+1 555 123 4567",
       role,
       chamberLocation: chamberLocation || "All Practice Chambers",
       status: "Active",
@@ -274,7 +274,7 @@ export function AddStaffModal({ isOpen, onClose, onAddStaff, chambers }: AddStaf
                   type="tel"
                   value={phone}
                   onChange={(e) => setPhone(e.target.value)}
-                  placeholder="+971 50 123 4567"
+                  placeholder="e.g. +1 555 123 4567"
                   style={{
                     width: "100%",
                     background: "rgba(255,255,255,0.04)",

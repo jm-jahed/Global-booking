@@ -48,8 +48,7 @@ export function ServiceDetailModal({ service, onClose, onBookService }: ServiceD
           <div className="service-modal-kpi-strip">
             <div className="service-kpi-item">
               <span className="kpi-micro-label">Pricing</span>
-              <span className="kpi-value-gold">AED {service.priceAED.toLocaleString()}</span>
-              <span className="kpi-sub-text">≈ ${service.priceUSD} USD</span>
+              <span className="kpi-value-gold">{service.priceAED.toLocaleString()}</span>
             </div>
 
             <div className="service-kpi-item">

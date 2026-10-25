@@ -46,10 +46,10 @@ const DEFAULT_WEEKLY_SCHEDULE: Record<string, DaySchedule> = {
 const DEFAULT_CHAMBER: DoctorChamberDetail = {
   id: "chamber-main",
   facilityName: "Main Consultation Chamber",
-  city: "Dubai",
+  city: "",
   visitingSchedule: "Daily 05:00 AM – 09:00 PM",
   roomNumber: "Suite 405, 4th Floor",
-  contactPhone: "+971 4 435 9999",
+  contactPhone: "",
   timezone: "Asia/Dubai",
 };
 
@@ -65,7 +65,7 @@ export function AvailabilityView() {
 
   // Section 8 State: Consultation Fee & Chamber Locations
   const [consultationFeeAed, setConsultationFeeAed] = useState<number>(500);
-  const [chamberSummary, setChamberSummary] = useState<string>("Mediclinic City Hospital, Dubai Healthcare City");
+  const [chamberSummary, setChamberSummary] = useState<string>("");
   const [chambers, setChambers] = useState<DoctorChamberDetail[]>([DEFAULT_CHAMBER]);
   const [selectedChamberId, setSelectedChamberId] = useState<string>("chamber-main");
 
@@ -130,10 +130,10 @@ export function AvailabilityView() {
     const newChamber: DoctorChamberDetail = {
       id: newId,
       facilityName: `Consultation Chamber #${chambers.length + 1}`,
-      city: "Dubai",
+      city: "",
       visitingSchedule: "Mon - Fri: 09:00 AM – 05:00 PM",
       roomNumber: "Room 101",
-      contactPhone: "+971 4 435 9999",
+      contactPhone: "",
       timezone: "Asia/Dubai",
     };
     const updated = [...chambers, newChamber];
@@ -229,7 +229,7 @@ export function AvailabilityView() {
         chambers: chambers.map((c) => ({
           id: c.id,
           facilityName: c.facilityName.trim() || "Consultation Chamber",
-          city: c.city.trim() || "Dubai",
+          city: c.city.trim() || "",
           visitingSchedule: c.visitingSchedule?.trim() || "Daily 05:00 AM – 09:00 PM",
           roomNumber: c.roomNumber?.trim() || "",
           contactPhone: c.contactPhone?.trim() || "",
@@ -440,10 +440,10 @@ export function AvailabilityView() {
             </div>
           </div>
           <div className="availability-kpi-value" style={{ fontSize: 19, fontWeight: 800, color: "#e5b869" }}>
-            {consultationFeeAed} <span style={{ fontSize: 12, fontWeight: 700, color: "#f3c87a" }}>AED</span>
+            {consultationFeeAed}
           </div>
           <div className="availability-kpi-sub" style={{ fontSize: 11, color: "#94a3b8", marginTop: 4 }}>
-            Follow-up: <strong style={{ color: "#ffffff" }}>{Math.round(consultationFeeAed * 0.75)} AED</strong>
+            Follow-up: <strong style={{ color: "#ffffff" }}>{Math.round(consultationFeeAed * 0.75)}</strong>
           </div>
         </div>
 
@@ -533,7 +533,7 @@ export function AvailabilityView() {
           {/* Initial Fee */}
           <div>
             <label style={{ display: "block", fontSize: 12, color: "#cbd5e1", marginBottom: 6, fontWeight: 600 }}>
-              Initial Consultation Fee (AED)
+              Initial Consultation Fee
             </label>
             <div style={{ position: "relative" }}>
               <input
@@ -555,7 +555,7 @@ export function AvailabilityView() {
                   background: "rgba(255,255,255,0.04)",
                   border: "1px solid rgba(255,255,255,0.12)",
                   borderRadius: 8,
-                  padding: "11px 48px 11px 12px",
+                  padding: "11px 12px",
                   color: "#ffffff",
                   fontSize: 14,
                   fontWeight: 600,
@@ -563,22 +563,9 @@ export function AvailabilityView() {
                   boxSizing: "border-box",
                 }}
               />
-              <span
-                style={{
-                  position: "absolute",
-                  right: 12,
-                  top: 12,
-                  fontSize: 12,
-                  color: "#e5b869",
-                  fontWeight: 700,
-                  letterSpacing: "0.04em",
-                }}
-              >
-                AED
-              </span>
             </div>
             <p style={{ margin: "6px 0 0", fontSize: 11, color: "#8e9fb5" }}>
-              Follow-up fee is automatically calculated at 75% ({Math.round(consultationFeeAed * 0.75)} AED).
+              Follow-up fee is automatically calculated at 75% ({Math.round(consultationFeeAed * 0.75)}).
             </p>
           </div>
 
@@ -591,7 +578,7 @@ export function AvailabilityView() {
               type="text"
               value={chamberSummary}
               onChange={(e) => setChamberSummary(e.target.value)}
-              placeholder="e.g. Mediclinic City Hospital, Dubai Healthcare City"
+              placeholder="e.g. City General Hospital, Central Medical Wing"
               style={{
                 width: "100%",
                 background: "rgba(255,255,255,0.04)",
@@ -812,16 +799,16 @@ export function AvailabilityView() {
                 />
               </div>
 
-              {/* 2. City / Emirate */}
+              {/* 2. City / State / Region */}
               <div>
                 <label style={{ display: "block", fontSize: 11.5, color: "#cbd5e1", marginBottom: 5, fontWeight: 600 }}>
-                  City / Emirate
+                  City / State / Region
                 </label>
                 <input
                   type="text"
                   value={activeChamber.city}
                   onChange={(e) => handleUpdateActiveChamber("city", e.target.value)}
-                  placeholder="e.g. Dubai"
+                  placeholder="e.g. Downtown Central"
                   style={{
                     width: "100%",
                     background: "rgba(255,255,255,0.04)",
@@ -893,7 +880,7 @@ export function AvailabilityView() {
                   type="text"
                   value={activeChamber.contactPhone || ""}
                   onChange={(e) => handleUpdateActiveChamber("contactPhone", e.target.value)}
-                  placeholder="e.g. +971 4 435 9999"
+                  placeholder="e.g. +1 555 123 4567"
                   style={{
                     width: "100%",
                     background: "rgba(255,255,255,0.04)",
@@ -1315,7 +1302,7 @@ export function AvailabilityView() {
             {activeChamber.facilityName} • {activeChamber.roomNumber || "Suite 405, 4th Floor"} ({activeChamber.city})
           </div>
           <div style={{ fontSize: 12, color: "#cbd5e1", lineHeight: 1.6 }}>
-            Visiting Schedule: <strong>{activeChamber.visitingSchedule}</strong> • Consultation Fee: <strong>{consultationFeeAed} AED</strong> (Initial) / <strong>{Math.round(consultationFeeAed * 0.75)} AED</strong> (Follow-up) • Phone: <strong>{activeChamber.contactPhone}</strong>
+            Visiting Schedule: <strong>{activeChamber.visitingSchedule}</strong> • Consultation Fee: <strong>{consultationFeeAed}</strong> (Initial) / <strong>{Math.round(consultationFeeAed * 0.75)}</strong> (Follow-up) • Phone: <strong>{activeChamber.contactPhone}</strong>
           </div>
         </div>
 

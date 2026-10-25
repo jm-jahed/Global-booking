@@ -170,14 +170,11 @@ export function AdminTopbar({ onToggleSidebar, isSidebarOpen = false, adminUser 
 
       {/* Right: Info Badges, Notifications & Admin Profile */}
       <div className="admin-topbar-right">
-        {/* Currency & Environment Indicator */}
+        {/* Environment Indicator */}
         <div
           className="admin-topbar-info-pill"
-          title="Default system currency is AED; live database connected"
+          title="Authoritative live production database connected"
         >
-          <span>Currency:</span>
-          <span className="admin-info-highlight">AED</span>
-          <span>•</span>
           <span style={{ color: "#10b981", fontWeight: 600 }}>Live Production</span>
         </div>
 

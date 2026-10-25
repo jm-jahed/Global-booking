@@ -375,7 +375,7 @@ export function DoctorSettingsEditor() {
       {
         id: `CH-${Date.now().toString().slice(-4)}`,
         facilityName: "",
-        city: "Dubai",
+        city: "",
         visitingSchedule: "Mon - Thu: 5:00 PM - 9:00 PM",
         roomNumber: "",
         contactPhone: "",
@@ -1770,7 +1770,7 @@ export function DoctorSettingsEditor() {
                           type="text"
                           value={awd.issuingBody}
                           onChange={(e) => handleUpdateAward(idx, "issuingBody", e.target.value)}
-                          placeholder="e.g. Emirates Healthcare Excellence Awards"
+                          placeholder="e.g. National Healthcare Excellence Awards"
                           style={{
                             width: "100%",
                             background: "rgba(255,255,255,0.04)",
@@ -2177,7 +2177,7 @@ export function DoctorSettingsEditor() {
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))", gap: 18, marginBottom: 20 }}>
               <div>
                 <label style={{ display: "block", fontSize: 12, color: "#cbd5e1", marginBottom: 6, fontWeight: 600 }}>
-                  Initial Consultation Fee (AED)
+                  Initial Consultation Fee
                 </label>
                 <div style={{ position: "relative" }}>
                   <input
@@ -2205,12 +2205,9 @@ export function DoctorSettingsEditor() {
                       outline: "none",
                     }}
                   />
-                  <span style={{ position: "absolute", right: 12, top: 11, fontSize: 12, color: "#e5b869", fontWeight: 700 }}>
-                    AED
-                  </span>
                 </div>
                 <p style={{ margin: "6px 0 0", fontSize: 11, color: "#64748b" }}>
-                  Follow-up fee is automatically calculated at 75% ({Math.round(consultationFeeAed * 0.75)} AED).
+                  Follow-up fee is automatically calculated at 75% ({Math.round(consultationFeeAed * 0.75)}).
                 </p>
               </div>
 
@@ -2232,7 +2229,7 @@ export function DoctorSettingsEditor() {
                     fontSize: 13,
                     outline: "none",
                   }}
-                  placeholder="e.g. Mediclinic City Hospital, Dubai Healthcare City"
+                  placeholder="e.g. City General Hospital, Central Medical Wing"
                 />
               </div>
             </div>
@@ -2328,13 +2325,13 @@ export function DoctorSettingsEditor() {
 
                         <div>
                           <label style={{ display: "block", fontSize: 11, color: "#94a3b8", marginBottom: 4 }}>
-                            City / Emirate
+                            City / State / Region
                           </label>
                           <input
                             type="text"
                             value={ch.city}
                             onChange={(e) => handleUpdateChamber(idx, "city", e.target.value)}
-                            placeholder="e.g. Dubai Healthcare City"
+                            placeholder="e.g. Downtown Central"
                             style={{
                               width: "100%",
                               background: "rgba(255,255,255,0.04)",
@@ -2397,7 +2394,7 @@ export function DoctorSettingsEditor() {
                             type="text"
                             value={ch.contactPhone || ""}
                             onChange={(e) => handleUpdateChamber(idx, "contactPhone", e.target.value)}
-                            placeholder="e.g. +971 4 435 9999"
+                            placeholder="e.g. +1 555 123 4567"
                             style={{
                               width: "100%",
                               background: "rgba(255,255,255,0.04)",
@@ -2467,7 +2464,7 @@ export function DoctorSettingsEditor() {
                     type="text"
                     value={clinicPhone}
                     onChange={(e) => setClinicPhone(e.target.value)}
-                    placeholder="e.g. +971 4 435 9999"
+                    placeholder="e.g. +1 555 123 4567"
                     style={{
                       width: "100%",
                       background: "rgba(255,255,255,0.04)",
@@ -2492,7 +2489,7 @@ export function DoctorSettingsEditor() {
                     type="text"
                     value={inquiryWhatsApp}
                     onChange={(e) => setInquiryWhatsApp(e.target.value)}
-                    placeholder="e.g. +971 50 123 4567"
+                    placeholder="e.g. +1 555 987 6543"
                     style={{
                       width: "100%",
                       background: "rgba(255,255,255,0.04)",
@@ -2627,7 +2624,7 @@ export function DoctorSettingsEditor() {
                           type="text"
                           value={doc.title}
                           onChange={(e) => handleUpdateDocument(idx, "title", e.target.value)}
-                          placeholder="e.g. DHA Specialist Cardiology License"
+                          placeholder="e.g. Medical Board Specialist License"
                           style={{
                             width: "100%",
                             background: "rgba(255,255,255,0.04)",

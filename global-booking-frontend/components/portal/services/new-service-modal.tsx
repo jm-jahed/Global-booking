@@ -172,7 +172,7 @@ export function NewServiceModal({ isOpen, onClose, onAddService }: NewServiceMod
             </div>
 
             <div className="modal-field">
-              <label className="modal-label">Standard Price (AED)</label>
+              <label className="modal-label">Standard Price</label>
               <div className="modal-input-wrap">
                 <DollarSign size={15} className="modal-input-icon" />
                 <input
@@ -196,7 +196,7 @@ export function NewServiceModal({ isOpen, onClose, onAddService }: NewServiceMod
                 onChange={(e) => setInsuranceCovered(e.target.value === "yes")}
                 className="modal-select modal-input-plain"
               >
-                <option value="yes">Yes — Covered by UAE Insurance Networks</option>
+                <option value="yes">Yes — Covered by Standard Insurance Networks</option>
                 <option value="no">No — Self-Pay / Private Only</option>
               </select>
             </div>

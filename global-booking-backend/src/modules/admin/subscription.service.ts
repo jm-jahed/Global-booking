@@ -16,10 +16,10 @@ import type {
 export function formatAedAmount(aedUnits: number): MoneyAmount {
   const safeUnits = Number.isFinite(aedUnits) && aedUnits >= 0 ? aedUnits : 0;
   const amountInFils = Math.round(safeUnits * 100);
-  const formatted = `AED ${(amountInFils / 100).toLocaleString("en-US", {
+  const formatted = (amountInFils / 100).toLocaleString("en-US", {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
-  })}`;
+  });
 
   return {
     amountInFils,

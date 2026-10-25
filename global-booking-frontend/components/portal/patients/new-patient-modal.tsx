@@ -176,7 +176,7 @@ export function NewPatientModal({ isOpen, onClose, onPatientCreated }: NewPatien
                 </label>
                 <input
                   type="tel"
-                  placeholder="e.g. +971 50 123 4567 or 017..."
+                  placeholder="e.g. +1 555 123 4567 or local number"
                   value={phone}
                   onChange={(e) => setPhone(e.target.value)}
                   style={{

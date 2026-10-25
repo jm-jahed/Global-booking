@@ -205,7 +205,7 @@ export function AdminSettingsManager() {
                 borderRadius: 20,
               }}
             >
-              AED Locked
+              Standard Pricing Model
             </span>
           </div>
           <p style={{ margin: 0, fontSize: 14, color: "#94a3b8" }}>
@@ -346,7 +346,7 @@ export function AdminSettingsManager() {
 
               <div>
                 <label style={{ display: "block", fontSize: 13, color: "#cbd5e1", marginBottom: 6 }}>
-                  Operating Currency (Permanently Locked)
+                  Operating Pricing Model
                 </label>
                 <div
                   style={{
@@ -363,10 +363,10 @@ export function AdminSettingsManager() {
                   }}
                 >
                   <Lock size={16} />
-                  <span>AED — United Arab Emirates Dirham</span>
+                  <span>Numeric Pricing (Standard Base Units)</span>
                 </div>
                 <span style={{ display: "block", fontSize: 11, color: "#64748b", marginTop: 4 }}>
-                  System-wide currency locked to AED for UAE regulatory compliance and Doctor/Hospital billing.
+                  System-wide standard numeric amounts for global doctor/hospital billing without regional currency locks.
                 </span>
               </div>
             </div>
@@ -651,10 +651,10 @@ export function AdminSettingsManager() {
               >
                 <div>
                   <div style={{ fontWeight: 600, color: "#fff" }}>
-                    Mandatory Regulatory License Verification (DHA / MOH / DOH)
+                    Mandatory Regulatory License Verification (Accredited Medical Board)
                   </div>
                   <div style={{ fontSize: 12, color: "#94a3b8", marginTop: 2 }}>
-                    Staff must confirm official UAE medical registration numbers before granting account activation.
+                    Staff must confirm official medical registration numbers before granting account activation.
                   </div>
                 </div>
                 <input

@@ -105,7 +105,7 @@ export function DashboardView() {
   const primaryChamber = doctorProfile?.chambers?.[0] || {
     id: "main-chamber",
     facilityName: "Main Specialist Clinic",
-    city: "Dubai",
+    city: "",
     timezone: DEFAULT_CHAMBER_TIMEZONE,
     visitingSchedule: "Daily 05:00 PM – 09:00 PM",
   };
@@ -209,7 +209,7 @@ export function DashboardView() {
           consultationFee: {
             amountInFils: 50000,
             currency: "AED",
-            formatted: "AED 500.00",
+            formatted: "500.00",
           },
           slug: stored.slug || "dr-specialist",
           chambers: stored.chambers || [],
@@ -492,7 +492,7 @@ export function DashboardView() {
               }}
             >
               <MapPin size={13} color="#e5b869" />
-              {primaryChamber.facilityName} ({primaryChamber.city || "Dubai"})
+              {primaryChamber.facilityName} {primaryChamber.city ? `(${primaryChamber.city})` : ""}
             </span>
           </div>
 

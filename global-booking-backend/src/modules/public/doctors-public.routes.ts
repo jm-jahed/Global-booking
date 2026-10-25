@@ -210,7 +210,7 @@ export async function registerDoctorPublicRoutes(app: FastifyInstance): Promise<
                             {
                               id: "CHAMBER-1",
                               facilityName: match.chamberLocationsSummary || "Main Consultation Chamber",
-                              city: "Dubai",
+                              city: "",
                               visitingSchedule: "Daily 05:00 PM – 09:00 PM",
                             },
                           ],
@@ -527,7 +527,7 @@ export async function registerDoctorPublicRoutes(app: FastifyInstance): Promise<
         chamber = doctor.chambers?.[0] || {
           id: "chamber-primary",
           facilityName: doctor.chamberLocationsSummary || "Primary Consultation Chamber",
-          city: "Dubai",
+          city: "",
           timezone: "Asia/Dubai",
         };
       }

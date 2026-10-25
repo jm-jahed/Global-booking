@@ -30,7 +30,7 @@ test("Public Doctor API (GET /api/v1/public/doctors/:slug) - Security, Publishin
     consultationFee: {
       amountInFils: 50000,
       currency: "AED",
-      formatted: "AED 500.00",
+      formatted: "500.00",
     },
     bio: "Senior cardiovascular physician specializing in complex coronary interventions.",
     languages: ["English", "Arabic"],
@@ -75,7 +75,7 @@ test("Public Doctor API (GET /api/v1/public/doctors/:slug) - Security, Publishin
     consultationFee: {
       amountInFils: 75000,
       currency: "AED",
-      formatted: "AED 750.00",
+      formatted: "750.00",
     },
     bio: "Senior cranial and spinal neurosurgeon specializing in minimally invasive neuro-endoscopy.",
     languages: ["English", "French"],
@@ -215,7 +215,7 @@ test("Public Doctor API (GET /api/v1/public/doctors/:slug) - Security, Publishin
     consultationFee: {
       amountInFils: 25000,
       currency: "AED",
-      formatted: "AED 250.00",
+      formatted: "250.00",
     },
     isPublished: true,
     passwordHash: "$2b$12$super_secret_hash_value_never_expose",
@@ -323,7 +323,7 @@ test("Public Doctor API (GET /api/v1/public/doctors/:slug) - Security, Publishin
     assert.equal(doc.yearsOfExperience, 14);
     assert.equal(doc.bio, "Senior cardiovascular physician specializing in complex coronary interventions.");
     assert.deepEqual(doc.languages, ["English", "Arabic"]);
-    assert.equal(doc.consultationFee.formatted, "AED 500.00");
+    assert.equal(doc.consultationFee.formatted, "500.00");
     assert.equal(doc.isPublished, true);
 
     // Verify sanitized chamber fields (facilityName, city, visitingSchedule)

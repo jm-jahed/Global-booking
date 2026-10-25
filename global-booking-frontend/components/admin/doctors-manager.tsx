@@ -51,7 +51,7 @@ export function DoctorsManager() {
     specialty: "Cardiology",
     licenseNumber: "",
     yearsOfExperience: 5,
-    chamberLocationsSummary: "Dubai Healthcare City",
+    chamberLocationsSummary: "",
     consultationFeeAed: 500,
     accountStatus: "TRIAL",
   });
@@ -129,7 +129,7 @@ export function DoctorsManager() {
         specialty: formData.specialty || "General Specialist",
         licenseNumber: formData.licenseNumber || `LIC-${Date.now().toString().slice(-6)}`,
         yearsOfExperience: formData.yearsOfExperience || 5,
-        chamberLocationsSummary: formData.chamberLocationsSummary || "Main Medical Center",
+        chamberLocationsSummary: formData.chamberLocationsSummary || "",
         consultationFeeAed: formData.consultationFeeAed || 500,
       };
       const res = await createDoctor(payload);
@@ -143,7 +143,7 @@ export function DoctorsManager() {
         specialty: "General Specialist",
         licenseNumber: "",
         yearsOfExperience: 5,
-        chamberLocationsSummary: "Main Medical Center",
+        chamberLocationsSummary: "",
         consultationFeeAed: 500,
         accountStatus: "TRIAL",
       });
@@ -218,7 +218,7 @@ export function DoctorsManager() {
             </span>
           </div>
           <p style={{ margin: 0, fontSize: 14, color: "#94a3b8" }}>
-            Manage authorized healthcare specialists, assigned Patients, AED consultation fees, and subscription lifecycles.
+            Manage authorized healthcare specialists, assigned Patients, consultation fees, and subscription lifecycles.
           </p>
         </div>
 
@@ -473,7 +473,7 @@ export function DoctorsManager() {
                   <div>
                     <span style={{ color: "#94a3b8", display: "block" }}>Consultation Fee</span>
                     <strong style={{ color: "#e5b869", fontSize: 14 }}>
-                      {doc.consultationFee?.formatted || "AED 500.00"}
+                      {doc.consultationFee?.formatted || "500.00"}
                     </strong>
                   </div>
                   <div>
@@ -482,7 +482,7 @@ export function DoctorsManager() {
                   </div>
                   <div>
                     <span style={{ color: "#94a3b8", display: "block" }}>Location</span>
-                    <strong style={{ color: "#fff" }}>{doc.chamberLocationsSummary || "Dubai"}</strong>
+                    <strong style={{ color: "#fff" }}>{doc.chamberLocationsSummary || "Not specified"}</strong>
                   </div>
                 </div>
 
@@ -741,7 +741,7 @@ export function DoctorsManager() {
                     required
                     value={formData.phone}
                     onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                    placeholder="+971 50 123 4567"
+                    placeholder="e.g. +1 555 123 4567"
                     style={{
                       width: "100%",
                       background: "rgba(0,0,0,0.4)",
@@ -967,7 +967,7 @@ export function DoctorsManager() {
               <div><strong>Account ID:</strong> <code style={{ color: "#e5b869" }}>{createdResult.doctor?.id}</code></div>
               <div><strong>Doctor ID:</strong> <code style={{ color: "#38bdf8" }}>{createdResult.doctor?.doctorId}</code></div>
               <div><strong>Status:</strong> <span style={{ color: "#10b981" }}>{createdResult.doctor?.accountStatus}</span></div>
-              <div><strong>Subscription:</strong> <span style={{ color: "#fff" }}>{createdResult.subscription?.planName} (AED)</span></div>
+              <div><strong>Subscription:</strong> <span style={{ color: "#fff" }}>{createdResult.subscription?.planName}</span></div>
               
               {/* Doctor Sign-In Credentials Block */}
               <div

@@ -104,7 +104,7 @@ test("GET and PATCH /api/v1/portal/doctor/profile enforces ownership and updates
     consultationFee: {
       amountInFils: 50000,
       currency: "AED",
-      formatted: "AED 500.00",
+      formatted: "500.00",
     },
     passwordHash: "$2b$12$super_secret_hash_value_never_expose",
     invitationTokenHash: "sha256_invitation_hash_never_expose",
@@ -170,7 +170,7 @@ test("GET and PATCH /api/v1/portal/doctor/profile enforces ownership and updates
     assert.equal(getBody.doctor.fullName, "Dr. Sarah Khan");
     assert.equal(getBody.doctor.specialty, "Consultant Cardiologist");
     assert.equal(getBody.doctor.slug, "dr-sarah-khan");
-    assert.equal(getBody.doctor.consultationFee.formatted, "AED 500.00");
+    assert.equal(getBody.doctor.consultationFee.formatted, "500.00");
 
     // CRITICAL PRIVACY CHECK: passwordHash and invitationTokenHash MUST NEVER BE PRESENT
     assert.equal(getBody.doctor.passwordHash, undefined);
@@ -211,7 +211,7 @@ test("GET and PATCH /api/v1/portal/doctor/profile enforces ownership and updates
     assert.equal(patchBody.success, true);
     assert.equal(patchBody.doctor.bio, "Specializing in advanced cardiology, preventative cardiovascular wellness, and hypertension care.");
     assert.deepEqual(patchBody.doctor.languages, ["English", "Arabic", "Urdu"]);
-    assert.equal(patchBody.doctor.consultationFee.formatted, "AED 650.00");
+    assert.equal(patchBody.doctor.consultationFee.formatted, "650.00");
     assert.equal(patchBody.doctor.consultationFee.amountInFils, 65000);
     assert.equal(patchBody.doctor.isPublished, true);
     assert.equal(patchBody.doctor.chambers.length, 1);
@@ -489,7 +489,7 @@ test("REGRESSION: Consultation fee of 0 is preserved accurately without defaulti
     assert.equal(patchRes.statusCode, 200);
     const patchBody = JSON.parse(patchRes.body);
     assert.equal(patchBody.doctor.consultationFee.amountInFils, 0);
-    assert.equal(patchBody.doctor.consultationFee.formatted, "AED 0.00");
+    assert.equal(patchBody.doctor.consultationFee.formatted, "0.00");
 
     // 2. Fetch profile and verify 0 remains 0
     const getRes = await app.inject({
@@ -500,7 +500,7 @@ test("REGRESSION: Consultation fee of 0 is preserved accurately without defaulti
     assert.equal(getRes.statusCode, 200);
     const getBody = JSON.parse(getRes.body);
     assert.equal(getBody.doctor.consultationFee.amountInFils, 0);
-    assert.equal(getBody.doctor.consultationFee.formatted, "AED 0.00");
+    assert.equal(getBody.doctor.consultationFee.formatted, "0.00");
   } finally {
     mongoAdapter.isConnected = originalIsConnected;
     mongoAdapter.getDoctorCollection = originalGetDoctorCollection;

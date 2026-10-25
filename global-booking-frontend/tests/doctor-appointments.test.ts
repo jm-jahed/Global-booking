@@ -200,7 +200,7 @@ test("Stale-Cache: Authoritative server data overwrites outdated localStorage en
     status: "Pending", // Stale status in local cache
     channel: "Online Web",
     paymentStatus: "Paid",
-    price: "500 AED",
+    price: "500",
     createdAt: "2026-10-25T08:00:00.000Z",
   };
   mockStorage.setItem(storageKey, JSON.stringify([staleLocalApt]));
@@ -281,7 +281,7 @@ test("Server Error / Graceful Fallback: Network failure or 503 falls back to cac
     status: "Confirmed",
     channel: "Online Web",
     paymentStatus: "Paid",
-    price: "500 AED",
+    price: "500",
     createdAt: "2026-10-25T08:00:00.000Z",
   };
   mockStorage.setItem(storageKey, JSON.stringify([cachedApt]));
@@ -336,7 +336,7 @@ test("Doctor Data Isolation: Doctor A and Doctor B maintain strictly isolated ap
     status: "Confirmed",
     channel: "In-Person Chamber",
     paymentStatus: "Paid",
-    price: "500 AED",
+    price: "500",
     createdAt: new Date().toISOString(),
   });
 
@@ -425,7 +425,7 @@ test("Daily Serial Number Calculation: Resets to #01 on empty roster and increme
     status: "Confirmed",
     channel: "In-Person Chamber",
     paymentStatus: "Paid",
-    price: "500 AED",
+    price: "500",
     createdAt: new Date().toISOString(),
   });
 

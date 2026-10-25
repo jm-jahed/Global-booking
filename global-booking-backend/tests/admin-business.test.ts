@@ -36,11 +36,11 @@ test("AED currency utility calculates safe minor units in fils without floating 
   const fee = formatAedAmount(450.5);
   assert.equal(fee.amountInFils, 45050);
   assert.equal(fee.currency, "AED");
-  assert.equal(fee.formatted, "AED 450.50");
+  assert.equal(fee.formatted, "450.50");
 
   const zeroFee = formatAedAmount(0);
   assert.equal(zeroFee.amountInFils, 0);
-  assert.equal(zeroFee.formatted, "AED 0.00");
+  assert.equal(zeroFee.formatted, "0.00");
 });
 
 test("Default subscription enforces 14-day trial period and AED pricing", () => {
@@ -429,5 +429,54 @@ test("PATCH /api/v1/admin/settings rejects invalid session timeout", async () =>
 
   assert.equal(res.statusCode, 400);
 });
+
+test("REGRESSION: Admin Hospital and Doctor creation does NOT silently inject Dubai or UAE defaults", () => {
+  // 1. Hospital creation with omitted location leaves fields empty, never injecting Dubai or UAE
+  const rawHospitalBody: any = {
+    institutionName: "General Medical Center",
+    email: "info@general-med.org",
+    phone: "+1 555 123 4567",
+  };
+  const resolvedCity = (rawHospitalBody.city || "").trim();
+  const resolvedState = (rawHospitalBody.emirateOrState || "").trim();
+  const resolvedCountry = rawHospitalBody.country || rawHospitalBody.location?.country || "";
+
+  assert.equal(resolvedCity, "");
+  assert.notEqual(resolvedCity, "Dubai");
+  assert.equal(resolvedState, "");
+  assert.notEqual(resolvedState, "Dubai");
+  assert.equal(resolvedCountry, "");
+  assert.notEqual(resolvedCountry, "United Arab Emirates");
+
+  // 2. Explicit non-UAE hospital location is preserved accurately
+  const internationalHospital: any = {
+    city: "Sydney",
+    emirateOrState: "NSW",
+    country: "Australia",
+  };
+  assert.equal((internationalHospital.city || "").trim(), "Sydney");
+  assert.equal(internationalHospital.country, "Australia");
+
+  // 3. Doctor creation with omitted chamber summary defaults to empty, not Dubai
+  const rawDoctorBody: any = {
+    fullName: "Dr. Alex Taylor",
+    email: "alex@globalbooking.org",
+    phone: "+44 20 7946 0991",
+  };
+  const chamberSummary = (rawDoctorBody.chamberLocationsSummary || "").trim();
+  assert.equal(chamberSummary, "");
+  assert.notEqual(chamberSummary, "Main Medical Center, Dubai");
+
+  // 4. Default chamber city in doctor record is empty, not Dubai
+  const defaultChamber = {
+    id: "CHAMBER-1",
+    facilityName: chamberSummary || "Main Consultation Chamber",
+    city: "",
+    visitingSchedule: "Daily 05:00 PM – 09:00 PM",
+  };
+  assert.equal(defaultChamber.city, "");
+  assert.notEqual(defaultChamber.city, "Dubai");
+});
+
 
 

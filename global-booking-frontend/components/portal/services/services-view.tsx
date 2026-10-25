@@ -428,8 +428,7 @@ export function ServicesView() {
                   </div>
 
                   <div className="service-spec-pill">
-                    <span className="text-gold font-bold">AED {service.priceAED}</span>
-                    <span style={{ fontSize: 10, color: "#8e9fb5" }}>(${service.priceUSD})</span>
+                    <span className="text-gold font-bold">{service.priceAED}</span>
                   </div>
 
                   <div className={`service-spec-pill ${service.insuranceCovered ? "spec-covered" : "spec-private"}`}>
@@ -490,7 +489,7 @@ export function ServicesView() {
                   <th style={{ width: 120 }}>Service Code</th>
                   <th>Procedure / Specialty</th>
                   <th style={{ width: 110 }}>Duration</th>
-                  <th style={{ width: 130 }}>Tariff (AED)</th>
+                  <th style={{ width: 130 }}>Tariff</th>
                   <th style={{ width: 150 }}>Insurance Coverage</th>
                   <th>Assigned Specialist</th>
                   <th style={{ width: 100 }}>Status</th>
@@ -529,9 +528,8 @@ export function ServicesView() {
                       <td>
                         <div style={{ display: "flex", flexDirection: "column" }}>
                           <span style={{ fontWeight: 700, color: "var(--portal-gold)", fontSize: 13 }}>
-                            AED {service.priceAED}
+                            {service.priceAED}
                           </span>
-                          <span style={{ fontSize: 10, color: "#8e9fb5" }}>≈ ${service.priceUSD} USD</span>
                         </div>
                       </td>
                       <td>

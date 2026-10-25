@@ -175,7 +175,7 @@ export async function registerDoctorRoutes(app: FastifyInstance): Promise<void> 
         licenseNumber,
         yearsOfExperience = 5,
         medicalDegrees = ["MBBS"],
-        chamberLocationsSummary = "Main Medical Center, Dubai",
+        chamberLocationsSummary = "",
         consultationFeeAed = 500,
         accountStatus = "TRIAL",
       } = request.body || {};
@@ -293,8 +293,8 @@ export async function registerDoctorRoutes(app: FastifyInstance): Promise<void> 
         chambers: [
           {
             id: "CHAMBER-1",
-            facilityName: chamberLocationsSummary.trim() || "Main Consultation Chamber",
-            city: "Dubai",
+            facilityName: (chamberLocationsSummary || "").trim() || "Main Consultation Chamber",
+            city: "",
             visitingSchedule: "Daily 05:00 PM – 09:00 PM",
           },
         ],

@@ -741,7 +741,7 @@ export function NewTicketModal({
               </label>
               <input
                 type="tel"
-                placeholder="+971 50 123 4567"
+                placeholder="e.g. +1 555 123 4567"
                 value={phone}
                 onChange={(e) => setPhone(e.target.value)}
                 style={{

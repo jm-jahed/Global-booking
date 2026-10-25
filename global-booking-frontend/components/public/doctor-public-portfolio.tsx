@@ -162,26 +162,28 @@ export function DoctorPublicPortfolio({
   };
 
   const formatFee = (fee: any): { initial: string; followUp: string } => {
-    if (!fee) return { initial: "500 AED", followUp: "350 AED" };
+    if (!fee) return { initial: "500", followUp: "350" };
     if (typeof fee.amount === "number" && fee.amount > 0) {
-      const currency = fee.currency || "AED";
       return {
-        initial: `${fee.amount} ${currency}`,
-        followUp: `${Math.round(fee.amount * 0.75)} ${currency}`,
+        initial: `${fee.amount}`,
+        followUp: `${Math.round(fee.amount * 0.75)}`,
       };
     }
     if (typeof fee.amountInFils === "number" && fee.amountInFils > 0) {
-      const currency = fee.currency || "AED";
       const amt = fee.amountInFils / 100;
       return {
-        initial: `${amt} ${currency}`,
-        followUp: `${Math.round(amt * 0.75)} ${currency}`,
+        initial: `${amt}`,
+        followUp: `${Math.round(amt * 0.75)}`,
       };
     }
     if (typeof fee.formatted === "string" && fee.formatted.trim()) {
-      return { initial: fee.formatted, followUp: fee.formatted };
+      const cleanFormatted = fee.formatted.replace(/[^\d.,]/g, "").trim();
+      return {
+        initial: cleanFormatted || fee.formatted,
+        followUp: cleanFormatted || fee.formatted,
+      };
     }
-    return { initial: "500 AED", followUp: "350 AED" };
+    return { initial: "500", followUp: "350" };
   };
 
   // Loading State

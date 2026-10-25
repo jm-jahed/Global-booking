@@ -98,7 +98,7 @@ const PERMISSIONS_CATALOG: { key: AdminPermission; label: string; description: s
   {
     key: "MANAGE_SUBSCRIPTIONS",
     label: "Manage Subscriptions",
-    description: "Extend trial periods, manage AED subscription plans, and review lifecycle.",
+    description: "Extend trial periods, manage subscription plans, and review lifecycle.",
   },
   {
     key: "VIEW_AUDIT_LOGS",

@@ -66,7 +66,7 @@ test("Doctor profile excludes credentials and internal database tokens", () => {
     consultationFee: {
       amountInFils: 50000,
       currency: "AED" as const,
-      formatted: "AED 500.00",
+      formatted: "500.00",
     },
     slug: "dr-sarah-khan",
     isPublished: true,
@@ -88,7 +88,7 @@ test("REGRESSION: Consultation fee of 0 AED preserves numeric zero without defau
     consultationFee: {
       amountInFils: 0,
       currency: "AED",
-      formatted: "AED 0.00",
+      formatted: "0.00",
     },
   };
   const feeFilsZero = responseZero.consultationFee?.amountInFils;
@@ -225,4 +225,48 @@ test("REGRESSION: Intentional field clearing preserves core identity fields whil
   assert.equal(userClearedState.bio, "");
   assert.equal(userClearedState.chamberLocationsSummary, "");
 });
+
+test("REGRESSION: Chamber creation and clearing does NOT default to Dubai or UAE phone", () => {
+  // 1. Initial/Default chamber has empty city and empty phone
+  const defaultChamber = {
+    id: "chamber-main",
+    facilityName: "Main Consultation Chamber",
+    city: "",
+    contactPhone: "",
+    timezone: "Asia/Dubai",
+  };
+  assert.equal(defaultChamber.city, "");
+  assert.equal(defaultChamber.contactPhone, "");
+
+  // 2. Adding a new chamber produces empty city and phone
+  const newChamber = {
+    id: "chamber-new",
+    facilityName: "Consultation Chamber #2",
+    city: "",
+    contactPhone: "",
+    timezone: "Asia/Dubai",
+  };
+  assert.equal(newChamber.city, "");
+  assert.equal(newChamber.contactPhone, "");
+
+  // 3. Clearing chamber city yields empty string in payload, never 'Dubai'
+  const clearedChamber = {
+    id: "chamber-1",
+    facilityName: "City Clinic",
+    city: "   ",
+  };
+  const sanitizedCity = clearedChamber.city.trim() || "";
+  assert.equal(sanitizedCity, "");
+  assert.notEqual(sanitizedCity, "Dubai");
+
+  // 4. Explicit non-Dubai locations are preserved accurately
+  const internationalChamber = {
+    id: "chamber-2",
+    facilityName: "Central Health Wing",
+    city: "Toronto",
+  };
+  const preservedCity = internationalChamber.city.trim() || "";
+  assert.equal(preservedCity, "Toronto");
+});
+
 

@@ -170,7 +170,7 @@ export function mapBackendToDoctorAppointment(item: BackendAppointmentItem): Doc
     status: mappedStatus,
     channel: mappedChannel,
     paymentStatus: "Paid",
-    price: "500 AED",
+    price: "500",
     notes: item.notes || undefined,
     createdAt: item.createdAt || new Date().toISOString(),
     isOnlineBooking: mappedChannel === "Online Web",

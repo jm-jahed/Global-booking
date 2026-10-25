@@ -297,7 +297,7 @@ export default function HomePage() {
                     <div className="doc-specialty-text">Consultant Interventional Cardiologist</div>
                     <div className="doc-chamber-info">
                       <MapPin size={12} className="loc-ic" />
-                      <span>Mediclinic City Hospital • Dubai Healthcare City</span>
+                      <span>City General Hospital • Main Consultation Wing</span>
                     </div>
                   </div>
                 </div>
@@ -315,7 +315,7 @@ export default function HomePage() {
                   </div>
                   <div className="metric-divider" />
                   <div className="metric-item">
-                    <span className="metric-val">500 AED</span>
+                    <span className="metric-val">500</span>
                     <span className="metric-lbl">Consultation</span>
                   </div>
                 </div>
@@ -542,7 +542,7 @@ export default function HomePage() {
                       <strong className="widget-doc-name">Mediclinic City Hospital</strong>
                       <span className="widget-verif-badge emerald">Enterprise</span>
                     </div>
-                    <span className="widget-doc-spec">Dubai Healthcare City • OPD</span>
+                    <span className="widget-doc-spec">Main Healthcare Center • OPD</span>
                   </div>
                 </div>
 
@@ -648,7 +648,7 @@ export default function HomePage() {
             </div>
             <div className="trust-dock-copy">
               <strong>Protected Access</strong>
-              <span>HIPAA & DHA-ready security</span>
+              <span>HIPAA-ready security</span>
             </div>
           </div>
 
@@ -680,7 +680,7 @@ export default function HomePage() {
             </div>
             <div className="footer-status-pill">
               <span className="status-live-dot" />
-              <span>All Systems Operational • DHA & HIPAA Compliant</span>
+              <span>All Systems Operational • HIPAA Compliant</span>
             </div>
           </div>
 

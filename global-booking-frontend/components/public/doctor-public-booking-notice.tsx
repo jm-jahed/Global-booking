@@ -1350,7 +1350,8 @@ export function DoctorPublicBookingNotice({ slug }: DoctorPublicBookingNoticePro
                         Location & Room
                       </strong>
                       <span style={{ fontSize: 12, color: "#94a3b8" }}>
-                        {selectedChamber?.facilityName || "Main Specialized Chamber"}, {selectedChamber?.city || "Dubai"}
+                        {selectedChamber?.facilityName || "Main Specialized Chamber"}
+                        {selectedChamber?.city ? `, ${selectedChamber.city}` : ""}
                       </span>
                     </div>
                   </div>

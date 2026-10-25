@@ -197,7 +197,7 @@ export function ReportsView() {
             chamberLocationsSummary: "",
             yearsOfExperience: 0,
             medicalDegrees: [],
-            consultationFee: { amountInFils: 50000, currency: "AED", formatted: "AED 500.00" },
+            consultationFee: { amountInFils: 50000, currency: "AED", formatted: "500.00" },
             createdAt: "",
             updatedAt: "",
           });

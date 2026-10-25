@@ -68,10 +68,10 @@ export function NewAppointmentModal({
     "Clinical Consultation";
 
   const clinicalServices = [
-    { name: `${activeSpecialty} Consultation & Assessment`, category: activeSpecialty, price: "500 AED", duration: "30 min" },
-    { name: `${activeSpecialty} Follow-up Review`, category: activeSpecialty, price: "450 AED", duration: "30 min" },
-    { name: `Comprehensive Health Screening & Diagnostic Evaluation`, category: activeSpecialty, price: "600 AED", duration: "45 min" },
-    { name: `Prescription & Clinical Care Management`, category: activeSpecialty, price: "400 AED", duration: "20 min" },
+    { name: `${activeSpecialty} Consultation & Assessment`, category: activeSpecialty, price: "500", duration: "30 min" },
+    { name: `${activeSpecialty} Follow-up Review`, category: activeSpecialty, price: "450", duration: "30 min" },
+    { name: `Comprehensive Health Screening & Diagnostic Evaluation`, category: activeSpecialty, price: "600", duration: "45 min" },
+    { name: `Prescription & Clinical Care Management`, category: activeSpecialty, price: "400", duration: "20 min" },
   ];
 
   const chamberLocations = [
@@ -106,7 +106,7 @@ export function NewAppointmentModal({
       referenceNumber: randId,
       serialNumber: randToken,
       patientName: patientName.trim(),
-      patientPhone: patientPhone.trim() || "+971 50 000 0000",
+      patientPhone: patientPhone.trim() || "+1 555 000 0000",
       patientEmail: patientEmail.trim() || undefined,
       patientAgeGender: patientAgeGender.trim() || "Adult Patient",
       bloodGroup: bloodGroup.trim() || "O+",
@@ -248,7 +248,7 @@ export function NewAppointmentModal({
               <input
                 type="tel"
                 required
-                placeholder="+971 50 123 4567"
+                placeholder="e.g. +1 555 123 4567"
                 value={patientPhone}
                 onChange={(e) => setPatientPhone(e.target.value)}
                 style={{
