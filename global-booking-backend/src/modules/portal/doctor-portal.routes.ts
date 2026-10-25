@@ -91,7 +91,7 @@ export async function registerDoctorPortalRoutes(app: FastifyInstance): Promise<
         });
       }
 
-      if (session.role !== "DOCTOR") {
+      if (session.role !== "DOCTOR" && session.role !== "STAFF") {
         return reply.status(403).send({
           statusCode: 403,
           error: "Forbidden",
@@ -107,7 +107,8 @@ export async function registerDoctorPortalRoutes(app: FastifyInstance): Promise<
         });
       }
 
-      if (!session.adminId || typeof session.adminId !== "string" || !session.adminId.trim()) {
+      const targetDoctorId = session.role === "STAFF" ? session.doctorId : session.adminId;
+      if (!targetDoctorId || typeof targetDoctorId !== "string" || !targetDoctorId.trim()) {
         return reply.status(401).send({
           statusCode: 401,
           error: "Unauthorized",
@@ -115,10 +116,10 @@ export async function registerDoctorPortalRoutes(app: FastifyInstance): Promise<
         });
       }
 
-      const cleanAdminId = session.adminId.trim();
+      const cleanDoctorId = targetDoctorId.trim();
       const docCol = mongoAdapter.getDoctorCollection();
       const doctor = await docCol.findOne({
-        $or: [{ id: cleanAdminId }, { doctorId: cleanAdminId }],
+        $or: [{ id: cleanDoctorId }, { doctorId: cleanDoctorId }],
       });
 
       if (!doctor) {

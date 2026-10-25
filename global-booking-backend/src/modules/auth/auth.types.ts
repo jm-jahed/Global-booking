@@ -54,13 +54,42 @@ export interface SafeAdminProfile {
   readonly createdAt: string;
 }
 
-export type UserRole = SuperAdminRole | "DOCTOR" | "HOSPITAL";
+export type UserRole = SuperAdminRole | "DOCTOR" | "HOSPITAL" | "STAFF";
+
+export interface StaffRecord {
+  id: string;
+  name: string;
+  email: string;
+  passwordHash: string;
+  role: "STAFF";
+  staffRole: "Receptionist / Front Desk" | "Clinical Nurse" | "Chamber Manager" | "Billing Coordinator";
+  tenantType: "DOCTOR" | "HOSPITAL";
+  doctorId?: string | undefined;
+  hospitalId?: string | undefined;
+  chamberLocation?: string | undefined;
+  phone?: string | undefined;
+  permissions: {
+    canManageQueue: boolean;
+    canBookPhoneAppointments: boolean;
+    canViewPatientHistory: boolean;
+    canCollectPayments: boolean;
+  };
+  accountStatus: "ACTIVE" | "SUSPENDED";
+  lastLoginAt?: string | undefined;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export type SafeStaffProfile = Omit<StaffRecord, "passwordHash">;
 
 export interface AdminSessionPayload {
   readonly adminId: string;
   readonly email: string;
   readonly role: UserRole;
   readonly permissions: readonly AdminPermission[];
+  readonly doctorId?: string | undefined;
+  readonly hospitalId?: string | undefined;
+  readonly staffRole?: string | undefined;
 }
 
 export interface LoginRequestBody {

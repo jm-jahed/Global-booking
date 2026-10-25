@@ -13,7 +13,7 @@ export function PortalBottomNav({ onOpenSidebar }: PortalBottomNavProps) {
 
   const isHomeActive = pathname === "/dashboard" || pathname === "/live-queue" || pathname === "/";
   const isPatientsActive = pathname.startsWith("/patients");
-  const isScheduleActive = pathname.startsWith("/appointments") || pathname.startsWith("/schedule");
+  const isScheduleActive = pathname.startsWith("/availability") || pathname.startsWith("/schedule");
   const isReportsActive = pathname.startsWith("/reports");
 
   return (
@@ -30,7 +30,7 @@ export function PortalBottomNav({ onOpenSidebar }: PortalBottomNavProps) {
         {isPatientsActive && <span className="bottom-nav-indicator" />}
       </Link>
 
-      <Link href="/appointments" className={`bottom-nav-item ${isScheduleActive ? "active" : ""}`}>
+      <Link href="/availability" className={`bottom-nav-item ${isScheduleActive ? "active" : ""}`}>
         <Calendar size={19} className="bottom-nav-icon" />
         <span>Schedule</span>
         {isScheduleActive && <span className="bottom-nav-indicator" />}

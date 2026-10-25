@@ -6377,6 +6377,603 @@
 }
 
 /* ==========================================================================
+   APPOINTMENTS VIEW: Luxury Clinical Suite (Matching Reports, Live Queue & Dashboard)
+   ========================================================================== */
+.appointments-luxury-page-container {
+  padding: 24px 28px 60px;
+  min-height: 100vh;
+  width: 100%;
+  max-width: 100%;
+  background: #050b14;
+  color: #ffffff;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  box-sizing: border-box;
+  overflow-x: hidden;
+}
+
+/* 1. Header Bar */
+.appointments-luxury-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 16px;
+  padding: 4px 0;
+}
+
+.appointments-luxury-header-left {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-width: 0;
+}
+
+.appointments-luxury-icon-badge {
+  width: 48px;
+  height: 48px;
+  border-radius: 14px;
+  background: linear-gradient(135deg, rgba(229, 184, 105, 0.22) 0%, rgba(184, 134, 40, 0.08) 100%);
+  border: 1.5px solid rgba(229, 184, 105, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #f5c270;
+  box-shadow: 0 0 24px rgba(229, 184, 105, 0.28), inset 0 0 14px rgba(229, 184, 105, 0.12);
+  flex-shrink: 0;
+}
+
+.appointments-luxury-title-text {
+  margin: 0;
+  font-size: 24px;
+  font-weight: 800;
+  color: #ffffff;
+  letter-spacing: -0.02em;
+}
+
+.appointments-luxury-subtitle-text {
+  margin: 3px 0 0;
+  font-size: 13px;
+  color: #8e9fb5;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.appointments-luxury-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.appointments-btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 16px;
+  border-radius: 11px;
+  background: rgba(15, 23, 42, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  color: #e2e8f0;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25);
+  transition: all 0.2s ease;
+  text-decoration: none;
+}
+
+.appointments-btn-secondary:hover {
+  background: rgba(30, 41, 59, 0.85);
+  border-color: rgba(229, 184, 105, 0.4);
+  color: #ffffff;
+}
+
+.appointments-btn-primary {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 18px;
+  border-radius: 11px;
+  background: linear-gradient(135deg, #e5b869 0%, #b88628 100%);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: #070c17;
+  font-size: 13px;
+  font-weight: 750;
+  cursor: pointer;
+  box-shadow: 0 4px 16px rgba(229, 184, 105, 0.35);
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.appointments-btn-primary:hover {
+  transform: translateY(-1px);
+  filter: brightness(1.08);
+  box-shadow: 0 6px 20px rgba(229, 184, 105, 0.55);
+}
+
+/* 2. 4 Glowing KPI Metric Cards */
+.appointments-kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 14px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.appointments-kpi-card {
+  position: relative;
+  border-radius: 20px;
+  padding: 16px 16px;
+  background: linear-gradient(135deg, rgba(13, 22, 41, 0.75) 0%, rgba(7, 12, 23, 0.95) 100%);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  box-shadow: 0 8px 26px rgba(0, 0, 0, 0.38);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  transition: transform 0.25s ease, border-color 0.25s ease;
+  min-width: 0;
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+.appointments-kpi-card:hover {
+  transform: translateY(-2px);
+}
+
+.appointments-kpi-card.kpi-emerald {
+  border-color: rgba(16, 185, 129, 0.35);
+}
+.appointments-kpi-card.kpi-emerald:hover {
+  border-color: rgba(16, 185, 129, 0.6);
+  box-shadow: 0 10px 30px rgba(16, 185, 129, 0.15);
+}
+
+.appointments-kpi-card.kpi-cyan {
+  border-color: rgba(56, 189, 248, 0.35);
+}
+.appointments-kpi-card.kpi-cyan:hover {
+  border-color: rgba(56, 189, 248, 0.6);
+  box-shadow: 0 10px 30px rgba(56, 189, 248, 0.15);
+}
+
+.appointments-kpi-card.kpi-purple {
+  border-color: rgba(168, 85, 247, 0.35);
+}
+.appointments-kpi-card.kpi-purple:hover {
+  border-color: rgba(168, 85, 247, 0.6);
+  box-shadow: 0 10px 30px rgba(168, 85, 247, 0.15);
+}
+
+.appointments-kpi-card.kpi-amber {
+  border-color: rgba(245, 158, 11, 0.35);
+}
+.appointments-kpi-card.kpi-amber:hover {
+  border-color: rgba(245, 158, 11, 0.6);
+  box-shadow: 0 10px 30px rgba(245, 158, 11, 0.15);
+}
+
+.appointments-kpi-icon-orb {
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  position: relative;
+}
+
+.kpi-emerald .appointments-kpi-icon-orb {
+  background: radial-gradient(circle, rgba(16, 185, 129, 0.25) 0%, rgba(16, 185, 129, 0.04) 70%);
+  border: 1.5px solid rgba(16, 185, 129, 0.5);
+  box-shadow: 0 0 20px rgba(16, 185, 129, 0.25);
+  color: #10b981;
+}
+
+.kpi-cyan .appointments-kpi-icon-orb {
+  background: radial-gradient(circle, rgba(56, 189, 248, 0.25) 0%, rgba(56, 189, 248, 0.04) 70%);
+  border: 1.5px solid rgba(56, 189, 248, 0.5);
+  box-shadow: 0 0 20px rgba(56, 189, 248, 0.25);
+  color: #38bdf8;
+}
+
+.kpi-purple .appointments-kpi-icon-orb {
+  background: radial-gradient(circle, rgba(168, 85, 247, 0.25) 0%, rgba(168, 85, 247, 0.04) 70%);
+  border: 1.5px solid rgba(168, 85, 247, 0.5);
+  box-shadow: 0 0 20px rgba(168, 85, 247, 0.25);
+  color: #c084fc;
+}
+
+.kpi-amber .appointments-kpi-icon-orb {
+  background: radial-gradient(circle, rgba(245, 158, 11, 0.25) 0%, rgba(245, 158, 11, 0.04) 70%);
+  border: 1.5px solid rgba(245, 158, 11, 0.5);
+  box-shadow: 0 0 20px rgba(245, 158, 11, 0.25);
+  color: #fbbf24;
+}
+
+.appointments-kpi-content {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  overflow: hidden;
+  flex: 1;
+}
+
+.appointments-kpi-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: #94a3b8;
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.appointments-kpi-value {
+  font-size: 30px;
+  font-weight: 800;
+  color: #ffffff;
+  letter-spacing: -0.02em;
+  line-height: 1.15;
+}
+
+.appointments-kpi-desc {
+  font-size: 11.5px;
+  color: #64748b;
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* 3. Controls Bar & View Tabs */
+.appointments-toolbar-deck {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 16px;
+  background: linear-gradient(135deg, rgba(13, 22, 41, 0.85) 0%, rgba(8, 14, 27, 0.95) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 14px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+  flex-wrap: wrap;
+}
+
+.appointments-view-tabs {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(4, 9, 20, 0.6);
+  padding: 4px;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.appointments-tab-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 14px;
+  border-radius: 8px;
+  background: transparent;
+  border: none;
+  color: #94a3b8;
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.appointments-tab-btn.active {
+  background: rgba(229, 184, 105, 0.16);
+  color: #f5c270;
+  border: 1px solid rgba(229, 184, 105, 0.35);
+  box-shadow: 0 2px 10px rgba(229, 184, 105, 0.15);
+}
+
+.appointments-filters-group {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: 1;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  min-width: 0;
+}
+
+.appointments-search-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+  min-width: 220px;
+  flex: 1;
+  max-width: 320px;
+}
+
+.appointments-search-icon {
+  position: absolute;
+  left: 12px;
+  color: #64748b;
+  pointer-events: none;
+}
+
+.appointments-search-input {
+  width: 100%;
+  padding: 9px 12px 9px 38px;
+  border-radius: 10px;
+  background: rgba(4, 9, 20, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #ffffff;
+  font-size: 12.5px;
+  outline: none;
+  transition: border-color 0.2s ease;
+}
+
+.appointments-search-input:focus {
+  border-color: rgba(56, 189, 248, 0.5);
+  background: rgba(4, 9, 20, 0.9);
+}
+
+.appointments-select-pill {
+  padding: 9px 28px 9px 12px;
+  border-radius: 10px;
+  background: rgba(4, 9, 20, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #cbd5e1;
+  font-size: 12.5px;
+  font-weight: 500;
+  outline: none;
+  cursor: pointer;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+}
+
+.appointments-date-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 8px 14px;
+  border-radius: 10px;
+  background: rgba(15, 23, 42, 0.7);
+  border: 1px solid rgba(229, 184, 105, 0.35);
+  color: #e2e8f0;
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+/* 4. Table Card */
+.appointments-luxury-table-card {
+  background: linear-gradient(135deg, rgba(13, 22, 41, 0.75) 0%, rgba(7, 12, 23, 0.95) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 20px;
+  padding: 22px 24px;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.35);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.appointments-table-header-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.appointments-table-title-group {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.appointments-table-meta-group {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 12.5px;
+  color: #94a3b8;
+}
+
+.appointments-table-wrapper {
+  overflow-x: auto;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  background: rgba(4, 9, 20, 0.4);
+}
+
+.appointments-luxury-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+  font-size: 13px;
+}
+
+.appointments-luxury-table th {
+  padding: 12px 14px;
+  background: rgba(15, 23, 42, 0.7);
+  color: #94a3b8;
+  font-size: 11px;
+  font-weight: 750;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  white-space: nowrap;
+}
+
+.appointments-luxury-table td {
+  padding: 13px 14px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+  color: #e2e8f0;
+  vertical-align: middle;
+}
+
+.appointments-luxury-table tr:hover td {
+  background: rgba(255, 255, 255, 0.02);
+}
+
+/* Responsive Media Queries */
+@media (max-width: 1280px) {
+  .appointments-kpi-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 12px !important;
+  }
+}
+
+@media (max-width: 768px) {
+  .appointments-luxury-page-container {
+    padding: 14px 14px 84px !important;
+    gap: 14px !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
+  }
+
+  .appointments-luxury-header {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 12px !important;
+  }
+
+  .appointments-luxury-header-left {
+    gap: 10px !important;
+  }
+
+  .appointments-luxury-icon-badge {
+    width: 42px !important;
+    height: 42px !important;
+    border-radius: 12px !important;
+  }
+
+  .appointments-luxury-title-text {
+    font-size: 20px !important;
+  }
+
+  .appointments-luxury-subtitle-text {
+    font-size: 11.5px !important;
+  }
+
+  .appointments-luxury-actions {
+    display: flex !important;
+    width: 100% !important;
+    gap: 8px !important;
+    overflow-x: auto !important;
+    flex-wrap: nowrap !important;
+    -webkit-overflow-scrolling: touch !important;
+    padding-bottom: 4px !important;
+  }
+
+  .appointments-btn-secondary,
+  .appointments-btn-primary {
+    padding: 8px 12px !important;
+    font-size: 11.5px !important;
+    border-radius: 9px !important;
+    flex-shrink: 0 !important;
+  }
+
+  /* 4 KPI Cards: ALWAYS 2x2 grid on mobile */
+  .appointments-kpi-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 10px !important;
+  }
+
+  .appointments-kpi-card {
+    padding: 12px 10px !important;
+    border-radius: 14px !important;
+    gap: 8px !important;
+    min-width: 0 !important;
+  }
+
+  .appointments-kpi-icon-orb {
+    width: 38px !important;
+    height: 38px !important;
+  }
+
+  .appointments-kpi-label {
+    font-size: 11.5px !important;
+  }
+
+  .appointments-kpi-value {
+    font-size: 20px !important;
+  }
+
+  .appointments-kpi-desc {
+    font-size: 10.5px !important;
+  }
+
+  .appointments-toolbar-deck {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 10px !important;
+    padding: 12px !important;
+  }
+
+  .appointments-view-tabs {
+    width: 100% !important;
+    justify-content: space-between !important;
+  }
+
+  .appointments-tab-btn {
+    flex: 1 !important;
+    justify-content: center !important;
+    padding: 7px 6px !important;
+    font-size: 11.5px !important;
+  }
+
+  .appointments-filters-group {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr !important;
+    width: 100% !important;
+    gap: 8px !important;
+    align-items: center !important;
+  }
+
+  .appointments-search-wrap {
+    grid-column: 1 / -1 !important;
+    max-width: 100% !important;
+    width: 100% !important;
+    min-width: 0 !important;
+  }
+
+  .appointments-select-pill {
+    width: 100% !important;
+    min-width: 0 !important;
+    padding: 8px 24px 8px 10px !important;
+    font-size: 11.5px !important;
+  }
+
+  .appointments-date-pill {
+    grid-column: 1 / -1 !important;
+    justify-content: center !important;
+    padding: 8px 12px !important;
+    font-size: 11.5px !important;
+  }
+
+  .appointments-table-card,
+  .appointments-luxury-table-card {
+    padding: 16px 14px !important;
+    border-radius: 16px !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .appointments-kpi-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+}
+
+/* ==========================================================================
    DOCTOR PERSONAL LIVE QUEUE & CHAMBER DISPATCH MODULE (100% FIXED BOX)
    ========================================================================== */
 
@@ -10432,5 +11029,339 @@
   .reports-print-only-header,
   .reports-print-only-footer {
     display: none !important;
+  }
+}
+
+/* ==========================================================================
+   AVAILABILITY & SCHEDULE - LUXURY PORTAL RESPONSIVE STYLES
+   ========================================================================== */
+.availability-page-container {
+  min-height: 100%;
+  padding: 24px 28px 100px;
+  background: #050b14;
+  color: #ffffff;
+  box-sizing: border-box;
+  overflow-x: hidden;
+  width: 100%;
+}
+
+.availability-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin-bottom: 24px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.availability-header-left {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.availability-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.availability-kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 14px;
+  margin-bottom: 24px;
+}
+
+.availability-kpi-card {
+  background: #0c1527;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  padding: 16px 18px;
+  position: relative;
+  overflow: hidden;
+  min-width: 0;
+}
+
+.availability-section-card {
+  background: #0c1527;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 16px;
+  padding: 24px 28px;
+  margin-bottom: 24px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25);
+  box-sizing: border-box;
+}
+
+.availability-section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 18px;
+}
+
+.availability-chamber-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 16px;
+}
+
+.availability-opd-desktop-table {
+  display: block;
+  overflow-x: auto;
+  width: 100%;
+}
+
+.availability-opd-mobile-cards {
+  display: none;
+}
+
+.availability-mobile-card {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.availability-mobile-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.availability-mobile-card-times {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.availability-mobile-card-cap {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding-top: 10px;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.availability-preview-banner {
+  background: linear-gradient(135deg, rgba(229, 184, 105, 0.08) 0%, rgba(12, 21, 39, 0.9) 100%);
+  border: 1px solid rgba(229, 184, 105, 0.3);
+  border-radius: 16px;
+  padding: 22px 26px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+@media (max-width: 768px) {
+  .availability-page-container {
+    padding: 14px 12px 100px !important;
+  }
+
+  .availability-header {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 12px !important;
+    margin-bottom: 16px !important;
+    padding-bottom: 14px !important;
+  }
+
+  .availability-header-actions {
+    width: 100% !important;
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 8px !important;
+  }
+
+  .availability-header-actions a,
+  .availability-header-actions button {
+    width: 100% !important;
+    justify-content: center !important;
+    box-sizing: border-box !important;
+  }
+
+  /* 2x2 Grid for 4 KPI Cards on Mobile */
+  .availability-kpi-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 10px !important;
+    margin-bottom: 16px !important;
+  }
+
+  .availability-kpi-card {
+    padding: 12px 12px !important;
+    border-radius: 12px !important;
+  }
+
+  .availability-kpi-title {
+    font-size: 10px !important;
+    letter-spacing: 0.02em !important;
+  }
+
+  .availability-kpi-value {
+    font-size: 16px !important;
+  }
+
+  .availability-kpi-sub {
+    font-size: 10px !important;
+  }
+
+  .availability-section-card {
+    padding: 16px 14px !important;
+    border-radius: 14px !important;
+    margin-bottom: 16px !important;
+  }
+
+  .availability-section-header h2 {
+    font-size: 15px !important;
+  }
+
+  .availability-chamber-grid {
+    grid-template-columns: 1fr !important;
+    gap: 12px !important;
+  }
+
+  /* Hide desktop table and show responsive mobile cards */
+  .availability-opd-desktop-table {
+    display: none !important;
+  }
+
+  .availability-opd-mobile-cards {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 10px !important;
+  }
+
+  .availability-preview-banner {
+    padding: 16px 14px !important;
+    flex-direction: column !important;
+    align-items: stretch !important;
+  }
+
+  .availability-preview-banner a {
+    width: 100% !important;
+    justify-content: center !important;
+    box-sizing: border-box !important;
+  }
+}
+
+/* ==========================================================================
+   STAFF MANAGEMENT - LUXURY PORTAL RESPONSIVE STYLES
+   ========================================================================== */
+.staff-page-container {
+  min-height: 100%;
+  padding: 24px 28px 100px;
+  background: #050b14;
+  color: #ffffff;
+  box-sizing: border-box;
+  overflow-x: hidden;
+  width: 100%;
+}
+
+.staff-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin-bottom: 24px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.staff-kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 14px;
+  margin-bottom: 24px;
+}
+
+.staff-kpi-card {
+  background: #0c1527;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  padding: 16px 18px;
+  position: relative;
+  overflow: hidden;
+  min-width: 0;
+}
+
+.staff-table-card {
+  background: #0c1527;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 16px;
+  padding: 20px 24px;
+  margin-bottom: 24px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25);
+  box-sizing: border-box;
+}
+
+.staff-desktop-table {
+  display: block;
+  overflow-x: auto;
+  width: 100%;
+}
+
+.staff-mobile-cards {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  .staff-page-container {
+    padding: 14px 12px 100px !important;
+  }
+
+  .staff-header {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 12px !important;
+    margin-bottom: 16px !important;
+    padding-bottom: 14px !important;
+  }
+
+  .staff-header-actions {
+    width: 100% !important;
+  }
+
+  .staff-header-actions button {
+    width: 100% !important;
+    justify-content: center !important;
+  }
+
+  /* 2x2 Grid for 4 KPI Cards on Mobile */
+  .staff-kpi-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 10px !important;
+    margin-bottom: 16px !important;
+  }
+
+  .staff-kpi-card {
+    padding: 12px 12px !important;
+    border-radius: 12px !important;
+  }
+
+  .staff-table-card {
+    padding: 14px 12px !important;
+    border-radius: 14px !important;
+  }
+
+  .staff-desktop-table {
+    display: none !important;
+  }
+
+  .staff-mobile-cards {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 10px !important;
   }
 }

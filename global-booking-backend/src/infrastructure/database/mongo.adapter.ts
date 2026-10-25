@@ -1,7 +1,7 @@
 import dns from "node:dns";
 import { MongoClient, type Db, type Collection } from "mongodb";
 import type { DatabasePort, DatabaseConnectionSettings } from "./database.port.js";
-import type { AdminUserRecord } from "../../modules/auth/auth.types.js";
+import type { AdminUserRecord, StaffRecord } from "../../modules/auth/auth.types.js";
 import type {
   RegistrationRecord,
   DoctorRecord,
@@ -12,6 +12,10 @@ import type {
 import type { QueueTicketRecord, QueueCounterRecord } from "../../modules/queue/queue.types.js";
 import type { AppointmentRecord } from "../../modules/appointments/appointments.types.js";
 import type { PatientRecord } from "../../modules/patients/patients.types.js";
+import type {
+  NotificationRecord,
+  NotificationPreferencesRecord,
+} from "../../modules/notifications/notification.types.js";
 
 export interface PatientIndexOperationResult {
   readonly spec: Record<string, 1 | -1>;
@@ -85,6 +89,7 @@ export class MongoDatabaseAdapter implements DatabasePort {
       await this.ensurePhaseBIndexes();
       await this.ensureQueueIndexes();
       await this.ensureAppointmentIndexes();
+      await this.ensureNotificationIndexes();
     } catch (error) {
       this.connected = false;
       this.client = null;
@@ -169,6 +174,18 @@ export class MongoDatabaseAdapter implements DatabasePort {
 
   getPatientCollection(): Collection<PatientRecord> {
     return this.getDb().collection<PatientRecord>("patients");
+  }
+
+  getStaffCollection(): Collection<StaffRecord> {
+    return this.getDb().collection<StaffRecord>("staff");
+  }
+
+  getNotificationCollection(): Collection<NotificationRecord> {
+    return this.getDb().collection<NotificationRecord>("notifications");
+  }
+
+  getNotificationPreferencesCollection(): Collection<NotificationPreferencesRecord> {
+    return this.getDb().collection<NotificationPreferencesRecord>("notification_preferences");
   }
 
   getCollection<T extends Document = Document>(name: string): Collection<T> {
@@ -310,6 +327,30 @@ export class MongoDatabaseAdapter implements DatabasePort {
     } catch {
       // Non-fatal
     }
+  }
+
+  /**
+   * Ensures essential indexes for persistent Notifications and Preferences:
+   * 1. notifications: id (unique), doctorId+createdAt, doctorId+read, doctorId+type+createdAt
+   * 2. notifications: doctorId+eventRef (unique, sparse for idempotency)
+   * 3. notification_preferences: doctorId (unique)
+   */
+  async ensureNotificationIndexes(): Promise<void> {
+    if (!this.db) {
+      return;
+    }
+    const notifCol = this.getNotificationCollection();
+    await notifCol.createIndex({ id: 1 }, { unique: true, background: true });
+    await notifCol.createIndex({ doctorId: 1, createdAt: -1 }, { background: true });
+    await notifCol.createIndex({ doctorId: 1, read: 1 }, { background: true });
+    await notifCol.createIndex({ doctorId: 1, type: 1, createdAt: -1 }, { background: true });
+    await notifCol.createIndex(
+      { doctorId: 1, eventRef: 1 },
+      { unique: true, sparse: true, background: true },
+    );
+
+    const prefsCol = this.getNotificationPreferencesCollection();
+    await prefsCol.createIndex({ doctorId: 1 }, { unique: true, background: true });
   }
 
   /**

@@ -717,4 +717,257 @@ export async function updateDoctorProfile(
   );
 }
 
+export interface BackendStaffRecord {
+  id: string;
+  name: string;
+  email: string;
+  role: "STAFF";
+  staffRole: "Receptionist / Front Desk" | "Clinical Nurse" | "Chamber Manager" | "Billing Coordinator";
+  tenantType: "DOCTOR" | "HOSPITAL";
+  doctorId?: string;
+  hospitalId?: string;
+  chamberLocation?: string;
+  phone?: string;
+  permissions: {
+    canManageQueue: boolean;
+    canBookPhoneAppointments: boolean;
+    canViewPatientHistory: boolean;
+    canCollectPayments: boolean;
+  };
+  accountStatus: "ACTIVE" | "SUSPENDED";
+  lastLoginAt?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CreateStaffPayload {
+  name: string;
+  email: string;
+  password: string;
+  role?: string;
+  phone?: string;
+  chamberLocation?: string;
+  permissions?: {
+    canManageQueue?: boolean;
+    canBookPhoneAppointments?: boolean;
+    canViewPatientHistory?: boolean;
+    canCollectPayments?: boolean;
+  };
+}
+
+export interface UpdateStaffPayload {
+  name?: string;
+  phone?: string;
+  role?: string;
+  chamberLocation?: string;
+  accountStatus?: "ACTIVE" | "SUSPENDED";
+  password?: string;
+  permissions?: {
+    canManageQueue?: boolean;
+    canBookPhoneAppointments?: boolean;
+    canViewPatientHistory?: boolean;
+    canCollectPayments?: boolean;
+  };
+}
+
+export async function getDoctorStaff(): Promise<{ statusCode: number; staff: BackendStaffRecord[] }> {
+  return request<{ statusCode: number; staff: BackendStaffRecord[] }>("/api/v1/portal/doctor/staff");
+}
+
+export async function createDoctorStaff(
+  payload: CreateStaffPayload,
+): Promise<{ statusCode: number; success: boolean; message: string; staff: BackendStaffRecord }> {
+  return request<{ statusCode: number; success: boolean; message: string; staff: BackendStaffRecord }>(
+    "/api/v1/portal/doctor/staff",
+    {
+      method: "POST",
+      body: JSON.stringify(payload),
+    },
+  );
+}
+
+export async function updateDoctorStaff(
+  id: string,
+  payload: UpdateStaffPayload,
+): Promise<{ statusCode: number; success: boolean; message: string; staff: BackendStaffRecord }> {
+  return request<{ statusCode: number; success: boolean; message: string; staff: BackendStaffRecord }>(
+    `/api/v1/portal/doctor/staff/${encodeURIComponent(id)}`,
+    {
+      method: "PATCH",
+      body: JSON.stringify(payload),
+    },
+  );
+}
+
+export async function deleteDoctorStaff(
+  id: string,
+): Promise<{ statusCode: number; success: boolean; message: string }> {
+  return request<{ statusCode: number; success: boolean; message: string }>(
+    `/api/v1/portal/doctor/staff/${encodeURIComponent(id)}`,
+    {
+      method: "DELETE",
+    },
+  );
+}
+
+export interface BackendNotificationItem {
+  id: string;
+  doctorId: string;
+  type: "appointment" | "queue" | "patient" | "system" | "billing";
+  priority: "urgent" | "normal" | "info";
+  title: string;
+  message: string;
+  timestamp: string;
+  relativeTime: string;
+  dateGroup: "Today" | "Yesterday" | "Earlier This Week";
+  read: boolean;
+  chamber: string;
+  patientName?: string;
+  patientPhone?: string;
+  tokenNumber?: string;
+  actionLink?: string;
+  actionLabel?: string;
+  eventRef?: string;
+  metadata?: Record<string, unknown>;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface BackendNotificationPreferences {
+  doctorId?: string;
+  soundAlerts: boolean;
+  browserPush: boolean;
+  queueAlerts: boolean;
+  appointmentAlerts: boolean;
+  whatsappAlerts: boolean;
+  smsAlerts: boolean;
+  emailDigest: boolean;
+  securityAlerts: boolean;
+  updatedAt?: string;
+}
+
+export interface NotificationsListResponse {
+  statusCode: number;
+  notifications: BackendNotificationItem[];
+  pagination: {
+    page: number;
+    limit: number;
+    total: number;
+    totalPages: number;
+    unreadCount: number;
+  };
+}
+
+export interface NotificationsQueryParams {
+  page?: number;
+  limit?: number;
+  category?: string;
+  read?: boolean;
+  chamber?: string;
+  priority?: string;
+  search?: string;
+}
+
+export async function getDoctorNotifications(
+  params?: NotificationsQueryParams
+): Promise<NotificationsListResponse> {
+  const query = new URLSearchParams();
+  if (params?.page) query.set("page", String(params.page));
+  if (params?.limit) query.set("limit", String(params.limit));
+  if (params?.category) query.set("category", params.category);
+  if (params?.read !== undefined) query.set("read", String(params.read));
+  if (params?.chamber) query.set("chamber", params.chamber);
+  if (params?.priority) query.set("priority", params.priority);
+  if (params?.search) query.set("search", params.search);
+
+  const qs = query.toString();
+  return request<NotificationsListResponse>(
+    `/api/v1/portal/doctor/notifications${qs ? `?${qs}` : ""}`
+  );
+}
+
+export async function updateNotificationReadStatus(
+  id: string,
+  read: boolean
+): Promise<{ statusCode: number; success: boolean; notification: BackendNotificationItem }> {
+  return request<{ statusCode: number; success: boolean; notification: BackendNotificationItem }>(
+    `/api/v1/portal/doctor/notifications/${encodeURIComponent(id)}/read`,
+    {
+      method: "PATCH",
+      body: JSON.stringify({ read }),
+    }
+  );
+}
+
+export async function markAllNotificationsAsRead(): Promise<{
+  statusCode: number;
+  success: boolean;
+  modifiedCount: number;
+  message: string;
+}> {
+  return request<{
+    statusCode: number;
+    success: boolean;
+    modifiedCount: number;
+    message: string;
+  }>("/api/v1/portal/doctor/notifications/mark-all-read", {
+    method: "POST",
+  });
+}
+
+export async function deleteDoctorNotification(
+  id: string
+): Promise<{ statusCode: number; success: boolean; message: string }> {
+  return request<{ statusCode: number; success: boolean; message: string }>(
+    `/api/v1/portal/doctor/notifications/${encodeURIComponent(id)}`,
+    {
+      method: "DELETE",
+    }
+  );
+}
+
+export async function clearAllReadNotifications(): Promise<{
+  statusCode: number;
+  success: boolean;
+  deletedCount: number;
+  message: string;
+}> {
+  return request<{
+    statusCode: number;
+    success: boolean;
+    deletedCount: number;
+    message: string;
+  }>("/api/v1/portal/doctor/notifications/clear-read", {
+    method: "DELETE",
+  });
+}
+
+export async function getDoctorNotificationPreferences(): Promise<{
+  statusCode: number;
+  preferences: BackendNotificationPreferences;
+}> {
+  return request<{
+    statusCode: number;
+    preferences: BackendNotificationPreferences;
+  }>("/api/v1/portal/doctor/notifications/preferences");
+}
+
+export async function updateDoctorNotificationPreferences(
+  preferences: Partial<BackendNotificationPreferences>
+): Promise<{
+  statusCode: number;
+  success: boolean;
+  preferences: BackendNotificationPreferences;
+}> {
+  return request<{
+    statusCode: number;
+    success: boolean;
+    preferences: BackendNotificationPreferences;
+  }>("/api/v1/portal/doctor/notifications/preferences", {
+    method: "PUT",
+    body: JSON.stringify(preferences),
+  });
+}
+
+
 

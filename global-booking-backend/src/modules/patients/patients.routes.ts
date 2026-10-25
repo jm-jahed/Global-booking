@@ -25,7 +25,7 @@ async function resolveAuthenticatedDoctor(
     return null;
   }
 
-  if (session.role !== "DOCTOR") {
+  if (session.role !== "DOCTOR" && session.role !== "STAFF") {
     void reply.status(403).send({
       statusCode: 403,
       error: "Forbidden",
@@ -43,8 +43,52 @@ async function resolveAuthenticatedDoctor(
     return null;
   }
 
+  let targetDoctorId: string | undefined;
+
+  if (session.role === "DOCTOR") {
+    targetDoctorId = session.adminId;
+  } else if (session.role === "STAFF") {
+    if (!session.doctorId) {
+      void reply.status(403).send({
+        statusCode: 403,
+        error: "Forbidden",
+        message: "Staff member is not assigned to a doctor.",
+      });
+      return null;
+    }
+
+    const staffCol = mongoAdapter.getStaffCollection();
+    const staff = await staffCol.findOne({ id: session.adminId });
+    if (!staff || staff.accountStatus === "SUSPENDED") {
+      void reply.status(403).send({
+        statusCode: 403,
+        error: "Forbidden",
+        message: "Staff account is suspended or inactive.",
+      });
+      return null;
+    }
+
+    if (staff.permissions && staff.permissions.canViewPatientHistory === false) {
+      void reply.status(403).send({
+        statusCode: 403,
+        error: "Forbidden",
+        message: "Staff member does not have permission to view patient directory.",
+      });
+      return null;
+    }
+
+    targetDoctorId = session.doctorId;
+  } else {
+    void reply.status(403).send({
+      statusCode: 403,
+      error: "Forbidden",
+      message: "Access restricted to verified Doctor or authorized Staff accounts.",
+    });
+    return null;
+  }
+
   const docCol = mongoAdapter.getDoctorCollection();
-  const doctor = await docCol.findOne({ id: session.adminId });
+  const doctor = await docCol.findOne({ id: targetDoctorId });
 
   if (!doctor) {
     void reply.status(404).send({

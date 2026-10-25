@@ -6,10 +6,9 @@ import {
   HOSPITAL_NAV_ITEMS,
 } from "../components/portal/portal-sidebar";
 
-test("Doctor Dashboard Sidebar contains exactly 12 approved menus in strict order", () => {
+test("Doctor Dashboard Sidebar contains exactly 11 approved menus in strict order", () => {
   const expectedDoctorLabels = [
     "Dashboard",
-    "Appointments",
     "Live Queue",
     "My Patients",
     "Availability & Schedule",
@@ -24,8 +23,8 @@ test("Doctor Dashboard Sidebar contains exactly 12 approved menus in strict orde
 
   assert.equal(
     DOCTOR_NAV_ITEMS.length,
-    12,
-    `Expected exactly 12 Doctor sidebar menus, found ${DOCTOR_NAV_ITEMS.length}`,
+    11,
+    `Expected exactly 11 Doctor sidebar menus, found ${DOCTOR_NAV_ITEMS.length}`,
   );
 
   const actualLabels = DOCTOR_NAV_ITEMS.map((m) => m.label);
@@ -60,10 +59,9 @@ test("Doctor account contains NO Hospital or Clinic menus", () => {
   assert.equal(doctorLabels.includes("Clients"), false);
 });
 
-test("Hospital / Clinic Dashboard Sidebar contains exactly 15 approved menus in strict order", () => {
+test("Hospital / Clinic Dashboard Sidebar contains exactly 14 approved menus in strict order", () => {
   const expectedHospitalLabels = [
     "Dashboard",
-    "Appointments",
     "Live Queue",
     "Patients",
     "Doctors & Specialists",
@@ -81,8 +79,8 @@ test("Hospital / Clinic Dashboard Sidebar contains exactly 15 approved menus in 
 
   assert.equal(
     HOSPITAL_NAV_ITEMS.length,
-    15,
-    `Expected exactly 15 Hospital sidebar menus, found ${HOSPITAL_NAV_ITEMS.length}`,
+    14,
+    `Expected exactly 14 Hospital sidebar menus, found ${HOSPITAL_NAV_ITEMS.length}`,
   );
 
   const actualLabels = HOSPITAL_NAV_ITEMS.map((m) => m.label);
@@ -100,15 +98,16 @@ test("Staff login restrictions: Staff Management & Subscription & Billing hidden
   );
 
   assert.deepEqual(staffRestrictedInDoctor, [
+    "Reports",
     "Staff Management",
     "Subscription & Billing",
   ]);
 
-  // Appointments allows phone booking for staff
-  const appointmentsItem = DOCTOR_NAV_ITEMS.find((item) => item.label === "Appointments");
-  assert.ok(appointmentsItem);
-  assert.equal(appointmentsItem?.phoneBookingAllowed, true);
+  // Live Queue allows phone booking for staff
+  const queueItem = DOCTOR_NAV_ITEMS.find((item) => item.label === "Live Queue");
+  assert.ok(queueItem);
+  assert.equal(queueItem?.phoneBookingAllowed, true);
 
-  // Doctor has full access to all 12 items
-  assert.equal(DOCTOR_NAV_ITEMS.length, 12);
+  // Doctor has full access to all 11 items
+  assert.equal(DOCTOR_NAV_ITEMS.length, 11);
 });

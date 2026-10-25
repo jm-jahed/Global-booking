@@ -31,6 +31,7 @@ function RestrictedRouteNotice({
     accountType === "STAFF" &&
     (pathname.startsWith("/staff") ||
       pathname.startsWith("/pricing") ||
+      pathname.startsWith("/reports") ||
       pathname.startsWith("/services"));
 
   return (
@@ -225,7 +226,7 @@ export function PortalLayoutClient({ children }: PortalLayoutClientProps) {
   const isHospitalOnlyRoute =
     pathname.startsWith("/services") || pathname.startsWith("/departments");
   const isStaffRestrictedRoute =
-    pathname.startsWith("/staff") || pathname.startsWith("/pricing");
+    pathname.startsWith("/staff") || pathname.startsWith("/pricing") || pathname.startsWith("/reports");
 
   const isRestricted =
     (isDoctorAccount && isHospitalOnlyRoute) ||

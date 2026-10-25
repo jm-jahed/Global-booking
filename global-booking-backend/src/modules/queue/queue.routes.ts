@@ -13,6 +13,7 @@ import {
 } from "./queue.service.js";
 import type { CreateQueueTicketBody, QueueQuery } from "./queue.types.js";
 import type { DoctorRecord } from "../admin/admin.types.js";
+import { createNotification } from "../notifications/notification.service.js";
 
 export async function registerDoctorQueueRoutes(app: FastifyInstance): Promise<void> {
   /**
@@ -34,7 +35,7 @@ export async function registerDoctorQueueRoutes(app: FastifyInstance): Promise<v
       return null;
     }
 
-    if (session.role !== "DOCTOR") {
+    if (session.role !== "DOCTOR" && session.role !== "STAFF") {
       void reply.status(403).send({
         statusCode: 403,
         error: "Forbidden",
@@ -52,8 +53,52 @@ export async function registerDoctorQueueRoutes(app: FastifyInstance): Promise<v
       return null;
     }
 
+    let targetDoctorId: string | undefined;
+
+    if (session.role === "DOCTOR") {
+      targetDoctorId = session.adminId;
+    } else if (session.role === "STAFF") {
+      if (!session.doctorId) {
+        void reply.status(403).send({
+          statusCode: 403,
+          error: "Forbidden",
+          message: "Staff member is not assigned to a doctor.",
+        });
+        return null;
+      }
+
+      const staffCol = mongoAdapter.getStaffCollection();
+      const staff = await staffCol.findOne({ id: session.adminId });
+      if (!staff || staff.accountStatus === "SUSPENDED") {
+        void reply.status(403).send({
+          statusCode: 403,
+          error: "Forbidden",
+          message: "Staff account is suspended or inactive.",
+        });
+        return null;
+      }
+
+      if (staff.permissions && staff.permissions.canManageQueue === false) {
+        void reply.status(403).send({
+          statusCode: 403,
+          error: "Forbidden",
+          message: "Staff member does not have permission to manage live queue.",
+        });
+        return null;
+      }
+
+      targetDoctorId = session.doctorId;
+    } else {
+      void reply.status(403).send({
+        statusCode: 403,
+        error: "Forbidden",
+        message: "Access restricted to verified Doctor or authorized Staff accounts.",
+      });
+      return null;
+    }
+
     const docCol = mongoAdapter.getDoctorCollection();
-    const doctor = await docCol.findOne({ id: session.adminId });
+    const doctor = await docCol.findOne({ id: targetDoctorId });
 
     if (!doctor) {
       void reply.status(404).send({
@@ -223,6 +268,28 @@ export async function registerDoctorQueueRoutes(app: FastifyInstance): Promise<v
 
       try {
         const ticket = await callQueueTicket(doctor.doctorId, id);
+
+        // Business event 2: Queue ticket successfully called (error isolated)
+        const targetDoctorId = doctor.id || doctor.doctorId;
+        createNotification({
+          id: `notif_queue_call_${ticket.id}`,
+          doctorId: targetDoctorId,
+          type: "queue",
+          priority: "urgent",
+          title: `Patient in Chamber — Token ${ticket.ticketNumber}`,
+          message: `Patient ${ticket.patientName} (Token ${ticket.ticketNumber}) called into consultation chamber.`,
+          read: false,
+          chamberId: ticket.chamberId,
+          patientName: ticket.patientName,
+          patientPhone: ticket.patientPhone,
+          tokenNumber: ticket.ticketNumber,
+          actionLink: "/live-queue",
+          actionLabel: "Open Live Queue",
+          eventRef: `queue_call:${ticket.id}`,
+        }).catch((notifErr) => {
+          request.log.error(notifErr, "Failed to create queue call notification record");
+        });
+
         return reply.status(200).send({
           statusCode: 200,
           success: true,

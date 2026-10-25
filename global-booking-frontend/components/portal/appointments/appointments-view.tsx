@@ -18,6 +18,7 @@ import {
   Download,
   Check,
   ChevronDown,
+  ChevronRight,
   User,
   Activity,
   Stethoscope,
@@ -236,8 +237,21 @@ export function AppointmentsView() {
     setSelectedIds([]);
   };
 
+  // Generate rich avatar initials gradient
+  const getInitialsGradient = (name: string) => {
+    const gradients = [
+      "linear-gradient(135deg, #10b981 0%, #059669 100%)",
+      "linear-gradient(135deg, #38bdf8 0%, #0284c7 100%)",
+      "linear-gradient(135deg, #a855f7 0%, #7c3aed 100%)",
+      "linear-gradient(135deg, #f59e0b 0%, #d97706 100%)",
+    ];
+    let hash = 0;
+    for (let i = 0; i < name.length; i++) hash += name.charCodeAt(i);
+    return gradients[Math.abs(hash) % gradients.length];
+  };
+
   return (
-    <div className="dashboard-page-container appointments-module">
+    <div className="appointments-luxury-page-container">
       {/* Toast Notification */}
       {toastMessage && (
         <div className="portal-toast">
@@ -246,7 +260,7 @@ export function AppointmentsView() {
         </div>
       )}
 
-      {/* ONLINE THEKE BOOKING ASHLE REAL-TIME ALERT BANNER */}
+      {/* Real-time online booking notification banner */}
       {newOnlineAlert && (
         <div className="online-booking-alert-banner">
           <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
@@ -272,166 +286,116 @@ export function AppointmentsView() {
         </div>
       )}
 
-      {/* TOP HEADER: Doctor Personal Practice Branding */}
-      <section className="appointments-header-section">
-        <div className="header-text-group">
-          <div className="module-title-row">
-            <div className="hero-icon-calendar">
-              <Stethoscope size={22} className="text-gold" />
-            </div>
-            <div>
-              <h1 className="hero-title-text">Appointments & Consultations</h1>
-              <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 2 }}>
-                <span style={{ fontSize: 11.5, color: "#94a3b8", fontWeight: 500 }}>
-                  {doctorName} • {doctorSpecialty}
-                </span>
-                <span className="live-sync-pill">
-                  <span className={isServerFresh ? "suite-pulse-dot" : "suite-offline-dot"} />
-                  {isServerFresh ? "MongoDB Live Sync" : "Cached Practice Data"}
-                </span>
-              </div>
+      {/* 1. TOP LUXURY HEADER: Practice Branding & Actions */}
+      <header className="appointments-luxury-header" aria-label="Appointments Header">
+        <div className="appointments-luxury-header-left">
+          <div className="appointments-luxury-icon-badge" title="Appointments & Consultations">
+            <CalendarDays size={24} strokeWidth={2.4} />
+          </div>
+          <div>
+            <h1 className="appointments-luxury-title-text">Appointments</h1>
+            <div className="appointments-luxury-subtitle-text">
+              <span>{doctorName} • {doctorSpecialty}</span>
             </div>
           </div>
         </div>
 
-        <div className="header-action-buttons">
+        <div className="appointments-luxury-actions">
           <button
             type="button"
-            className="secondary-action-button"
+            className="appointments-btn-secondary"
             onClick={handleManualSync}
             title="Refresh appointments and sync with public booking page"
           >
-            <RefreshCw size={14} className={isSyncing ? "spin-animation" : ""} />
+            <RefreshCw size={14} className={isSyncing ? "spin-animation" : ""} style={{ color: "#f5c270" }} />
             <span>Sync Web</span>
           </button>
 
           <Link
             href={`/${doctorSlug}/book`}
             target="_blank"
-            className="secondary-action-button"
+            className="appointments-btn-secondary"
             title="Open patient public booking portal in new tab"
           >
-            <ExternalLink size={14} />
+            <ExternalLink size={14} style={{ color: "#38bdf8" }} />
             <span>Public Booking Page</span>
           </Link>
 
           <button
             type="button"
-            className="primary-gold-button"
+            className="appointments-btn-primary"
             onClick={() => setIsModalOpen(true)}
           >
             <Plus size={15} strokeWidth={2.4} />
             <span>New Patient Appointment</span>
           </button>
         </div>
+      </header>
+
+      {/* 2. FOUR LUXURY GLOWING KPI METRIC CARDS */}
+      <section className="appointments-kpi-grid" aria-label="Appointment KPI Summaries">
+        {/* Card 1: Total Consultations */}
+        <div className="appointments-kpi-card kpi-emerald">
+          <div className="appointments-kpi-icon-orb">
+            <CalendarDays size={22} strokeWidth={2.4} />
+          </div>
+          <div className="appointments-kpi-content">
+            <span className="appointments-kpi-label">Total Consultations</span>
+            <span className="appointments-kpi-value">{kpis.total}</span>
+            <span className="appointments-kpi-desc" style={{ color: "#34d399" }}>Practice Today</span>
+          </div>
+          <ChevronRight size={18} style={{ color: "#64748b", marginLeft: "auto", flexShrink: 0, opacity: 0.7 }} />
+        </div>
+
+        {/* Card 2: Confirmed & Arrived */}
+        <div className="appointments-kpi-card kpi-cyan">
+          <div className="appointments-kpi-icon-orb">
+            <CheckCircle2 size={22} strokeWidth={2.4} />
+          </div>
+          <div className="appointments-kpi-content">
+            <span className="appointments-kpi-label">Confirmed & Arrived</span>
+            <span className="appointments-kpi-value">{kpis.confirmed}</span>
+            <span className="appointments-kpi-desc" style={{ color: "#38bdf8" }}>Ready in Chamber</span>
+          </div>
+          <ChevronRight size={18} style={{ color: "#64748b", marginLeft: "auto", flexShrink: 0, opacity: 0.7 }} />
+        </div>
+
+        {/* Card 3: Online Web Bookings */}
+        <div className="appointments-kpi-card kpi-purple">
+          <div className="appointments-kpi-icon-orb">
+            <Globe size={22} strokeWidth={2.4} />
+          </div>
+          <div className="appointments-kpi-content">
+            <span className="appointments-kpi-label">Online Web Bookings</span>
+            <span className="appointments-kpi-value">{kpis.onlineCount}</span>
+            <span className="appointments-kpi-desc" style={{ color: "#c084fc" }}>Live Website Sync</span>
+          </div>
+          <ChevronRight size={18} style={{ color: "#64748b", marginLeft: "auto", flexShrink: 0, opacity: 0.7 }} />
+        </div>
+
+        {/* Card 4: In Consultation / Done */}
+        <div className="appointments-kpi-card kpi-amber">
+          <div className="appointments-kpi-icon-orb">
+            <Activity size={22} strokeWidth={2.4} />
+          </div>
+          <div className="appointments-kpi-content">
+            <span className="appointments-kpi-label">In Consultation / Done</span>
+            <span className="appointments-kpi-value">{kpis.inConsultation + kpis.completed}</span>
+            <span className="appointments-kpi-desc" style={{ color: "#fbbf24" }}>
+              {kpis.inConsultation} Active • {kpis.completed} Done
+            </span>
+          </div>
+          <ChevronRight size={18} style={{ color: "#64748b", marginLeft: "auto", flexShrink: 0, opacity: 0.7 }} />
+        </div>
       </section>
 
-      {/* 4 COMPACT CLINICAL METRIC CARDS */}
-      <section className="dashboard-metrics-grid" aria-label="Appointment KPI Summaries">
-        {/* Total Patients */}
-        <article className="metric-card">
-          <div className="metric-card-top">
-            <div className="metric-icon-box">
-              <CalendarDays size={18} className="text-gold" />
-            </div>
-            <span className="metric-label">Total Consultations</span>
-          </div>
-          <div className="metric-card-body">
-            <div className="metric-number-group">
-              <div className="metric-value">{kpis.total}</div>
-              <div className="metric-trend trend-up">
-                <span className="trend-arrow">Practice Today</span>
-              </div>
-            </div>
-            <div className="metric-sparkline-box">
-              <svg width="68" height="28" viewBox="0 0 68 28" fill="none">
-                <path d="M2,24 Q18,22 28,15 T48,9 T66,3" stroke="#e5b869" strokeWidth="2" strokeLinecap="round" />
-                <circle cx="66" cy="3" r="2" fill="#e5b869" />
-              </svg>
-            </div>
-          </div>
-        </article>
-
-        {/* Confirmed Patients */}
-        <article className="metric-card">
-          <div className="metric-card-top">
-            <div className="metric-icon-box" style={{ background: "rgba(16, 185, 129, 0.12)", color: "#10b981" }}>
-              <CheckCircle2 size={18} />
-            </div>
-            <span className="metric-label">Confirmed & Arrived</span>
-          </div>
-          <div className="metric-card-body">
-            <div className="metric-number-group">
-              <div className="metric-value">{kpis.confirmed}</div>
-              <div className="metric-trend trend-up">
-                <span className="trend-arrow" style={{ color: "#34d399" }}>Ready in Chamber</span>
-              </div>
-            </div>
-            <div className="metric-sparkline-box">
-              <svg width="68" height="28" viewBox="0 0 68 28" fill="none">
-                <path d="M2,24 Q18,18 32,14 T52,8 T66,2" stroke="#10b981" strokeWidth="2" strokeLinecap="round" />
-                <circle cx="66" cy="2" r="2" fill="#10b981" />
-              </svg>
-            </div>
-          </div>
-        </article>
-
-        {/* Online Web Bookings ("ONLINE THEKE BOOKING ASHLE") */}
-        <article className="metric-card" style={{ borderColor: "rgba(96, 165, 250, 0.35)", background: "linear-gradient(135deg, rgba(37, 99, 235, 0.08) 0%, rgba(11, 19, 37, 0.95) 100%)" }}>
-          <div className="metric-card-top">
-            <div className="metric-icon-box" style={{ background: "rgba(59, 130, 246, 0.15)", color: "#60a5fa" }}>
-              <Globe size={18} />
-            </div>
-            <span className="metric-label" style={{ color: "#93c5fd" }}>Online Web Bookings</span>
-          </div>
-          <div className="metric-card-body">
-            <div className="metric-number-group">
-              <div className="metric-value" style={{ color: "#bfdbfe" }}>{kpis.onlineCount}</div>
-              <div className="metric-trend trend-up">
-                <span className="trend-arrow" style={{ color: "#60a5fa" }}>Live Website Sync</span>
-              </div>
-            </div>
-            <div className="metric-sparkline-box">
-              <svg width="68" height="28" viewBox="0 0 68 28" fill="none">
-                <path d="M2,22 Q16,14 32,18 T52,6 T66,2" stroke="#60a5fa" strokeWidth="2" strokeLinecap="round" />
-                <circle cx="66" cy="2" r="2" fill="#60a5fa" />
-              </svg>
-            </div>
-          </div>
-        </article>
-
-        {/* In Consultation / Completed */}
-        <article className="metric-card">
-          <div className="metric-card-top">
-            <div className="metric-icon-box" style={{ background: "rgba(245, 158, 11, 0.12)", color: "#f59e0b" }}>
-              <Activity size={18} />
-            </div>
-            <span className="metric-label">In Consultation / Done</span>
-          </div>
-          <div className="metric-card-body">
-            <div className="metric-number-group">
-              <div className="metric-value">{kpis.inConsultation + kpis.completed}</div>
-              <div className="metric-trend trend-up">
-                <span className="trend-arrow">{kpis.inConsultation} Active • {kpis.completed} Done</span>
-              </div>
-            </div>
-            <div className="metric-sparkline-box">
-              <svg width="68" height="28" viewBox="0 0 68 28" fill="none">
-                <path d="M2,24 Q24,20 36,12 T54,8 T66,4" stroke="#f59e0b" strokeWidth="2" strokeLinecap="round" />
-                <circle cx="66" cy="4" r="2" fill="#f59e0b" />
-              </svg>
-            </div>
-          </div>
-        </article>
-      </section>
-
-      {/* FILTER & VIEW CONTROLS TOOLBAR */}
-      <section className="appointments-controls-bar">
-        {/* Left: View Switcher Buttons */}
-        <div className="view-mode-toggle-group">
+      {/* 3. TOOLBAR: VIEW TABS & FILTERS DECK */}
+      <section className="appointments-toolbar-deck" aria-label="Appointment Controls and Filters">
+        {/* Left: View Mode Tabs */}
+        <div className="appointments-view-tabs">
           <button
             type="button"
-            className={`view-mode-button ${viewMode === "table" ? "active" : ""}`}
+            className={`appointments-tab-btn ${viewMode === "table" ? "active" : ""}`}
             onClick={() => setViewMode("table")}
           >
             <TableIcon size={14} />
@@ -439,7 +403,7 @@ export function AppointmentsView() {
           </button>
           <button
             type="button"
-            className={`view-mode-button ${viewMode === "kanban" ? "active" : ""}`}
+            className={`appointments-tab-btn ${viewMode === "kanban" ? "active" : ""}`}
             onClick={() => setViewMode("kanban")}
           >
             <Kanban size={14} />
@@ -447,7 +411,7 @@ export function AppointmentsView() {
           </button>
           <button
             type="button"
-            className={`view-mode-button ${viewMode === "calendar" ? "active" : ""}`}
+            className={`appointments-tab-btn ${viewMode === "calendar" ? "active" : ""}`}
             onClick={() => setViewMode("calendar")}
           >
             <CalendarIcon size={14} />
@@ -456,55 +420,49 @@ export function AppointmentsView() {
         </div>
 
         {/* Right: Search & Filters */}
-        <div className="filters-right-group">
+        <div className="appointments-filters-group">
           {/* Search box */}
-          <div className="table-search-box table-search-wide">
-            <Search size={14} className="text-muted" />
+          <div className="appointments-search-wrap">
+            <Search size={15} className="appointments-search-icon" />
             <input
               type="text"
-              placeholder="Search patient, mobile, serial #, or chamber..."
+              placeholder="Search patient, mobile, serial #..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="table-search-input"
+              className="appointments-search-input"
             />
           </div>
 
           {/* Booking Channel Filter */}
-          <div className="filter-dropdown-wrap">
-            <select
-              value={channelFilter}
-              onChange={(e) => setChannelFilter(e.target.value)}
-              className="table-filter-select"
-            >
-              <option value="All Channels">All Channels</option>
-              <option value="Online Web">Online Web</option>
-              <option value="In-Person Chamber">In-Person Chamber</option>
-              <option value="Phone Booking">Phone Booking</option>
-            </select>
-            <ChevronDown size={12} className="dropdown-arrow-icon" />
-          </div>
+          <select
+            value={channelFilter}
+            onChange={(e) => setChannelFilter(e.target.value)}
+            className="appointments-select-pill"
+          >
+            <option value="All Channels">All Channels</option>
+            <option value="Online Web">Online Web</option>
+            <option value="In-Person Chamber">In-Person Chamber</option>
+            <option value="Phone Booking">Phone Booking</option>
+          </select>
 
           {/* Status Filter */}
-          <div className="filter-dropdown-wrap">
-            <select
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
-              className="table-filter-select"
-            >
-              <option value="All Status">All Status</option>
-              <option value="Confirmed">Confirmed</option>
-              <option value="In Consultation">In Consultation</option>
-              <option value="Pending">Pending</option>
-              <option value="Completed">Completed</option>
-              <option value="Cancelled">Cancelled</option>
-            </select>
-            <ChevronDown size={12} className="dropdown-arrow-icon" />
-          </div>
+          <select
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value)}
+            className="appointments-select-pill"
+          >
+            <option value="All Status">All Status</option>
+            <option value="Confirmed">Confirmed</option>
+            <option value="In Consultation">In Consultation</option>
+            <option value="Pending">Pending</option>
+            <option value="Completed">Completed</option>
+            <option value="Cancelled">Cancelled</option>
+          </select>
 
           {/* Date Indicator */}
-          <div className="filter-date-pill">
-            <Calendar size={13} className="text-gold" />
-            <span>Today, 24 Apr 2026</span>
+          <div className="appointments-date-pill">
+            <Calendar size={13} style={{ color: "#f5c270" }} />
+            <span>Today, 25 Oct 2026</span>
           </div>
         </div>
       </section>
@@ -534,11 +492,25 @@ export function AppointmentsView() {
         </div>
       )}
 
-      {/* VIEW 1: CLINICAL TABLE VIEW (Fixed Height Table Card, Zero Window Scrolling) */}
+      {/* VIEW 1: CLINICAL TABLE VIEW */}
       {viewMode === "table" && (
-        <article className="dashboard-panel appointments-table-card">
-          <div className="table-responsive-wrapper">
-            <table className="appointments-table">
+        <article className="appointments-luxury-table-card">
+          <div className="appointments-table-header-bar">
+            <div className="appointments-table-title-group">
+              <div style={{ width: 10, height: 10, borderRadius: "50%", background: "#f5c270", boxShadow: "0 0 10px #f5c270" }} />
+              <h2 style={{ margin: 0, fontSize: 16, fontWeight: 800, color: "#ffffff" }}>
+                Patient Appointments &amp; Consultations
+              </h2>
+            </div>
+            <div className="appointments-table-meta-group">
+              <span>
+                Total Records: <strong style={{ color: "#ffffff" }}>{filteredAppointments.length}</strong>
+              </span>
+            </div>
+          </div>
+
+          <div className="appointments-table-wrapper">
+            <table className="appointments-luxury-table">
               <thead>
                 <tr>
                   <th style={{ width: "36px" }}>
@@ -554,7 +526,6 @@ export function AppointmentsView() {
                   </th>
                   <th style={{ width: "70px" }}>Serial #</th>
                   <th>Patient Details</th>
-                  <th>Clinical Cardiology Service</th>
                   <th>Chamber Location</th>
                   <th>Schedule</th>
                   <th>Channel</th>
@@ -589,9 +560,28 @@ export function AppointmentsView() {
 
                       {/* Patient Details */}
                       <td className="client-cell">
-                        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                          <div className="patient-avatar-badge">
-                            {apt.patientName.charAt(0)}
+                        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                          <div
+                            style={{
+                              width: 36,
+                              height: 36,
+                              borderRadius: "50%",
+                              background: getInitialsGradient(apt.patientName),
+                              display: "flex",
+                              alignItems: "center",
+                              justifyContent: "center",
+                              color: "#ffffff",
+                              fontWeight: 800,
+                              fontSize: 13,
+                              flexShrink: 0,
+                              boxShadow: "0 2px 8px rgba(0,0,0,0.3)",
+                            }}
+                          >
+                            {apt.patientName
+                              .split(" ")
+                              .map((n) => n[0])
+                              .slice(0, 2)
+                              .join("")}
                           </div>
                           <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
                             <span style={{ fontSize: 13, fontWeight: 700, color: "#ffffff" }}>
@@ -604,18 +594,6 @@ export function AppointmentsView() {
                               <span className="blood-group-pill">{apt.bloodGroup}</span>
                             </div>
                           </div>
-                        </div>
-                      </td>
-
-                      {/* Clinical Cardiology Service */}
-                      <td>
-                        <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
-                          <span style={{ fontSize: 13, fontWeight: 600, color: "#e2e8f0" }}>
-                            {apt.service}
-                          </span>
-                          <span style={{ fontSize: 11, color: "#38bdf8" }}>
-                            Cardiology Care
-                          </span>
                         </div>
                       </td>
 
@@ -722,7 +700,7 @@ export function AppointmentsView() {
                   ))
                 ) : (
                   <tr>
-                    <td colSpan={10} style={{ textAlign: "center", padding: "40px 20px", color: "#94a3b8" }}>
+                    <td colSpan={9} style={{ textAlign: "center", padding: "40px 20px", color: "#94a3b8" }}>
                       <Stethoscope size={28} color="#e5b869" style={{ margin: "0 auto 10px", opacity: 0.6 }} />
                       <p style={{ margin: 0, fontSize: 14, fontWeight: 600, color: "#ffffff" }}>
                         No doctor appointments found matching current filters.

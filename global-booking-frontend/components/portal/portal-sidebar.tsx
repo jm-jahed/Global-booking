@@ -53,19 +53,18 @@ export interface PortalNavItem {
 }
 
 /**
- * 12 Approved Menus for DOCTOR DASHBOARD SIDEBAR (Strict Order)
+ * 11 Approved Menus for DOCTOR DASHBOARD SIDEBAR (Strict Order)
  * 1. Dashboard
- * 2. Appointments
- * 3. Live Queue
- * 4. My Patients
- * 5. Availability & Schedule
- * 6. Reports
- * 7. QR Code & Booking Link
- * 8. Staff Management (Doctor full access, hidden for Staff by default)
- * 9. Subscription & Billing (Doctor full access, hidden for Staff by default)
- * 10. Notifications
- * 11. My Profile & Portfolio
- * 12. Logout
+ * 2. Live Queue
+ * 3. My Patients
+ * 4. Availability & Schedule
+ * 5. Reports
+ * 6. QR Code & Booking Link
+ * 7. Staff Management (Doctor full access, hidden for Staff by default)
+ * 8. Subscription & Billing (Doctor full access, hidden for Staff by default)
+ * 9. Notifications
+ * 10. My Profile & Portfolio
+ * 11. Logout
  */
 export const DOCTOR_NAV_ITEMS: readonly PortalNavItem[] = [
   {
@@ -77,21 +76,13 @@ export const DOCTOR_NAV_ITEMS: readonly PortalNavItem[] = [
     staffAccessible: true,
   },
   {
-    id: "appointments",
-    label: "Appointments",
-    href: "/appointments",
-    icon: CalendarDays,
-    activeMatch: (path) => path.startsWith("/appointments"),
-    staffAccessible: true,
-    phoneBookingAllowed: true,
-  },
-  {
     id: "live-queue",
     label: "Live Queue",
     href: "/live-queue",
     icon: Activity,
     activeMatch: (path) => path.startsWith("/live-queue"),
     staffAccessible: true,
+    phoneBookingAllowed: true,
   },
   {
     id: "my-patients",
@@ -118,7 +109,7 @@ export const DOCTOR_NAV_ITEMS: readonly PortalNavItem[] = [
     href: "/reports",
     icon: BarChart3,
     activeMatch: (path) => path.startsWith("/reports"),
-    staffAccessible: true,
+    staffAccessible: false, // Staff restricted (backend enforces DOCTOR only)
   },
   {
     id: "qr-code",
@@ -175,22 +166,21 @@ export const DOCTOR_NAV_ITEMS: readonly PortalNavItem[] = [
 ] as const;
 
 /**
- * 15 Approved Menus for HOSPITAL / CLINIC DASHBOARD SIDEBAR (Strict Order)
+ * 14 Approved Menus for HOSPITAL / CLINIC DASHBOARD SIDEBAR (Strict Order)
  * 1. Dashboard
- * 2. Appointments
- * 3. Live Queue
- * 4. Patients
- * 5. Doctors & Specialists
- * 6. Departments & Specializations
- * 7. Availability & Schedule
- * 8. Reports
- * 9. QR Code & Booking Link
- * 10. Staff Management
- * 11. Subscription & Billing
- * 12. Notifications
- * 13. Hospital / Clinic Profile
- * 14. Account Settings
- * 15. Logout
+ * 2. Live Queue
+ * 3. Patients
+ * 4. Doctors & Specialists
+ * 5. Departments & Specializations
+ * 6. Availability & Schedule
+ * 7. Reports
+ * 8. QR Code & Booking Link
+ * 9. Staff Management
+ * 10. Subscription & Billing
+ * 11. Notifications
+ * 12. Hospital / Clinic Profile
+ * 13. Account Settings
+ * 14. Logout
  */
 export const HOSPITAL_NAV_ITEMS: readonly PortalNavItem[] = [
   {
@@ -202,21 +192,13 @@ export const HOSPITAL_NAV_ITEMS: readonly PortalNavItem[] = [
     staffAccessible: true,
   },
   {
-    id: "appointments",
-    label: "Appointments",
-    href: "/appointments",
-    icon: CalendarDays,
-    activeMatch: (path) => path.startsWith("/appointments"),
-    staffAccessible: true,
-    phoneBookingAllowed: true,
-  },
-  {
     id: "live-queue",
     label: "Live Queue",
     href: "/live-queue",
     icon: Activity,
     activeMatch: (path) => path.startsWith("/live-queue"),
     staffAccessible: true,
+    phoneBookingAllowed: true,
   },
   {
     id: "patients",
@@ -260,7 +242,7 @@ export const HOSPITAL_NAV_ITEMS: readonly PortalNavItem[] = [
     href: "/reports",
     icon: BarChart3,
     activeMatch: (path) => path.startsWith("/reports"),
-    staffAccessible: true,
+    staffAccessible: false, // Staff restricted (backend enforces DOCTOR only)
   },
   {
     id: "qr-code",

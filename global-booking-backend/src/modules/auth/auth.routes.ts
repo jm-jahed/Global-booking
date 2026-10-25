@@ -298,7 +298,100 @@ export async function registerAuthRoutes(app: FastifyInstance): Promise<void> {
         });
       }
 
-      // Neither admin, doctor, nor hospital found with valid credentials
+      // If no admin, doctor, or hospital record, check staff accounts
+      const staffCol = mongoAdapter.getStaffCollection();
+      const staffRecord = await staffCol.findOne({ email: normalizedEmail });
+
+      if (staffRecord && staffRecord.passwordHash) {
+        const passwordMatch = await verifyPassword(password, staffRecord.passwordHash);
+
+        if (!passwordMatch) {
+          return reply.status(401).send({
+            statusCode: 401,
+            error: "Unauthorized",
+            message: "Invalid email or password.",
+          });
+        }
+
+        if (staffRecord.accountStatus === "SUSPENDED") {
+          return reply.status(403).send({
+            statusCode: 403,
+            error: "Forbidden",
+            message: "This Staff account is currently suspended. Please contact your administrator.",
+          });
+        }
+
+        // If staff is associated with a doctor, verify parent doctor is not suspended
+        let parentDoctorName: string | undefined;
+        if (staffRecord.tenantType === "DOCTOR" && staffRecord.doctorId) {
+          const docCol = mongoAdapter.getDoctorCollection();
+          const parentDoc = await docCol.findOne({ id: staffRecord.doctorId });
+          if (!parentDoc || parentDoc.accountStatus === "SUSPENDED") {
+            return reply.status(403).send({
+              statusCode: 403,
+              error: "Forbidden",
+              message: "The associated Doctor account is suspended or unavailable.",
+            });
+          }
+          parentDoctorName = parentDoc.fullName;
+        }
+
+        // Successful authentication: clear rate limiter
+        resetLoginRateLimit(rateLimitKey);
+
+        const sessionPayload: AdminSessionPayload = {
+          adminId: staffRecord.id,
+          email: staffRecord.email,
+          role: "STAFF",
+          staffRole: staffRecord.staffRole,
+          doctorId: staffRecord.doctorId,
+          hospitalId: staffRecord.hospitalId,
+          permissions: [],
+        };
+
+        const token = app.jwt.sign(sessionPayload, { expiresIn: SESSION_EXPIRY_STRING });
+        const isProduction = process.env.NODE_ENV === "production";
+
+        reply.setCookie(ADMIN_COOKIE_NAME, token, {
+          path: "/",
+          httpOnly: true,
+          secure: isProduction,
+          sameSite: "lax",
+          signed: true,
+          maxAge: SESSION_MAX_AGE_SECONDS,
+        });
+
+        const nowIso = new Date().toISOString();
+        await staffCol.updateOne(
+          { id: staffRecord.id },
+          { $set: { lastLoginAt: nowIso, updatedAt: nowIso } },
+        );
+
+        return reply.status(200).send({
+          statusCode: 200,
+          token,
+          user: {
+            id: staffRecord.id,
+            email: staffRecord.email,
+            name: staffRecord.name,
+            fullName: staffRecord.name,
+            role: "STAFF",
+            staffRole: staffRecord.staffRole,
+            tenantType: staffRecord.tenantType,
+            doctorId: staffRecord.doctorId,
+            hospitalId: staffRecord.hospitalId,
+            chamberLocation: staffRecord.chamberLocation,
+            phone: staffRecord.phone,
+            permissions: staffRecord.permissions,
+            accountStatus: staffRecord.accountStatus,
+            parentDoctorName,
+            isActive: staffRecord.accountStatus === "ACTIVE",
+            createdAt: staffRecord.createdAt,
+          },
+        });
+      }
+
+      // Neither admin, doctor, hospital, nor staff found with valid credentials
       return reply.status(401).send({
         statusCode: 401,
         error: "Unauthorized",
@@ -394,6 +487,55 @@ export async function registerAuthRoutes(app: FastifyInstance): Promise<void> {
             permissions: ["VIEW_HOSPITALS"],
             isActive: true,
             createdAt: hsp.createdAt,
+          },
+        });
+      }
+
+      if (session.role === "STAFF") {
+        const staffCol = mongoAdapter.getStaffCollection();
+        const staff = await staffCol.findOne({ id: session.adminId });
+
+        if (!staff || staff.accountStatus === "SUSPENDED") {
+          return reply.status(401).send({
+            statusCode: 401,
+            error: "Unauthorized",
+            message: "Staff account is inactive or not found.",
+          });
+        }
+
+        let parentDoctorName: string | undefined;
+        if (staff.tenantType === "DOCTOR" && staff.doctorId) {
+          const docCol = mongoAdapter.getDoctorCollection();
+          const parentDoc = await docCol.findOne({ id: staff.doctorId });
+          if (!parentDoc || parentDoc.accountStatus === "SUSPENDED") {
+            return reply.status(403).send({
+              statusCode: 403,
+              error: "Forbidden",
+              message: "The associated Doctor account is suspended or unavailable.",
+            });
+          }
+          parentDoctorName = parentDoc.fullName;
+        }
+
+        return reply.status(200).send({
+          statusCode: 200,
+          user: {
+            id: staff.id,
+            email: staff.email,
+            name: staff.name,
+            fullName: staff.name,
+            role: "STAFF",
+            staffRole: staff.staffRole,
+            tenantType: staff.tenantType,
+            doctorId: staff.doctorId,
+            hospitalId: staff.hospitalId,
+            chamberLocation: staff.chamberLocation,
+            phone: staff.phone,
+            permissions: staff.permissions,
+            accountStatus: staff.accountStatus,
+            parentDoctorName,
+            isActive: staff.accountStatus === "ACTIVE",
+            createdAt: staff.createdAt,
           },
         });
       }

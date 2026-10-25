@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
+import Link from "next/link";
 import {
   Search,
   Calendar,
@@ -14,7 +15,7 @@ import {
   Globe,
   RotateCcw,
 } from "lucide-react";
-import { getStoredPortalUser, getStoredAccountType, getAdminMe } from "@/lib/api/admin-client";
+import { getStoredPortalUser, getStoredAccountType, getAdminMe, getDoctorNotifications } from "@/lib/api/admin-client";
 import {
   getStoredPortalDate,
   setStoredPortalDate,
@@ -120,6 +121,39 @@ export function PortalTopBar({
   const [selectedDateKey, setSelectedDateKey] = useState<string>(() => getStoredPortalDate());
   const [isDateDropdownOpen, setIsDateDropdownOpen] = useState(false);
   const dateDropdownRef = useRef<HTMLDivElement>(null);
+  const [unreadNotificationsCount, setUnreadNotificationsCount] = useState<number>(0);
+
+  useEffect(() => {
+    let isMounted = true;
+    const fetchUnread = () => {
+      getDoctorNotifications({ limit: 1 })
+        .then((res) => {
+          if (isMounted && res?.pagination && typeof res.pagination.unreadCount === "number") {
+            setUnreadNotificationsCount(res.pagination.unreadCount);
+          }
+        })
+        .catch(() => {});
+    };
+
+    fetchUnread();
+
+    const handleUpdate = (e: any) => {
+      if (e?.detail && typeof e.detail.unreadCount === "number") {
+        setUnreadNotificationsCount(e.detail.unreadCount);
+      } else {
+        fetchUnread();
+      }
+    };
+
+    window.addEventListener("gb_notifications_updated", handleUpdate);
+    const interval = setInterval(fetchUnread, 60000);
+
+    return () => {
+      isMounted = false;
+      window.removeEventListener("gb_notifications_updated", handleUpdate);
+      clearInterval(interval);
+    };
+  }, []);
 
   useEffect(() => {
     const onDateChange = (e: any) => {
@@ -510,15 +544,24 @@ export function PortalTopBar({
         </div>
 
         {/* Notification Bell with Badge */}
-        <button
-          type="button"
+        <Link
+          href="/notifications"
           className="topbar-notification-button"
           aria-label="Notifications"
-          title="3 unread notifications"
+          title={
+            unreadNotificationsCount > 0
+              ? `Practice notifications & alerts (${unreadNotificationsCount} unread)`
+              : "Practice notifications & alerts"
+          }
+          style={{ textDecoration: "none" }}
         >
           <Bell size={18} strokeWidth={2} />
-          <span className="notification-badge-dot">3</span>
-        </button>
+          {unreadNotificationsCount > 0 && (
+            <span className="notification-badge-dot">
+              {unreadNotificationsCount > 99 ? "99+" : unreadNotificationsCount}
+            </span>
+          )}
+        </Link>
 
         {/* User Profile Info */}
         <div className="topbar-user-profile">

@@ -1,6 +1,11 @@
-import { FoundationPage } from "@/components/shared/foundation-page";
-import { PAGE_CONTENT } from "@/config/page-content";
 import { pageMetadata } from "@/lib/utils/metadata";
-const content = PAGE_CONTENT.staff;
-export const metadata = pageMetadata("Staff", content.description);
-export default function Page() { return <FoundationPage {...content} />; }
+import { StaffPageGuard } from "./staff-page-guard";
+
+export const metadata = pageMetadata(
+  "Staff Management",
+  "Authorize receptionists, nurses, and chamber supervisors to manage patient queues and front-desk bookings."
+);
+
+export default function StaffPage() {
+  return <StaffPageGuard />;
+}

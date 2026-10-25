@@ -10,6 +10,7 @@ import {
   getDoctorAppointmentsList,
 } from "./appointments.service.js";
 import type { CreateGuestAppointmentInput, RecoverAppointmentInput } from "./appointments.types.js";
+import { createNotification } from "../notifications/notification.service.js";
 
 async function resolveAuthenticatedDoctor(
   request: FastifyRequest,
@@ -25,7 +26,7 @@ async function resolveAuthenticatedDoctor(
     return null;
   }
 
-  if (session.role !== "DOCTOR") {
+  if (session.role !== "DOCTOR" && session.role !== "STAFF") {
     void reply.status(403).send({
       statusCode: 403,
       error: "Forbidden",
@@ -43,8 +44,55 @@ async function resolveAuthenticatedDoctor(
     return null;
   }
 
+  let targetDoctorId: string | undefined;
+
+  if (session.role === "DOCTOR") {
+    targetDoctorId = session.adminId;
+  } else if (session.role === "STAFF") {
+    if (!session.doctorId) {
+      void reply.status(403).send({
+        statusCode: 403,
+        error: "Forbidden",
+        message: "Staff member is not assigned to a doctor.",
+      });
+      return null;
+    }
+
+    const staffCol = mongoAdapter.getStaffCollection();
+    const staff = await staffCol.findOne({ id: session.adminId });
+    if (!staff || staff.accountStatus === "SUSPENDED") {
+      void reply.status(403).send({
+        statusCode: 403,
+        error: "Forbidden",
+        message: "Staff account is suspended or inactive.",
+      });
+      return null;
+    }
+
+    const method = request.method.toUpperCase();
+    if (["POST", "PATCH", "PUT", "DELETE"].includes(method)) {
+      if (staff.permissions && staff.permissions.canBookPhoneAppointments === false) {
+        void reply.status(403).send({
+          statusCode: 403,
+          error: "Forbidden",
+          message: "Staff member does not have permission to book or modify appointments.",
+        });
+        return null;
+      }
+    }
+
+    targetDoctorId = session.doctorId;
+  } else {
+    void reply.status(403).send({
+      statusCode: 403,
+      error: "Forbidden",
+      message: "Access restricted to verified Doctor or authorized Staff accounts.",
+    });
+    return null;
+  }
+
   const docCol = mongoAdapter.getDoctorCollection();
-  const doctor = await docCol.findOne({ id: session.adminId });
+  const doctor = await docCol.findOne({ id: targetDoctorId });
 
   if (!doctor) {
     void reply.status(404).send({
@@ -173,6 +221,29 @@ export async function registerAppointmentRoutes(app: FastifyInstance): Promise<v
 
       try {
         const result = await createGuestAppointment(doctor, chamberWithTz, body);
+
+        // Business event 1: Public appointment successfully booked (error isolated)
+        if (!result.isReplay) {
+          const targetDoctorId = doctor.id || doctor.doctorId;
+          createNotification({
+            id: `notif_apt_${result.appointment.id}`,
+            doctorId: targetDoctorId,
+            type: "appointment",
+            priority: "normal",
+            title: "New Public Appointment Booked",
+            message: `New appointment booked by ${result.appointment.patientName} for ${result.appointment.appointmentDate} (${result.appointment.appointmentTime}) at ${result.appointment.chamberName || chamberWithTz.facilityName}. Reference #${result.appointment.referenceNumber}.`,
+            read: false,
+            chamberId: result.appointment.chamberId,
+            chamberName: result.appointment.chamberName || chamberWithTz.facilityName,
+            patientName: result.appointment.patientName,
+            patientPhone: result.appointment.patientPhone,
+            actionLink: "/availability",
+            actionLabel: "View Schedule",
+            eventRef: `appointment:${result.appointment.id}`,
+          }).catch((notifErr) => {
+            request.log.error(notifErr, "Failed to create appointment notification record");
+          });
+        }
 
         return reply.status(201).send({
           statusCode: 201,
