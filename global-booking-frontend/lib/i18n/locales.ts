@@ -1,6 +1,6 @@
 import type { Locale, LocaleInfo } from "./types";
 
-export const DEFAULT_LOCALE: Locale = "bn";
+export const DEFAULT_LOCALE: Locale = "en";
 
 export const RTL_LOCALES = new Set<Locale>(["ar", "ur", "fa"]);
 

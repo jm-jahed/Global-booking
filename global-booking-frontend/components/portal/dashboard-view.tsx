@@ -624,41 +624,72 @@ export function DashboardView() {
         </div>
       </section>
 
-      {/* Mobile Action Deck: Date Selector Pill, Refresh, Quick Issue OPD Token */}
+      {/* Mobile Action Deck: Luxury Interactive Date Navigator, Live Status Sync, Quick Token Button */}
       <div className="dashboard-mobile-actions-deck">
-        <button
-          type="button"
-          onClick={() => {
-            const next = shiftDateIso(selectedDateKey, 1);
-            setSelectedDateKey(next);
-            setStoredPortalDate(next);
-          }}
-          className="dashboard-mobile-pill-date"
-        >
-          <Calendar size={13} color="#e5b869" />
-          <span>{dateInfo.formattedDate}</span>
-          <span className="dashboard-mobile-pill-badge">{dateInfo.isToday ? tPortal("today") : dateInfo.dayOfWeek}</span>
-          <ChevronDown size={13} color="#8e9fb5" />
-        </button>
+        <div className="dashboard-mobile-pill-date">
+          <button
+            type="button"
+            onClick={() => {
+              const prev = shiftDateIso(selectedDateKey, -1);
+              setSelectedDateKey(prev);
+              setStoredPortalDate(prev);
+            }}
+            className="dashboard-date-nav-btn"
+            aria-label="Previous date"
+          >
+            ‹
+          </button>
+          <div style={{ display: "flex", alignItems: "center", gap: 5, minWidth: 0 }}>
+            <Calendar size={13} color="#e5b869" style={{ flexShrink: 0 }} />
+            <span className="dashboard-date-display-text">{dateInfo.formattedDate}</span>
+          </div>
+          <button
+            type="button"
+            onClick={() => {
+              const next = shiftDateIso(selectedDateKey, 1);
+              setSelectedDateKey(next);
+              setStoredPortalDate(next);
+            }}
+            className="dashboard-date-nav-btn"
+            aria-label="Next date"
+          >
+            ›
+          </button>
+          {!dateInfo.isToday && (
+            <button
+              type="button"
+              onClick={() => {
+                setSelectedDateKey(chamberTodayDateKey);
+                setStoredPortalDate(chamberTodayDateKey);
+              }}
+              className="dashboard-mobile-pill-badge"
+              style={{ border: "none", cursor: "pointer" }}
+            >
+              {tPortal("today")}
+            </button>
+          )}
+        </div>
 
         <button
           type="button"
           onClick={() => loadDashboardData(true)}
           disabled={refreshing}
           className="dashboard-mobile-pill-refresh"
+          title="Live clinical sync"
         >
-          <RefreshCw size={13} className={refreshing ? "animate-spin text-gold" : ""} />
-          <span>{refreshing ? "..." : tPortal("refresh")}</span>
+          <span className="dashboard-live-dot-pulse" />
+          <RefreshCw size={12} className={refreshing ? "animate-spin text-gold" : ""} />
+          <span>{refreshing ? "..." : "Live"}</span>
         </button>
 
         <button
           type="button"
           onClick={() => setIsTicketModalOpen(true)}
           className="dashboard-mobile-pill-token"
+          title="Issue Token"
         >
-          <Ticket size={14} />
+          <Ticket size={13} />
           <span>{tPortal("issueToken")}</span>
-          <ChevronRight size={13} />
         </button>
       </div>
 
@@ -667,8 +698,30 @@ export function DashboardView() {
         {/* Card 1: LIVE OPD (Gold Glowing Card) */}
         <Link href="/live-queue" style={{ textDecoration: "none", color: "inherit", display: "block" }}>
           <article className="queue-kpi-card queue-kpi-card-serving" style={{ cursor: "pointer" }}>
-            <div className="queue-kpi-card-icon queue-kpi-icon-serving">
-              <Stethoscope size={20} />
+            <div className="queue-kpi-card-header-row">
+              <div className="queue-kpi-card-icon queue-kpi-icon-serving">
+                <Stethoscope size={19} />
+              </div>
+              <div style={{ display: "flex", alignItems: "center", gap: 6, flexShrink: 0 }}>
+                <svg width="46" height="24" viewBox="0 0 54 26" fill="none">
+                  <path d="M2 16C8 16 12 6 18 10C24 14 28 22 34 14C40 6 46 12 52 12" stroke="#e5b869" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+                <div
+                  style={{
+                    width: 20,
+                    height: 20,
+                    borderRadius: "50%",
+                    background: "rgba(229, 184, 105, 0.15)",
+                    border: "1px solid rgba(229, 184, 105, 0.5)",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    flexShrink: 0,
+                  }}
+                >
+                  <ChevronRight size={11} color="#e5b869" />
+                </div>
+              </div>
             </div>
             <div className="queue-kpi-card-body">
               <span className="queue-kpi-card-label" style={{ color: "#e5b869" }}>
@@ -681,34 +734,23 @@ export function DashboardView() {
                 {servingTicket ? tPortal("currentlyServing") : tPortal("chamberIdle")}
               </div>
             </div>
-            {/* Mini wave chart + chevron */}
-            <div style={{ display: "flex", alignItems: "center", gap: 8, flexShrink: 0 }}>
-              <svg width="54" height="26" viewBox="0 0 54 26" fill="none">
-                <path d="M2 16C8 16 12 6 18 10C24 14 28 22 34 14C40 6 46 12 52 12" stroke="#e5b869" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
-              <div
-                style={{
-                  width: 22,
-                  height: 22,
-                  borderRadius: "50%",
-                  background: "rgba(229, 184, 105, 0.15)",
-                  border: "1px solid rgba(229, 184, 105, 0.5)",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  flexShrink: 0,
-                }}
-              >
-                <ChevronRight size={13} color="#e5b869" />
-              </div>
-            </div>
           </article>
         </Link>
 
         {/* Card 2: COMPLETED TODAY (Blue Card) */}
         <article className="queue-kpi-card queue-kpi-card-next">
-          <div className="queue-kpi-card-icon queue-kpi-icon-next">
-            <Clock size={20} />
+          <div className="queue-kpi-card-header-row">
+            <div className="queue-kpi-card-icon queue-kpi-icon-next">
+              <Clock size={19} />
+            </div>
+            <div style={{ flexShrink: 0 }}>
+              <svg width="34" height="26" viewBox="0 0 34 28" fill="none">
+                <rect x="2" y="16" width="5" height="12" rx="1.5" fill="#38bdf8" opacity="0.45" />
+                <rect x="11" y="11" width="5" height="17" rx="1.5" fill="#38bdf8" opacity="0.65" />
+                <rect x="20" y="5" width="5" height="23" rx="1.5" fill="#38bdf8" opacity="0.85" />
+                <rect x="29" y="0" width="5" height="28" rx="1.5" fill="#38bdf8" />
+              </svg>
+            </div>
           </div>
           <div className="queue-kpi-card-body">
             <span className="queue-kpi-card-label" style={{ color: "#38bdf8" }}>
@@ -721,21 +763,23 @@ export function DashboardView() {
               {tPortal("completedVisits")}
             </div>
           </div>
-          <div style={{ flexShrink: 0 }}>
-            <svg width="34" height="28" viewBox="0 0 34 28" fill="none">
-              <rect x="2" y="16" width="5" height="12" rx="1.5" fill="#38bdf8" opacity="0.45" />
-              <rect x="11" y="11" width="5" height="17" rx="1.5" fill="#38bdf8" opacity="0.65" />
-              <rect x="20" y="5" width="5" height="23" rx="1.5" fill="#38bdf8" opacity="0.85" />
-              <rect x="29" y="0" width="5" height="28" rx="1.5" fill="#38bdf8" />
-            </svg>
-          </div>
         </article>
 
         {/* Card 3: TOTAL REGISTERED (Teal/Emerald Card) */}
         <Link href={ROUTES.patients} style={{ textDecoration: "none", color: "inherit", display: "block" }}>
           <article className="queue-kpi-card queue-kpi-card-waiting" style={{ cursor: "pointer" }}>
-            <div className="queue-kpi-card-icon queue-kpi-icon-waiting">
-              <Users size={20} />
+            <div className="queue-kpi-card-header-row">
+              <div className="queue-kpi-card-icon queue-kpi-icon-waiting">
+                <Users size={19} />
+              </div>
+              <div style={{ flexShrink: 0 }}>
+                <svg width="34" height="26" viewBox="0 0 34 28" fill="none">
+                  <rect x="2" y="16" width="5" height="12" rx="1.5" fill="#10b981" opacity="0.45" />
+                  <rect x="11" y="11" width="5" height="17" rx="1.5" fill="#10b981" opacity="0.65" />
+                  <rect x="20" y="5" width="5" height="23" rx="1.5" fill="#10b981" opacity="0.85" />
+                  <rect x="29" y="0" width="5" height="28" rx="1.5" fill="#10b981" />
+                </svg>
+              </div>
             </div>
             <div className="queue-kpi-card-body">
               <span className="queue-kpi-card-label" style={{ color: "#10b981" }}>
@@ -748,22 +792,24 @@ export function DashboardView() {
                 {tPortal("patientsInSystem")}
               </div>
             </div>
-            <div style={{ flexShrink: 0 }}>
-              <svg width="34" height="28" viewBox="0 0 34 28" fill="none">
-                <rect x="2" y="16" width="5" height="12" rx="1.5" fill="#10b981" opacity="0.45" />
-                <rect x="11" y="11" width="5" height="17" rx="1.5" fill="#10b981" opacity="0.65" />
-                <rect x="20" y="5" width="5" height="23" rx="1.5" fill="#10b981" opacity="0.85" />
-                <rect x="29" y="0" width="5" height="28" rx="1.5" fill="#10b981" />
-              </svg>
-            </div>
           </article>
         </Link>
 
         {/* Card 4: SCHEDULED APPOINTMENTS (Purple Card) */}
         <Link href={ROUTES.appointments} style={{ textDecoration: "none", color: "inherit", display: "block" }}>
           <article className="queue-kpi-card queue-kpi-card-scheduled" style={{ cursor: "pointer" }}>
-            <div className="queue-kpi-card-icon queue-kpi-icon-scheduled">
-              <Calendar size={20} />
+            <div className="queue-kpi-card-header-row">
+              <div className="queue-kpi-card-icon queue-kpi-icon-scheduled">
+                <Calendar size={19} />
+              </div>
+              <div style={{ flexShrink: 0 }}>
+                <svg width="34" height="26" viewBox="0 0 34 28" fill="none">
+                  <rect x="2" y="16" width="5" height="12" rx="1.5" fill="#c084fc" opacity="0.45" />
+                  <rect x="11" y="11" width="5" height="17" rx="1.5" fill="#c084fc" opacity="0.65" />
+                  <rect x="20" y="5" width="5" height="23" rx="1.5" fill="#c084fc" opacity="0.85" />
+                  <rect x="29" y="0" width="5" height="28" rx="1.5" fill="#c084fc" />
+                </svg>
+              </div>
             </div>
             <div className="queue-kpi-card-body">
               <span className="queue-kpi-card-label" style={{ color: "#c084fc" }}>
@@ -775,14 +821,6 @@ export function DashboardView() {
               <div className="queue-kpi-card-sub">
                 {tPortal("onlinePhoneBookings")}
               </div>
-            </div>
-            <div style={{ flexShrink: 0 }}>
-              <svg width="34" height="28" viewBox="0 0 34 28" fill="none">
-                <rect x="2" y="16" width="5" height="12" rx="1.5" fill="#c084fc" opacity="0.45" />
-                <rect x="11" y="11" width="5" height="17" rx="1.5" fill="#c084fc" opacity="0.65" />
-                <rect x="20" y="5" width="5" height="23" rx="1.5" fill="#c084fc" opacity="0.85" />
-                <rect x="29" y="0" width="5" height="28" rx="1.5" fill="#c084fc" />
-              </svg>
             </div>
           </article>
         </Link>
@@ -798,28 +836,9 @@ export function DashboardView() {
         }}
       >
         {/* OPERATIONAL STREAM (TABS) */}
-        <article
-          style={{
-            background: "#0b1325",
-            border: "1px solid rgba(255, 255, 255, 0.08)",
-            borderRadius: 18,
-            padding: 24,
-            boxShadow: "0 8px 30px rgba(0, 0, 0, 0.35)",
-            display: "flex",
-            flexDirection: "column",
-            gap: 20,
-          }}
-        >
+        <article className="dashboard-queue-card">
           {/* Header Row: Exact Reference Match */}
-          <div
-            style={{
-              display: "flex",
-              flexDirection: "column",
-              gap: 14,
-              borderBottom: "1px solid rgba(255, 255, 255, 0.07)",
-              paddingBottom: 16,
-            }}
-          >
+          <div className="dashboard-queue-header">
             {/* Row 1: Title, Red Live Pill, Total Patients, Queue Settings */}
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 12 }}>
               <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
@@ -1039,6 +1058,7 @@ export function DashboardView() {
                   return (
                     <div
                       key={ticket.id}
+                      className="dashboard-ticket-card"
                       style={{
                         display: "flex",
                         alignItems: "center",

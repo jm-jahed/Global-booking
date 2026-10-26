@@ -236,29 +236,29 @@ export function DoctorPublicPortfolio({
     }
   };
 
-  const formatFee = (fee: any): { initial: string; followUp: string } => {
-    if (!fee) return { initial: "500", followUp: "350" };
-    if (typeof fee.amount === "number" && fee.amount > 0) {
-      return {
-        initial: `${fee.amount}`,
-        followUp: `${Math.round(fee.amount * 0.75)}`,
-      };
+  const formatFee = (fee: any): { initial: string; followUp: string; hasFee: boolean } => {
+    if (!fee) return { initial: "", followUp: "", hasFee: false };
+
+    let numericAmt: number | null = null;
+    if (typeof fee.amount === "number") {
+      numericAmt = fee.amount;
+    } else if (typeof fee.amountInFils === "number") {
+      numericAmt = fee.amountInFils / 100;
+    } else if (typeof fee.formatted === "string" && fee.formatted.trim()) {
+      const clean = fee.formatted.replace(/[^\d.]/g, "");
+      const parsed = parseFloat(clean);
+      if (!isNaN(parsed)) numericAmt = parsed;
     }
-    if (typeof fee.amountInFils === "number" && fee.amountInFils > 0) {
-      const amt = fee.amountInFils / 100;
-      return {
-        initial: `${amt}`,
-        followUp: `${Math.round(amt * 0.75)}`,
-      };
+
+    if (numericAmt === null || numericAmt <= 0) {
+      return { initial: "", followUp: "", hasFee: false };
     }
-    if (typeof fee.formatted === "string" && fee.formatted.trim()) {
-      const cleanFormatted = fee.formatted.replace(/[^\d.,]/g, "").trim();
-      return {
-        initial: cleanFormatted || fee.formatted,
-        followUp: cleanFormatted || fee.formatted,
-      };
-    }
-    return { initial: "500", followUp: "350" };
+
+    return {
+      initial: `${numericAmt}`,
+      followUp: `${Math.round(numericAmt * 0.75)}`,
+      hasFee: true,
+    };
   };
 
   // Loading State
@@ -458,6 +458,7 @@ export function DoctorPublicPortfolio({
         }}
       >
         <div
+          className="portfolio-header-inner"
           style={{
             maxWidth: 1240,
             margin: "0 auto",
@@ -465,14 +466,27 @@ export function DoctorPublicPortfolio({
             display: "flex",
             justifyContent: "space-between",
             alignItems: "center",
+            gap: 12,
+            boxSizing: "border-box",
           }}
         >
           {/* Doctor Personal Practice Identity */}
-          <a href="#top" style={{ display: "flex", alignItems: "center", gap: 12, textDecoration: "none" }}>
+          <a
+            href="#top"
+            className="portfolio-doctor-identity"
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 10,
+              textDecoration: "none",
+              flex: 1,
+              minWidth: 0,
+            }}
+          >
             <div
               style={{
-                width: 40,
-                height: 40,
+                width: 38,
+                height: 38,
                 borderRadius: 12,
                 background: "linear-gradient(135deg, #4338ca 0%, #6366f1 100%)",
                 display: "grid",
@@ -487,27 +501,35 @@ export function DoctorPublicPortfolio({
             >
               {doctorInitials}
             </div>
-            <div>
+            <div style={{ flex: 1, minWidth: 0, overflow: "hidden" }}>
               <div
+                className="portfolio-header-doc-name"
                 style={{
                   fontSize: 16,
                   fontWeight: 800,
                   color: "#0f172a",
-                  lineHeight: 1.15,
+                  lineHeight: 1.2,
                   letterSpacing: "-0.01em",
+                  whiteSpace: "nowrap",
+                  overflow: "hidden",
+                  textOverflow: "ellipsis",
                 }}
               >
                 {profile.fullName}
               </div>
               <div
+                className="portfolio-header-doc-sub"
                 style={{
                   fontSize: 11,
                   fontWeight: 600,
                   color: "#4f46e5",
                   marginTop: 2,
+                  whiteSpace: "nowrap",
+                  overflow: "hidden",
+                  textOverflow: "ellipsis",
                 }}
               >
-                {profile.customTitle || `${profile.specialty} Practice`}
+                {profile.customTitle || (locale === "bn" ? `${profile.specialty} প্র্যাকটিস` : `${profile.specialty} Practice`)}
               </div>
             </div>
           </a>
@@ -613,11 +635,12 @@ export function DoctorPublicPortfolio({
           </nav>
 
           {/* Right Controls: Language Selector, Share, Direct Booking CTA & Mobile Menu Toggle */}
-          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-            <LanguageSelector variant="header" />
+          <div className="portfolio-header-controls" style={{ display: "flex", alignItems: "center", gap: 8, flexShrink: 0 }}>
+            <LanguageSelector variant="header" theme="light" className="portfolio-lang-selector" />
             <button
               type="button"
               onClick={handleShare}
+              className="portfolio-share-btn"
               style={{
                 display: "inline-flex",
                 alignItems: "center",
@@ -631,6 +654,7 @@ export function DoctorPublicPortfolio({
                 fontWeight: 600,
                 cursor: "pointer",
                 transition: "all 0.15s ease",
+                flexShrink: 0,
               }}
               title={tPortal("share")}
             >
@@ -2295,18 +2319,20 @@ export function DoctorPublicPortfolio({
                         borderTop: "1px solid #e2e8f0",
                         paddingTop: 16,
                         display: "flex",
-                        justifyContent: "space-between",
+                        justifyContent: fees.hasFee ? "space-between" : "flex-end",
                         alignItems: "center",
                       }}
                     >
-                      <div>
-                        <div style={{ fontSize: 11, color: "#94a3b8", fontWeight: 600 }}>
-                          {tPortal("consultationFeeLabel")}
+                      {fees.hasFee && (
+                        <div>
+                          <div style={{ fontSize: 11, color: "#94a3b8", fontWeight: 600 }}>
+                            {tPortal("consultationFeeLabel")}
+                          </div>
+                          <div style={{ fontSize: 16, fontWeight: 800, color: "#1e1b4b", marginTop: 2 }}>
+                            {fees.initial}
+                          </div>
                         </div>
-                        <div style={{ fontSize: 16, fontWeight: 800, color: "#1e1b4b", marginTop: 2 }}>
-                          {fees.initial}
-                        </div>
-                      </div>
+                      )}
 
                       <Link
                         href={bookingHref}
@@ -2756,9 +2782,24 @@ export function DoctorPublicPortfolio({
             >
               {profile.fullName}
             </div>
-            <div style={{ fontSize: 11, color: "#64748b", fontWeight: 600 }}>
-              {tPortal("feeLabel")} <span style={{ color: "#4f46e5", fontWeight: 800 }}>{fees.initial}</span>
-            </div>
+            {fees.hasFee ? (
+              <div style={{ fontSize: 11, color: "#64748b", fontWeight: 600 }}>
+                {tPortal("feeLabel")} <span style={{ color: "#4f46e5", fontWeight: 800 }}>{fees.initial}</span>
+              </div>
+            ) : (
+              <div
+                style={{
+                  fontSize: 11,
+                  color: "#4f46e5",
+                  fontWeight: 600,
+                  whiteSpace: "nowrap",
+                  overflow: "hidden",
+                  textOverflow: "ellipsis",
+                }}
+              >
+                {profile.specialty}
+              </div>
+            )}
           </div>
         </div>
 
@@ -2873,6 +2914,33 @@ export function DoctorPublicPortfolio({
         }
 
         @media (max-width: 768px) {
+          .portfolio-header-inner {
+            padding: 10px 14px !important;
+            gap: 8px !important;
+          }
+          .portfolio-doctor-identity {
+            gap: 8px !important;
+          }
+          .portfolio-header-doc-name {
+            font-size: 14.5px !important;
+          }
+          .portfolio-header-doc-sub {
+            font-size: 10.5px !important;
+          }
+          .portfolio-lang-selector .lang-label-text {
+            display: none !important;
+          }
+          .portfolio-lang-selector button {
+            padding: 6px 8px !important;
+            border-radius: 9999px !important;
+          }
+          .share-btn-text {
+            display: none !important;
+          }
+          .portfolio-share-btn {
+            padding: 7px 9px !important;
+            border-radius: 9999px !important;
+          }
           .mobile-menu-btn {
             display: inline-flex !important;
           }
@@ -2947,8 +3015,11 @@ export function DoctorPublicPortfolio({
         }
 
         @media (max-width: 480px) {
-          .share-btn-text {
-            display: none !important;
+          .portfolio-header-doc-name {
+            font-size: 13.5px !important;
+          }
+          .portfolio-header-doc-sub {
+            font-size: 10px !important;
           }
         }
       `}</style>

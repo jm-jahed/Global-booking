@@ -13,8 +13,8 @@ import {
   formatLocaleNumber,
 } from "../lib/i18n/formatters";
 
-test("1. Bangla ('bn') MUST be the default locale across the entire system", () => {
-  assert.equal(DEFAULT_LOCALE, "bn", "DEFAULT_LOCALE must strictly be 'bn'");
+test("1. English ('en') MUST be the default locale across the entire system", () => {
+  assert.equal(DEFAULT_LOCALE, "en", "DEFAULT_LOCALE must strictly be 'en'");
   assert.equal(SUPPORTED_LOCALES[0]?.code, "bn", "Bangla must be the very first option in the supported locales list");
   assert.equal(SUPPORTED_LOCALES[0]?.nativeName, "বাংলা", "Native name must be বাংলা");
 });
