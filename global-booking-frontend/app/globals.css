@@ -18,7 +18,11 @@
 }
 
 * { box-sizing: border-box; }
-html { scroll-behavior: smooth; overflow-x: clip; }
+html {
+  scroll-behavior: smooth;
+  overflow-x: hidden;
+  width: 100%;
+}
 body {
   margin: 0;
   background: var(--paper);
@@ -26,7 +30,9 @@ body {
   font-family: 'Hind Siliguri', Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   font-size: 16px;
   line-height: 1.6;
-  overflow-x: clip;
+  overflow-x: hidden;
+  width: 100%;
+  position: relative;
 }
 html[lang="en"] body {
   font-family: Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;

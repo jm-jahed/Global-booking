@@ -75,7 +75,7 @@ function HealthcarePulseLogo({ size = 40 }: { size?: number }) {
 }
 
 export default function HomePage() {
-  const { t: tHome } = useTranslation("home");
+  const { t: tHome, locale } = useTranslation("home");
   const { t: tNav } = useTranslation("nav");
   const { t: tCommon } = useTranslation("common");
 
@@ -112,7 +112,9 @@ export default function HomePage() {
         <div className="header-inner">
           {/* Brand Logo & Name */}
           <Link href="/" className="brand-group">
-            <HealthcarePulseLogo size={42} />
+            <div className="brand-emblem-wrap">
+              <HealthcarePulseLogo size={38} />
+            </div>
             <div className="brand-labels">
               <span className="brand-title">GLOBAL BOOKING</span>
               <span className="brand-subtitle">{tCommon("appTagline", undefined, "HEALTHCARE PRACTICE PLATFORM")}</span>
@@ -139,12 +141,12 @@ export default function HomePage() {
           </nav>
 
           {/* Right Action Buttons */}
-          <div className="header-actions" style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          <div className="header-actions">
             {/* Global Multilingual Selector */}
-            <LanguageSelector variant="header" />
+            <LanguageSelector variant="header" theme="light" className="header-lang-selector" />
 
             <Link href="/login" className="sign-in-btn">
-              <User size={18} className="sign-in-icon" />
+              <User size={16} className="sign-in-icon" />
               <span>{tNav("login", undefined, "Sign In")}</span>
             </Link>
 
@@ -163,7 +165,7 @@ export default function HomePage() {
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
               aria-label="Toggle navigation"
             >
-              {mobileMenuOpen ? <X size={22} /> : <Menu size={22} />}
+              {mobileMenuOpen ? <X size={20} /> : <Menu size={20} />}
             </button>
           </div>
         </div>
@@ -238,8 +240,10 @@ export default function HomePage() {
 
             <div className="mobile-drawer-footer" style={{ display: "flex", flexDirection: "column", gap: 10 }}>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "0 4px" }}>
-                <span style={{ fontSize: 12, color: "#94a3b8" }}>Language / ভাষা:</span>
-                <LanguageSelector variant="compact" />
+                <span style={{ fontSize: 12, color: "#64748b", fontWeight: 600 }}>
+                  {locale === "bn" ? "ভাষা (Language):" : "Language:"}
+                </span>
+                <LanguageSelector variant="compact" theme="light" />
               </div>
               <Link
                 href="/login"
@@ -247,7 +251,11 @@ export default function HomePage() {
                 onClick={() => setMobileMenuOpen(false)}
               >
                 <LogIn size={16} />
-                <span>Doctor & Staff Sign In (/login)</span>
+                <span>
+                  {locale === "bn"
+                    ? "ডাক্তার ও স্টাফ পোর্টাল লগইন (Sign In)"
+                    : tNav("login", undefined, "Doctor & Staff Sign In (/login)")}
+                </span>
               </Link>
             </div>
           </div>

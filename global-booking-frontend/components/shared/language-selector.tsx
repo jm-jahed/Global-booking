@@ -9,15 +9,17 @@ import type { Locale } from "@/lib/i18n/types";
 export interface LanguageSelectorProps {
   readonly variant?: "header" | "topbar" | "footer" | "compact";
   readonly className?: string;
+  readonly theme?: "dark" | "light";
 }
 
-export function LanguageSelector({ variant = "header", className = "" }: LanguageSelectorProps) {
+export function LanguageSelector({ variant = "header", className = "", theme = "dark" }: LanguageSelectorProps) {
   const { locale, setLocale, dir } = useI18n();
   const [isOpen, setIsOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
 
   const activeLocaleInfo = getLocaleInfo(locale);
+  const isLight = theme === "light";
 
   // Close dropdown on click outside
   useEffect(() => {
@@ -74,23 +76,24 @@ export function LanguageSelector({ variant = "header", className = "" }: Languag
           gap: 6,
           padding: isCompact ? "4px 8px" : "6px 12px",
           borderRadius: 8,
-          background: "rgba(30, 41, 59, 0.7)",
-          border: "1px solid rgba(255, 255, 255, 0.12)",
-          color: "#f8fafc",
+          background: isLight ? "rgba(241, 245, 249, 0.95)" : "rgba(30, 41, 59, 0.7)",
+          border: isLight ? "1px solid rgba(203, 213, 225, 0.9)" : "1px solid rgba(255, 255, 255, 0.12)",
+          color: isLight ? "#0f172a" : "#f8fafc",
           fontSize: isCompact ? 12 : 13,
-          fontWeight: 500,
+          fontWeight: 600,
           cursor: "pointer",
           transition: "all 0.15s ease",
           backdropFilter: "blur(12px)",
           outline: "none",
+          boxShadow: isLight ? "0 1px 3px rgba(15, 23, 42, 0.05)" : "none",
         }}
       >
-        <Globe size={isCompact ? 13 : 15} style={{ color: "#818cf8", flexShrink: 0 }} />
-        <span>{activeLocaleInfo.nativeName}</span>
+        <Globe size={isCompact ? 13 : 15} style={{ color: isLight ? "#4f46e5" : "#818cf8", flexShrink: 0 }} />
+        <span className="lang-label-text">{activeLocaleInfo.nativeName}</span>
         <ChevronDown
           size={isCompact ? 12 : 14}
           style={{
-            color: "#94a3b8",
+            color: isLight ? "#64748b" : "#94a3b8",
             transition: "transform 0.2s ease",
             transform: isOpen ? "rotate(180deg)" : "rotate(0deg)",
           }}
@@ -109,10 +112,10 @@ export function LanguageSelector({ variant = "header", className = "" }: Languag
             width: 210,
             maxHeight: 320,
             overflowY: "auto",
-            backgroundColor: "#0f172a",
+            backgroundColor: isLight ? "#ffffff" : "#0f172a",
             borderRadius: 10,
-            border: "1px solid rgba(255, 255, 255, 0.14)",
-            boxShadow: "0 12px 30px rgba(0, 0, 0, 0.45)",
+            border: isLight ? "1px solid rgba(226, 232, 240, 1)" : "1px solid rgba(255, 255, 255, 0.14)",
+            boxShadow: isLight ? "0 16px 36px rgba(15, 23, 42, 0.16)" : "0 12px 30px rgba(0, 0, 0, 0.45)",
             padding: "4px 0",
             zIndex: 100,
             textAlign: "start",
@@ -125,8 +128,8 @@ export function LanguageSelector({ variant = "header", className = "" }: Languag
               fontWeight: 700,
               textTransform: "uppercase",
               letterSpacing: "0.06em",
-              color: "#64748b",
-              borderBottom: "1px solid rgba(255, 255, 255, 0.06)",
+              color: isLight ? "#64748b" : "#64748b",
+              borderBottom: isLight ? "1px solid rgba(226, 232, 240, 0.8)" : "1px solid rgba(255, 255, 255, 0.06)",
             }}
           >
             Select Language
@@ -149,8 +152,12 @@ export function LanguageSelector({ variant = "header", className = "" }: Languag
                   padding: "8px 12px",
                   fontSize: 13,
                   fontWeight: isSelected ? 600 : 400,
-                  color: isSelected ? "#a5b4fc" : "#e2e8f0",
-                  backgroundColor: isSelected ? "rgba(99, 102, 241, 0.14)" : "transparent",
+                  color: isSelected
+                    ? isLight ? "#4338ca" : "#a5b4fc"
+                    : isLight ? "#1e293b" : "#e2e8f0",
+                  backgroundColor: isSelected
+                    ? isLight ? "rgba(99, 102, 241, 0.08)" : "rgba(99, 102, 241, 0.14)"
+                    : "transparent",
                   border: "none",
                   cursor: "pointer",
                   textAlign: "start",
@@ -158,7 +165,7 @@ export function LanguageSelector({ variant = "header", className = "" }: Languag
                 }}
                 onMouseEnter={(e) => {
                   if (!isSelected) {
-                    e.currentTarget.style.backgroundColor = "rgba(255, 255, 255, 0.05)";
+                    e.currentTarget.style.backgroundColor = isLight ? "rgba(241, 245, 249, 1)" : "rgba(255, 255, 255, 0.05)";
                   }
                 }}
                 onMouseLeave={(e) => {
@@ -172,7 +179,7 @@ export function LanguageSelector({ variant = "header", className = "" }: Languag
                   <span style={{ fontSize: 10, color: "#64748b" }}>{item.name}</span>
                 </div>
                 {isSelected && (
-                  <Check size={14} style={{ color: "#818cf8", flexShrink: 0 }} />
+                  <Check size={14} style={{ color: isLight ? "#4f46e5" : "#818cf8", flexShrink: 0 }} />
                 )}
               </button>
             );

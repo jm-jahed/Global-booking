@@ -47,8 +47,18 @@ import { LanguageSelector } from "@/components/shared/language-selector";
 import { useTranslation } from "@/lib/i18n/i18n-context";
 import { formatLocaleNumber } from "@/lib/i18n/formatters";
 
-function getSpecialtyQuote(specialty?: string): string {
+function getSpecialtyQuote(specialty?: string, locale: string = "bn"): string {
   const s = (specialty || "").toLowerCase();
+  if (locale === "bn") {
+    if (s.includes("dent") || s.includes("oral")) return "আপনার সুন্দর ও সুস্থ হাসি আমাদের অঙ্গীকার";
+    if (s.includes("cardio") || s.includes("heart")) return "আপনার হৃদযন্ত্রের সুস্থতা আমাদের অঙ্গীকার";
+    if (s.includes("pedia") || s.includes("child")) return "আপনার শিশুর সুস্থ বিকাশ আমাদের অঙ্গীকার";
+    if (s.includes("derm") || s.includes("skin")) return "সুস্থ ও সুন্দর ত্বক আমাদের অঙ্গীকার";
+    if (s.includes("neuro")) return "স্নায়ু স্বাস্থ্য সুরক্ষা আমাদের অঙ্গীকার";
+    if (s.includes("ortho") || s.includes("bone")) return "হাড় ও জয়েন্টের সুস্থতা আমাদের অঙ্গীকার";
+    if (s.includes("eye") || s.includes("ophthalm")) return "উন্নত দৃষ্টিশক্তি আমাদের অঙ্গীকার";
+    return "আপনার সুস্বাস্থ্য ও নিরাময় আমাদের অঙ্গীকার";
+  }
   if (s.includes("cardio") || s.includes("heart")) return "Your Heart Our Priority";
   if (s.includes("pedia") || s.includes("child")) return "Your Child's Health Our Priority";
   if (s.includes("derm") || s.includes("skin")) return "Healthy Skin Our Priority";
@@ -59,12 +69,21 @@ function getSpecialtyQuote(specialty?: string): string {
   return "Your Health Our Priority";
 }
 
-function getAboutQuote(specialty?: string): string {
+function getAboutQuote(specialty?: string, locale: string = "bn"): string {
   const s = (specialty || "").toLowerCase();
+  if (locale === "bn") {
+    if (s.includes("dent") || s.includes("oral")) return "“সুস্থ দাঁত ও সুন্দর হাসির নিশ্চয়তায় আধুনিক ও ব্যথামুক্ত ডেন্টাল কেয়ার।”";
+    if (s.includes("cardio") || s.includes("heart")) return "“হৃদযন্ত্রের উন্নত স্বাস্থ্য সুরক্ষা ও সুস্থ আগামীর নির্ভরযোগ্য অঙ্গীকার।”";
+    if (s.includes("pedia") || s.includes("child")) return "“স্নেহ, যত্ন ও গভীর অভিজ্ঞতার সাথে শিশুর সার্বিক স্বাস্থ্য সুরক্ষা।”";
+    if (s.includes("derm") || s.includes("skin")) return "“আধুনিক চিকিৎসাবিজ্ঞানের আলোকে সুস্থ, উজ্জ্বল ত্বক ও আত্মবিশ্বাসের নবযাত্রা।”";
+    if (s.includes("neuro")) return "“সহানুভূতিশীল নিউরোলজিক্যাল কেয়ারে সুস্থ ও স্বাভাবিক জীবনের ছন্দ।”";
+    return "“সুস্থ আগামীর জন্য নির্ভরযোগ্য, মানবিক ও প্রমাণভিত্তিক চিকিৎসাসেবা।”";
+  }
   if (s.includes("cardio") || s.includes("heart")) return "“Better heart health. A healthier tomorrow.”";
   if (s.includes("pedia") || s.includes("child")) return "“Nurturing growing lives with gentle, expert care.”";
   if (s.includes("derm") || s.includes("skin")) return "“Radiant skin health grounded in medical science.”";
   if (s.includes("neuro")) return "“Compassionate neuro care restoring vitality and wellness.”";
+  if (s.includes("dent") || s.includes("oral")) return "“Modern, dedicated oral and dental care for a radiant smile.”";
   return "“Personalized, compassionate clinical care for a healthier tomorrow.”";
 }
 
@@ -76,9 +95,33 @@ interface DisplayServiceItem {
   icon: React.ReactNode;
 }
 
-function getDefaultSpecialtyServices(specialty?: string): DisplayServiceItem[] {
+function getDefaultSpecialtyServices(specialty?: string, locale: string = "bn"): DisplayServiceItem[] {
   const s = (specialty || "").toLowerCase();
+  if (s.includes("dent") || s.includes("oral")) {
+    if (locale === "bn") {
+      return [
+        { title: "দাঁত ও মুখের সার্বিক চিকিৎসা", sub: "বিশেষায়িত ডেন্টাল কেয়ার", category: "ডেন্টিস্ট্রি", description: "দাঁত ও মাড়ির যেকোনো রোগ নির্ণয় এবং আধুনিক বেদনামুক্ত চিকিৎসা সেবা।", icon: <Sparkles size={22} color="#4f46e5" /> },
+        { title: "ওরাল ও ম্যাক্সিলোফ্যাসিয়াল সার্জারি", sub: "মুখ ও চোয়ালের অস্ত্রোপচার", category: "সার্জারি", description: "আক্কেল দাঁত অপসারণ, জটিল রুট ক্যানাল এবং উন্নত ওরাল সার্জিক্যাল চিকিৎসা।", icon: <Activity size={22} color="#4f46e5" /> },
+        { title: "কসমেটিক ডেন্টিস্ট্রি ও স্কেলিং", sub: "হাসির সৌন্দর্যবর্ধন ও পরিচ্ছন্নতা", category: "কসমেটিক", description: "দাঁত হোয়াইটেনিং, ক্লিনিং, স্কেলিং এবং আত্মবিশ্বাসী হাসির পূর্ণাঙ্গ রূপরেখা।", icon: <ShieldCheck size={22} color="#4f46e5" /> },
+        { title: "প্রতিরোধমূলক ডেন্টাল কেয়ার", sub: "মুখের সামগ্রিক স্বাস্থ্যবিধি", category: "প্রতিরোধ", description: "দাঁতের ক্ষয় ও ক্যাভিটি প্রতিরোধে নিয়মিত চেকআপ এবং স্থায়ী ডেন্টাল সুরক্ষা পরামর্শ।", icon: <Stethoscope size={22} color="#4f46e5" /> },
+      ];
+    }
+    return [
+      { title: "Dental Consultation", sub: "Specialized Dental Care", category: "Dentistry", description: "Comprehensive oral examinations, diagnostics, and gentle treatment.", icon: <Sparkles size={22} color="#4f46e5" /> },
+      { title: "Oral Surgery", sub: "Surgical Dental Procedures", category: "Surgery", description: "Impacted tooth extractions, minor maxillofacial care, and surgical dentistry.", icon: <Activity size={22} color="#4f46e5" /> },
+      { title: "Cosmetic Dentistry", sub: "Smile Enhancement & Polishing", category: "Cosmetics", description: "Advanced teeth whitening, scaling, veneers, and smile makeovers.", icon: <ShieldCheck size={22} color="#4f46e5" /> },
+      { title: "Preventive Oral Health", sub: "Routine Cleanings & Fluoride", category: "Prevention", description: "Cavity prevention, gum health assessments, and daily oral hygiene plans.", icon: <Stethoscope size={22} color="#4f46e5" /> },
+    ];
+  }
   if (s.includes("cardio") || s.includes("heart")) {
+    if (locale === "bn") {
+      return [
+        { title: "হৃদরোগ নির্ণয় ও চিকিৎসা", sub: "বিশেষায়িত কার্ডিয়াক কেয়ার", category: "কার্ডিওলজি", description: "তীব্র ও দীর্ঘস্থায়ী হৃদরোগের আধুনিক পরীক্ষা-নিরীক্ষা এবং কার্যকর চিকিৎসা ব্যবস্থাপনা।", icon: <Heart size={22} color="#4f46e5" /> },
+        { title: "ইন্টারভেনশনাল কার্ডিওলজি", sub: "অত্যাধুনিক কার্ডিয়াক পদ্ধতি", category: "পদ্ধতি", description: "ডায়াগনস্টিক এনজিওগ্রাম এবং উন্নত মিনিমালি ইনভেসিভ হার্ট কেয়ার ও পরামর্শ।", icon: <Activity size={22} color="#4f46e5" /> },
+        { title: "প্রতিরোধমূলক হৃদরোগ কেয়ার", sub: "ঝুঁকি ও জীবনধারা মূল্যায়ন", category: "প্রতিরোধ", description: "হৃদরোগের ঝুঁকি নিরূপণ, ব্লাড প্রেশার ও কোলেস্টেরল নিয়ন্ত্রণ এবং হৃদবান্ধব জীবনপদ্ধতি।", icon: <ShieldCheck size={22} color="#4f46e5" /> },
+        { title: "ইকোকার্ডিওগ্রাফি ও পরীক্ষা", sub: "উচ্চমানের কার্ডিয়াক আল্ট্রাসাউন্ড", category: "ডায়াগনস্টিকস", description: "হাই-রেজোলিউশন ডপলার ইকোকার্ডিওগ্রাফি এবং নির্ভুল হার্ট ফাংশন মূল্যায়ন।", icon: <Microscope size={22} color="#4f46e5" /> },
+      ];
+    }
     return [
       { title: "Heart Disease", sub: "Diagnosis & Treatment", category: "Cardiology", description: "Comprehensive diagnosis and management of acute and chronic heart conditions.", icon: <Heart size={22} color="#4f46e5" /> },
       { title: "Interventional", sub: "Cardiology Procedures", category: "Procedures", description: "Diagnostic catheterization, coronary angiogram, and minimally invasive cardiac interventions.", icon: <Activity size={22} color="#4f46e5" /> },
@@ -87,6 +130,14 @@ function getDefaultSpecialtyServices(specialty?: string): DisplayServiceItem[] {
     ];
   }
   if (s.includes("pedia") || s.includes("child")) {
+    if (locale === "bn") {
+      return [
+        { title: "নবজাতক ও শিশুর স্বাস্থ্যসেবা", sub: "শারীরিক বৃদ্ধি ও বিকাশ পর্যবেক্ষণ", category: "শিশুরোগ", description: "শিশুদের নিয়মিত শারীরিক বিকাশ পর্যবেক্ষণ, সঠিক পুষ্টি পরামর্শ ও সাধারণ অসুস্থতার চিকিৎসা।", icon: <Heart size={22} color="#4f46e5" /> },
+        { title: "টিকাদান ও রোগ প্রতিরোধ", sub: "আন্তর্জাতিক ভ্যাকসিন শিডিউল", category: "টিকাদান", description: "আন্তর্জাতিক স্বাস্থ্য মান অনুযায়ী শিশুর সার্বিক টিকাদান কর্মসূচি ও সুরক্ষা গাইডলাইন।", icon: <ShieldCheck size={22} color="#4f46e5" /> },
+        { title: "শিশুর তীব্র অসুস্থতার চিকিৎসা", sub: "জ্বর, সর্দি ও ইনফেকশন কেয়ার", category: "জরুরি সেবা", description: "শিশুদের জ্বর, কাশি, নিউমোনিয়া ও সাধারণ ইনফেকশনের দ্রুত রোগ নির্ণয় ও নিরাময়।", icon: <Activity size={22} color="#4f46e5" /> },
+        { title: "শিশুর মেধা ও বিকাশ মূল্যায়ন", sub: "মাইলস্টোন ও আচরণ পর্যবেক্ষণ", category: "বিকাশ", description: "শিশুর মানসিক, বুদ্ধিবৃত্তিক ও শারীরিক মাইলস্টোনের সঠিক পর্যবেক্ষণ ও বিকাশ সহায়তা।", icon: <Microscope size={22} color="#4f46e5" /> },
+      ];
+    }
     return [
       { title: "Child Wellness", sub: "Routine Growth & Health Exams", category: "Pediatrics", description: "Routine health checks and developmental monitoring for infants, children, and teens.", icon: <Heart size={22} color="#4f46e5" /> },
       { title: "Immunizations", sub: "Global Vaccine Schedules", category: "Immunization", description: "Comprehensive childhood immunization programs adhering to international guidelines.", icon: <ShieldCheck size={22} color="#4f46e5" /> },
@@ -95,11 +146,27 @@ function getDefaultSpecialtyServices(specialty?: string): DisplayServiceItem[] {
     ];
   }
   if (s.includes("derm") || s.includes("skin")) {
+    if (locale === "bn") {
+      return [
+        { title: "চর্ম ও ত্বকের চিকিৎসা", sub: "ব্রণ, একজিমা ও এলার্জি কেয়ার", category: "ডার্মাটোলজি", description: "ব্রণ, একজিমা, সোরাইসিস এবং ত্বকের অ্যালার্জির আধুনিক ও উন্নত চিকিৎসা সেবা।", icon: <ShieldCheck size={22} color="#4f46e5" /> },
+        { title: "ত্বকের রোগ নির্ণয় ও স্ক্রিনিং", sub: "তিল ও ত্বকের ক্ষত পরীক্ষা", category: "স্ক্রিনিং", description: "উন্নত ডার্মোস্কোপির মাধ্যমে ত্বকের নানা ক্ষত ও জটিলতার নির্ভুল পরীক্ষা-নিরীক্ষা।", icon: <Microscope size={22} color="#4f46e5" /> },
+        { title: "এস্থেটিক ডার্মাটোলজি", sub: "ত্বকের লাবণ্য ও লেজার কেয়ার", category: "এস্থেটিক্স", description: "প্রমাণভিত্তিক ডার্মাটোলজিক্যাল চিকিৎসা ও ত্বকের তারুণ্য ধরে রাখার আধুনিক থেরাপি।", icon: <Sparkles size={22} color="#4f46e5" /> },
+        { title: "চুল ও মাথার ত্বকের যত্ন", sub: "চুল পড়া রোধ ও স্ক্যাল্প থেরাপি", category: "ট্রাইকোলজি", description: "অতিরিক্ত চুল পড়া, খুশকি ও স্ক্যাল্পের নানাবিধ সমস্যার আধুনিক সমাধান।", icon: <Activity size={22} color="#4f46e5" /> },
+      ];
+    }
     return [
       { title: "Clinical Dermatology", sub: "Acne, Eczema & Psoriasis Care", category: "Dermatology", description: "Advanced clinical therapies for acne, rosacea, eczema, and psoriasis management.", icon: <ShieldCheck size={22} color="#4f46e5" /> },
       { title: "Skin Cancer Screening", sub: "Mole Checks & Dermoscopy", category: "Oncology", description: "Full-body mole mapping, dermoscopy, and early skin lesion evaluations.", icon: <Microscope size={22} color="#4f46e5" /> },
       { title: "Aesthetic Procedures", sub: "Laser, Peels & Skin Rejuvenation", category: "Aesthetics", description: "Evidence-based dermatological rejuvenation and non-invasive corrective therapies.", icon: <Sparkles size={22} color="#4f46e5" /> },
       { title: "Hair & Scalp Health", sub: "Alopecia & Hair Loss Treatments", category: "Trichology", description: "Diagnostic evaluations and targeted medical treatments for hair and scalp disorders.", icon: <Activity size={22} color="#4f46e5" /> },
+    ];
+  }
+  if (locale === "bn") {
+    return [
+      { title: "বিশেষজ্ঞ কনসালটেশন", sub: "ব্যক্তিগত ক্লিনিক্যাল কেয়ার", category: "কনসালটেশন", description: "রোগের গভীর পর্যবেক্ষণ এবং সুনির্দিষ্ট চিকিৎসা পরামর্শ প্রদান।", icon: <Stethoscope size={22} color="#4f46e5" /> },
+      { title: "ডায়াগনস্টিক মূল্যায়ন", sub: "প্রমাণভিত্তিক স্বাস্থ্য পরীক্ষা", category: "ডায়াগনস্টিকস", description: "আধুনিক ক্লিনিক্যাল পরীক্ষা-নিরীক্ষা ও রোগীর পূর্বের রিপোর্ট বিশ্লেষণ।", icon: <Microscope size={22} color="#4f46e5" /> },
+      { title: "প্রতিরোধমূলক স্বাস্থ্যসেবা", sub: "পূর্ণাঙ্গ স্বাস্থ্য স্ক্রীনিং", category: "প্রতিরোধ", description: "ভবিষ্যত জটিলতা প্রতিরোধে পূর্বসতর্কতামূলক স্বাস্থ্য পরীক্ষা ও পরামর্শ।", icon: <ShieldCheck size={22} color="#4f46e5" /> },
+      { title: "সমন্বিত চিকিৎসা পরিকল্পনা", sub: "কার্যকর চিকিৎসা রোডম্যাপ", category: "চিকিৎসা", description: "রোগ থেকে দীর্ঘমেয়াদী মুক্তি ও দ্রুত আরোগ্যলাভে সুনির্দিষ্ট চিকিৎসা প্রটোকল।", icon: <Activity size={22} color="#4f46e5" /> },
     ];
   }
   return [
@@ -342,12 +409,12 @@ export function DoctorPublicPortfolio({
     Array.isArray(profile.services) && profile.services.length > 0
       ? profile.services.map((s, idx) => ({
           title: s.title,
-          sub: s.description || s.category || "Clinical Specialty",
+          sub: s.description || s.category || (locale === "bn" ? "ক্লিনিক্যাল বিশেষত্ব" : "Clinical Specialty"),
           category: s.category,
           description: s.description,
           icon: [<Heart size={22} color="#4f46e5" key="1" />, <Activity size={22} color="#4f46e5" key="2" />, <ShieldCheck size={22} color="#4f46e5" key="3" />, <Microscope size={22} color="#4f46e5" key="4" />][idx % 4],
         }))
-      : getDefaultSpecialtyServices(profile.specialty);
+      : getDefaultSpecialtyServices(profile.specialty, locale);
 
   return (
     <div
@@ -801,7 +868,7 @@ export function DoctorPublicPortfolio({
                 marginBottom: 20,
               }}
             >
-              <span>{profile.customTitle || `${profile.specialty} Specialist Practice`}</span>
+              <span>{profile.customTitle || (locale === "bn" ? `${profile.specialty} বিশেষায়িত চিকিৎসা সেবা` : `${profile.specialty} Specialist Practice`)}</span>
             </div>
 
             {/* Main Headline */}
@@ -837,8 +904,26 @@ export function DoctorPublicPortfolio({
                 margin: "0 0 32px",
               }}
             >
-              {profile.bio ||
-                `The health and well-being of our patients will always be our top priority. ${profile.fullName} provides dedicated, evidence-based ${profile.specialty.toLowerCase()} care and patient-first consultation.`}
+              {(() => {
+                const bio = profile.bio?.trim();
+                const isDefaultEngBio =
+                  !bio ||
+                  bio.includes("The health and well-being of our patients") ||
+                  bio.includes("patient-first consultation") ||
+                  bio.includes("is a highly committed specialist") ||
+                  bio.includes("evidence-based");
+
+                if (locale === "bn") {
+                  if (isDefaultEngBio) {
+                    return `আমাদের রোগীদের সুস্বাস্থ্য ও সঠিক চিকিৎসা নিশ্চিত করাই আমাদের প্রধান লক্ষ্য। ${profile.fullName} আধুনিক ও প্রমাণভিত্তিক চিকিৎসা এবং আন্তরিক মানবিক যত্নের সাথে নিয়মিত বিশেষায়িত চিকিৎসাসেবা প্রদান করছেন।`;
+                  }
+                  return bio;
+                }
+                return (
+                  bio ||
+                  `The health and well-being of our patients will always be our top priority. ${profile.fullName} provides dedicated, evidence-based ${profile.specialty.toLowerCase()} care and patient-first consultation.`
+                );
+              })()}
             </p>
 
             {/* Dual CTA Buttons (Exact Match to User's Mockup) */}
@@ -1333,12 +1418,30 @@ export function DoctorPublicPortfolio({
                   marginBottom: 20,
                 }}
               >
-                {getAboutQuote(profile.specialty)}
+                {getAboutQuote(profile.specialty, locale)}
               </div>
 
               <p style={{ fontSize: 15, lineHeight: 1.7, color: "#475569", margin: "0 0 24px" }}>
-                {profile.bio ||
-                  `${profile.fullName} is a highly committed specialist in ${profile.specialty}. Dedicated to delivering compassionate clinical consultation, precision diagnostics, and personalized treatment regimens tailored to every patient.`}
+                {(() => {
+                  const bio = profile.bio?.trim();
+                  const isDefaultEngBio =
+                    !bio ||
+                    bio.includes("is a highly committed specialist") ||
+                    bio.includes("Dedicated to delivering compassionate") ||
+                    bio.includes("The health and well-being of our patients") ||
+                    bio.includes("evidence-based");
+
+                  if (locale === "bn") {
+                    if (isDefaultEngBio) {
+                      return `${profile.fullName} একজন অভিজ্ঞ ও নিবেদিতপ্রাণ বিশেষজ্ঞ চিকিৎসক। প্রতিটি রোগীর সঠিক রোগ নির্ণয়, উন্নত ক্লিনিক্যাল কনসালটেশন এবং কার্যকর চিকিৎসা সেবা প্রদানে তিনি সর্বদা আন্তরিক ও যত্নশীল।`;
+                    }
+                    return bio;
+                  }
+                  return (
+                    bio ||
+                    `${profile.fullName} is a highly committed specialist in ${profile.specialty}. Dedicated to delivering compassionate clinical consultation, precision diagnostics, and personalized treatment regimens tailored to every patient.`
+                  );
+                })()}
               </p>
 
               {/* 4 Clinical Pillars */}
