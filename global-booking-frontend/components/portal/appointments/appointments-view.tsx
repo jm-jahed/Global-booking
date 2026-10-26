@@ -44,10 +44,14 @@ import {
 } from "@/lib/services/doctor-appointments-service";
 import { NewAppointmentModal } from "./new-appointment-modal";
 import { getStoredPortalUser } from "@/lib/api/admin-client";
+import { useTranslation } from "@/lib/i18n/i18n-context";
 
 type ViewMode = "table" | "calendar" | "kanban";
 
 export function AppointmentsView() {
+  const { t: tAppointments } = useTranslation("appointments");
+  const { t: tCommon } = useTranslation("common");
+
   const [appointments, setAppointments] = useState<DoctorAppointment[]>([]);
   const [viewMode, setViewMode] = useState<ViewMode>("table");
   const [searchQuery, setSearchQuery] = useState("");
@@ -293,7 +297,7 @@ export function AppointmentsView() {
             <CalendarDays size={24} strokeWidth={2.4} />
           </div>
           <div>
-            <h1 className="appointments-luxury-title-text">Appointments</h1>
+            <h1 className="appointments-luxury-title-text">{tAppointments("title")}</h1>
             <div className="appointments-luxury-subtitle-text">
               <span>{doctorName} • {doctorSpecialty}</span>
             </div>
@@ -308,7 +312,7 @@ export function AppointmentsView() {
             title="Refresh appointments and sync with public booking page"
           >
             <RefreshCw size={14} className={isSyncing ? "spin-animation" : ""} style={{ color: "#f5c270" }} />
-            <span>Sync Web</span>
+            <span>{tAppointments("syncWeb")}</span>
           </button>
 
           <Link
@@ -318,7 +322,7 @@ export function AppointmentsView() {
             title="Open patient public booking portal in new tab"
           >
             <ExternalLink size={14} style={{ color: "#38bdf8" }} />
-            <span>Public Booking Page</span>
+            <span>{tAppointments("publicBookingPage")}</span>
           </Link>
 
           <button
@@ -327,7 +331,7 @@ export function AppointmentsView() {
             onClick={() => setIsModalOpen(true)}
           >
             <Plus size={15} strokeWidth={2.4} />
-            <span>New Patient Appointment</span>
+            <span>{tAppointments("newAppointment")}</span>
           </button>
         </div>
       </header>
@@ -340,9 +344,9 @@ export function AppointmentsView() {
             <CalendarDays size={22} strokeWidth={2.4} />
           </div>
           <div className="appointments-kpi-content">
-            <span className="appointments-kpi-label">Total Consultations</span>
+            <span className="appointments-kpi-label">{tAppointments("totalConsultations")}</span>
             <span className="appointments-kpi-value">{kpis.total}</span>
-            <span className="appointments-kpi-desc" style={{ color: "#34d399" }}>Practice Today</span>
+            <span className="appointments-kpi-desc" style={{ color: "#34d399" }}>{tAppointments("practiceToday")}</span>
           </div>
           <ChevronRight size={18} style={{ color: "#64748b", marginLeft: "auto", flexShrink: 0, opacity: 0.7 }} />
         </div>
@@ -353,9 +357,9 @@ export function AppointmentsView() {
             <CheckCircle2 size={22} strokeWidth={2.4} />
           </div>
           <div className="appointments-kpi-content">
-            <span className="appointments-kpi-label">Confirmed & Arrived</span>
+            <span className="appointments-kpi-label">{tAppointments("confirmedArrived")}</span>
             <span className="appointments-kpi-value">{kpis.confirmed}</span>
-            <span className="appointments-kpi-desc" style={{ color: "#38bdf8" }}>Ready in Chamber</span>
+            <span className="appointments-kpi-desc" style={{ color: "#38bdf8" }}>{tAppointments("readyInChamber")}</span>
           </div>
           <ChevronRight size={18} style={{ color: "#64748b", marginLeft: "auto", flexShrink: 0, opacity: 0.7 }} />
         </div>
@@ -366,9 +370,9 @@ export function AppointmentsView() {
             <Globe size={22} strokeWidth={2.4} />
           </div>
           <div className="appointments-kpi-content">
-            <span className="appointments-kpi-label">Online Web Bookings</span>
+            <span className="appointments-kpi-label">{tAppointments("onlineWebBookings")}</span>
             <span className="appointments-kpi-value">{kpis.onlineCount}</span>
-            <span className="appointments-kpi-desc" style={{ color: "#c084fc" }}>Live Website Sync</span>
+            <span className="appointments-kpi-desc" style={{ color: "#c084fc" }}>{tAppointments("liveWebsiteSync")}</span>
           </div>
           <ChevronRight size={18} style={{ color: "#64748b", marginLeft: "auto", flexShrink: 0, opacity: 0.7 }} />
         </div>
@@ -379,7 +383,7 @@ export function AppointmentsView() {
             <Activity size={22} strokeWidth={2.4} />
           </div>
           <div className="appointments-kpi-content">
-            <span className="appointments-kpi-label">In Consultation / Done</span>
+            <span className="appointments-kpi-label">{tAppointments("inConsultationDone")}</span>
             <span className="appointments-kpi-value">{kpis.inConsultation + kpis.completed}</span>
             <span className="appointments-kpi-desc" style={{ color: "#fbbf24" }}>
               {kpis.inConsultation} Active • {kpis.completed} Done
@@ -399,7 +403,7 @@ export function AppointmentsView() {
             onClick={() => setViewMode("table")}
           >
             <TableIcon size={14} />
-            <span>Clinical Table</span>
+            <span>{tAppointments("clinicalTable")}</span>
           </button>
           <button
             type="button"
@@ -407,7 +411,7 @@ export function AppointmentsView() {
             onClick={() => setViewMode("kanban")}
           >
             <Kanban size={14} />
-            <span>Live OPD Board</span>
+            <span>{tAppointments("liveOpdBoard")}</span>
           </button>
           <button
             type="button"
@@ -415,7 +419,7 @@ export function AppointmentsView() {
             onClick={() => setViewMode("calendar")}
           >
             <CalendarIcon size={14} />
-            <span>Schedule Roster</span>
+            <span>{tAppointments("scheduleRoster")}</span>
           </button>
         </div>
 
@@ -426,7 +430,7 @@ export function AppointmentsView() {
             <Search size={15} className="appointments-search-icon" />
             <input
               type="text"
-              placeholder="Search patient, mobile, serial #..."
+              placeholder={tAppointments("searchPlaceholder")}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="appointments-search-input"
@@ -439,7 +443,7 @@ export function AppointmentsView() {
             onChange={(e) => setChannelFilter(e.target.value)}
             className="appointments-select-pill"
           >
-            <option value="All Channels">All Channels</option>
+            <option value="All Channels">{tAppointments("allChannels")}</option>
             <option value="Online Web">Online Web</option>
             <option value="In-Person Chamber">In-Person Chamber</option>
             <option value="Phone Booking">Phone Booking</option>
@@ -451,7 +455,7 @@ export function AppointmentsView() {
             onChange={(e) => setStatusFilter(e.target.value)}
             className="appointments-select-pill"
           >
-            <option value="All Status">All Status</option>
+            <option value="All Status">{tAppointments("allStatus")}</option>
             <option value="Confirmed">Confirmed</option>
             <option value="In Consultation">In Consultation</option>
             <option value="Pending">Pending</option>
@@ -462,7 +466,7 @@ export function AppointmentsView() {
           {/* Date Indicator */}
           <div className="appointments-date-pill">
             <Calendar size={13} style={{ color: "#f5c270" }} />
-            <span>Today, 25 Oct 2026</span>
+            <span>{tAppointments("todaySchedule")}</span>
           </div>
         </div>
       </section>
@@ -499,12 +503,12 @@ export function AppointmentsView() {
             <div className="appointments-table-title-group">
               <div style={{ width: 10, height: 10, borderRadius: "50%", background: "#f5c270", boxShadow: "0 0 10px #f5c270" }} />
               <h2 style={{ margin: 0, fontSize: 16, fontWeight: 800, color: "#ffffff" }}>
-                Patient Appointments &amp; Consultations
+                {tAppointments("appointmentsDirectory")}
               </h2>
             </div>
             <div className="appointments-table-meta-group">
               <span>
-                Total Records: <strong style={{ color: "#ffffff" }}>{filteredAppointments.length}</strong>
+                {tCommon("total")}: <strong style={{ color: "#ffffff" }}>{filteredAppointments.length}</strong>
               </span>
             </div>
           </div>
@@ -524,14 +528,14 @@ export function AppointmentsView() {
                       className="portal-checkbox"
                     />
                   </th>
-                  <th style={{ width: "70px" }}>Serial #</th>
-                  <th>Patient Details</th>
-                  <th>Chamber Location</th>
-                  <th>Schedule</th>
-                  <th>Channel</th>
-                  <th>Fee</th>
-                  <th>Clinical Status</th>
-                  <th style={{ textAlign: "right" }}>Actions</th>
+                  <th style={{ width: "70px" }}>{tAppointments("serialNo")}</th>
+                  <th>{tAppointments("patientName")}</th>
+                  <th>{tAppointments("chamber")}</th>
+                  <th>{tAppointments("appointmentTime")}</th>
+                  <th>{tAppointments("type")}</th>
+                  <th>{tAppointments("consultationFee")}</th>
+                  <th>{tAppointments("filterByStatus")}</th>
+                  <th style={{ textAlign: "right" }}>{tCommon("actions")}</th>
                 </tr>
               </thead>
               <tbody>

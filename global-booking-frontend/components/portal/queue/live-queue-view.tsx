@@ -73,6 +73,7 @@ import {
   shiftDateIso,
 } from "@/lib/utils/timezone";
 import { getStoredPortalDate, setStoredPortalDate } from "@/lib/utils/portal-date";
+import { useTranslation } from "@/lib/i18n/i18n-context";
 
 function mapBackendTicketToQueueItem(
   t: BackendQueueTicket,
@@ -125,6 +126,11 @@ function mapBackendTicketToQueueItem(
 }
 
 export function LiveQueueView() {
+  const { t: tQueue } = useTranslation("queue");
+  const { t: tPortal } = useTranslation("portal");
+  const { t: tCommon } = useTranslation("common");
+  const { t: tAppointments } = useTranslation("appointments");
+
   const [queue, setQueue] = useState<QueueItem[]>([]);
   const [counters, setCounters] = useState<CounterStation[]>(DOCTOR_CHAMBER_COUNTERS);
   const [searchQuery, setSearchQuery] = useState("");
@@ -670,7 +676,7 @@ export function LiveQueueView() {
           title="Sync live queue with latest database records"
         >
           <RefreshCw size={15} className={isSyncing ? "spin-animation" : ""} style={{ color: "#38bdf8" }} />
-          <span>Sync Queue</span>
+          <span>{tPortal("syncLive")}</span>
         </button>
 
         <button
@@ -680,7 +686,7 @@ export function LiveQueueView() {
           title="Open Waiting Room Live TV Display"
         >
           <Tv size={15} style={{ color: "#38bdf8" }} />
-          <span>Open TV Display</span>
+          <span>{tQueue("openDisplayBoard")}</span>
         </button>
 
         <button
@@ -691,8 +697,7 @@ export function LiveQueueView() {
         >
           <CalendarPlus size={18} strokeWidth={2.4} style={{ flexShrink: 0, color: "#ffffff" }} />
           <div className="btn-luxury-new-ticket-text" style={{ color: "#ffffff" }}>
-            <span>New Patient</span>
-            <span>Appointment</span>
+            <span>{tAppointments("newAppointment")}</span>
           </div>
         </button>
       </section>
@@ -731,7 +736,7 @@ export function LiveQueueView() {
               fontWeight: 600,
             }}
           >
-            Retry
+            {tCommon("refresh")}
           </button>
         </div>
       )}
@@ -745,13 +750,13 @@ export function LiveQueueView() {
           </div>
           <div className="queue-kpi-card-body">
             <span className="queue-kpi-card-label" style={{ color: "#e5b869" }}>
-              Now Serving
+              {tQueue("nowServing")}
             </span>
             <div className="queue-kpi-card-value">
               {kpis.servingToken}
             </div>
             <div className="queue-kpi-card-sub">
-              {kpis.servingName === "No patient in consultation" ? "No patient serving" : kpis.servingName}
+              {kpis.servingName === "No patient in consultation" ? tQueue("queueEmpty") : kpis.servingName}
             </div>
           </div>
           <ChevronRight size={16} color="#e5b869" className="queue-kpi-card-chevron" />
@@ -764,13 +769,13 @@ export function LiveQueueView() {
           </div>
           <div className="queue-kpi-card-body">
             <span className="queue-kpi-card-label" style={{ color: "#38bdf8" }}>
-              Next Serial
+              {tQueue("nextInLine")}
             </span>
             <div className="queue-kpi-card-value">
               {kpis.nextToken}
             </div>
             <div className="queue-kpi-card-sub">
-              {kpis.nextName === "No patient waiting" ? "No patient waiting" : kpis.nextName}
+              {kpis.nextName === "No patient waiting" ? tQueue("queueEmpty") : kpis.nextName}
             </div>
           </div>
           <ChevronRight size={16} color="#38bdf8" className="queue-kpi-card-chevron" />
@@ -783,13 +788,13 @@ export function LiveQueueView() {
           </div>
           <div className="queue-kpi-card-body">
             <span className="queue-kpi-card-label" style={{ color: "#10b981" }}>
-              Total Waiting
+              {tQueue("waitingList")}
             </span>
             <div className="queue-kpi-card-value">
               {kpis.waiting.toString().padStart(2, "0")}
             </div>
             <div className="queue-kpi-card-sub">
-              Patients in queue
+              {tQueue("waitingCount", { count: kpis.waiting })}
             </div>
           </div>
           <ChevronRight size={16} color="#10b981" className="queue-kpi-card-chevron" />
@@ -802,13 +807,13 @@ export function LiveQueueView() {
           </div>
           <div className="queue-kpi-card-body">
             <span className="queue-kpi-card-label" style={{ color: "#14b8a6" }}>
-              Completed Today
+              {tPortal("completedToday")}
             </span>
             <div className="queue-kpi-card-value">
               {kpis.completed.toString().padStart(2, "0")}
             </div>
             <div className="queue-kpi-card-sub">
-              Services completed
+              {tPortal("completedVisits")}
             </div>
           </div>
           <ChevronRight size={16} color="#14b8a6" className="queue-kpi-card-chevron" />
@@ -824,10 +829,10 @@ export function LiveQueueView() {
           <div className="live-queue-topbar">
             <div className="live-queue-topbar-header">
               <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                <h2 className="live-queue-card-title">Live Queue</h2>
+                <h2 className="live-queue-card-title">{tQueue("title")}</h2>
                 <div className="live-queue-live-badge">
                   <span className="live-pulsing-dot-small" />
-                  <span>Live</span>
+                  <span>{tPortal("liveBadge")}</span>
                 </div>
               </div>
 
@@ -840,7 +845,7 @@ export function LiveQueueView() {
                 }}
                 title="View All Queue Items"
               >
-                <span>View All</span>
+                <span>{tCommon("viewAll")}</span>
                 <ChevronRight size={14} />
               </button>
             </div>

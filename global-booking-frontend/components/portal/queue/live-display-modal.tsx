@@ -3,6 +3,8 @@
 import { useEffect, useState } from "react";
 import { X, Volume2, Monitor, Sparkles, Crown, Clock, Users, CheckCircle2, ChevronRight, Calendar } from "lucide-react";
 import { QueueItem, CounterStation } from "@/types/queue";
+import { useTranslation } from "@/lib/i18n/i18n-context";
+import { formatLocaleDate, formatLocaleTime } from "@/lib/i18n/formatters";
 
 interface LiveDisplayModalProps {
   isOpen: boolean;
@@ -23,6 +25,9 @@ export function LiveDisplayModal({
   chamberLocation,
   doctorSpecialty,
 }: LiveDisplayModalProps) {
+  const { t, locale } = useTranslation("queue");
+  const { t: tCommon } = useTranslation("common");
+
   const [time, setTime] = useState("");
   const [todayDate, setTodayDate] = useState("");
 
@@ -75,26 +80,13 @@ export function LiveDisplayModal({
   useEffect(() => {
     const update = () => {
       const now = new Date();
-      setTime(
-        now.toLocaleTimeString([], {
-          hour: "2-digit",
-          minute: "2-digit",
-          second: "2-digit",
-        })
-      );
-      setTodayDate(
-        now.toLocaleDateString("en-US", {
-          weekday: "long",
-          month: "short",
-          day: "numeric",
-          year: "numeric",
-        })
-      );
+      setTime(formatLocaleTime(now, locale));
+      setTodayDate(formatLocaleDate(now, locale));
     };
     update();
     const timer = setInterval(update, 1000);
     return () => clearInterval(timer);
-  }, []);
+  }, [locale]);
 
   // Escape key handler
   useEffect(() => {
@@ -126,67 +118,63 @@ export function LiveDisplayModal({
   const fourthPatient = waitingLine[2];
 
   // 4 Sequential Stages requested for Personal Doctor Practice:
-  // With Doctor
-  // NEXT NUMBER
-  // WAITING LOUNGE
-  // WAITING LOUNGE
   const stages = [
     {
       id: "box-1-serving",
-      stageTag: "WITH DOCTOR",
-      badgeText: "With Doctor",
+      stageTag: t("nowServing", undefined, "WITH DOCTOR").toUpperCase(),
+      badgeText: t("nowServing", undefined, "With Doctor"),
       badgeClass: "badge-serving",
       kpiCardClass: "queue-kpi-card-serving",
       kpiIconClass: "queue-kpi-icon-serving",
       accentColor: "#e5b869",
       icon: <Crown size={22} />,
       ticket: currentServing?.ticketNumber || "—",
-      patientName: currentServing?.clientName || (queue.length > 0 ? "Chamber Available" : "No patient serving"),
+      patientName: currentServing?.clientName || (queue.length > 0 ? tCommon("room", undefined, "Chamber Available") : t("noQueueTokens", undefined, "No patient serving")),
       subtitle: currentServing?.service || "",
       footerLeft: activeDoctorName,
       footerRight: activeChamber,
     },
     {
       id: "box-2-next",
-      stageTag: "NEXT NUMBER",
-      badgeText: "Stand By Door",
+      stageTag: t("nextInLine", undefined, "NEXT NUMBER").toUpperCase(),
+      badgeText: t("nextInLine", undefined, "Stand By Door"),
       badgeClass: "badge-next",
       kpiCardClass: "queue-kpi-card-next",
       kpiIconClass: "queue-kpi-icon-next",
       accentColor: "#38bdf8",
       icon: <Clock size={22} />,
       ticket: nextPatient?.ticketNumber || "—",
-      patientName: nextPatient?.clientName || (waitingLine.length === 0 ? "No patient waiting" : "Ready for next"),
+      patientName: nextPatient?.clientName || (waitingLine.length === 0 ? t("queueEmpty", undefined, "No patient waiting") : t("nextInLine", undefined, "Ready for next")),
       subtitle: nextPatient ? (nextPatient.service || "") : "",
       footerLeft: activeDoctorName,
       footerRight: "Chamber Entrance",
     },
     {
       id: "box-3-third",
-      stageTag: "WAITING LOUNGE",
-      badgeText: "Waiting Lounge",
+      stageTag: t("waitingList", undefined, "WAITING LOUNGE").toUpperCase(),
+      badgeText: t("waitingList", undefined, "Waiting Lounge"),
       badgeClass: "badge-waiting",
       kpiCardClass: "queue-kpi-card-waiting",
       kpiIconClass: "queue-kpi-icon-waiting",
       accentColor: "#10b981",
       icon: <Users size={22} />,
       ticket: thirdPatient?.ticketNumber || "—",
-      patientName: thirdPatient?.clientName || "Lounge Available",
+      patientName: thirdPatient?.clientName || t("waitingList", undefined, "Lounge Available"),
       subtitle: thirdPatient ? (thirdPatient.service || "") : "",
       footerLeft: activeDoctorName,
       footerRight: "Waiting Lounge",
     },
     {
       id: "box-4-fourth",
-      stageTag: "WAITING LOUNGE",
-      badgeText: "Waiting Lounge",
+      stageTag: t("waitingList", undefined, "WAITING LOUNGE").toUpperCase(),
+      badgeText: t("waitingList", undefined, "Waiting Lounge"),
       badgeClass: "badge-completed",
       kpiCardClass: "queue-kpi-card-completed",
       kpiIconClass: "queue-kpi-icon-completed",
       accentColor: "#14b8a6",
       icon: <Users size={22} />,
       ticket: fourthPatient?.ticketNumber || "—",
-      patientName: fourthPatient?.clientName || "Lounge Available",
+      patientName: fourthPatient?.clientName || t("waitingList", undefined, "Lounge Available"),
       subtitle: fourthPatient ? (fourthPatient.service || "") : "",
       footerLeft: activeDoctorName,
       footerRight: "Waiting Lounge",
@@ -208,10 +196,11 @@ export function LiveDisplayModal({
                   <span className="tv-doctor-title-text">{activeDoctorName.toUpperCase()}</span>
                 </div>
                 <div className="tv-brand-sub-wrap">
-                  <span className="tv-brand-sub-badge">WAITING ROOM LIVE DISPLAY</span>
+                  <span className="tv-brand-sub-badge">{t("waitingRoomDisplay", undefined, "WAITING ROOM LIVE DISPLAY")}</span>
                 </div>
               </div>
             </div>
+
 
             <button
               type="button"

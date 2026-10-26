@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { X, User, Mail, Phone, Calendar, HeartPulse, FileText, Loader2 } from "lucide-react";
 import { createDoctorPatient, PersistentPatient } from "@/lib/api/doctor-patients-client";
+import { useTranslation } from "@/lib/i18n/i18n-context";
 
 interface NewPatientModalProps {
   isOpen: boolean;
@@ -11,6 +12,9 @@ interface NewPatientModalProps {
 }
 
 export function NewPatientModal({ isOpen, onClose, onPatientCreated }: NewPatientModalProps) {
+  const { t } = useTranslation("patients");
+  const { t: tCommon } = useTranslation("common");
+
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   const [email, setEmail] = useState("");
@@ -99,10 +103,10 @@ export function NewPatientModal({ isOpen, onClose, onPatientCreated }: NewPatien
             </div>
             <div>
               <h2 style={{ margin: 0, fontSize: 17, fontWeight: 800, color: "#ffffff" }}>
-                Register New Patient
+                {t("patientRegistration", undefined, "Register New Patient")}
               </h2>
               <p style={{ margin: "3px 0 0", fontSize: 12, color: "#94a3b8" }}>
-                Create permanent patient record in clinic directory
+                {t("patientsSubtitle", undefined, "Create permanent patient record in clinic directory")}
               </p>
             </div>
           </div>
@@ -146,7 +150,7 @@ export function NewPatientModal({ isOpen, onClose, onPatientCreated }: NewPatien
             {/* Full Name */}
             <div>
               <label style={{ display: "block", fontSize: 12, fontWeight: 700, color: "#e2e8f0", marginBottom: 6 }}>
-                Patient Full Name *
+                {t("fullNameRequired", undefined, "Patient Full Name *")}
               </label>
               <input
                 type="text"
@@ -172,7 +176,7 @@ export function NewPatientModal({ isOpen, onClose, onPatientCreated }: NewPatien
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
               <div>
                 <label style={{ display: "block", fontSize: 12, fontWeight: 700, color: "#e2e8f0", marginBottom: 6 }}>
-                  Contact Phone Number
+                  {tCommon("phone", undefined, "Contact Phone Number")}
                 </label>
                 <input
                   type="tel"
@@ -195,7 +199,7 @@ export function NewPatientModal({ isOpen, onClose, onPatientCreated }: NewPatien
 
               <div>
                 <label style={{ display: "block", fontSize: 12, fontWeight: 700, color: "#e2e8f0", marginBottom: 6 }}>
-                  Email Address
+                  {tCommon("email", undefined, "Email Address")}
                 </label>
                 <input
                   type="email"
@@ -221,7 +225,7 @@ export function NewPatientModal({ isOpen, onClose, onPatientCreated }: NewPatien
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 10 }}>
               <div>
                 <label style={{ display: "block", fontSize: 12, fontWeight: 700, color: "#e2e8f0", marginBottom: 6 }}>
-                  Gender
+                  {t("gender", undefined, "Gender")}
                 </label>
                 <select
                   value={gender}
@@ -238,15 +242,15 @@ export function NewPatientModal({ isOpen, onClose, onPatientCreated }: NewPatien
                     boxSizing: "border-box",
                   }}
                 >
-                  <option value="Male">Male</option>
-                  <option value="Female">Female</option>
-                  <option value="Other">Other</option>
+                  <option value="Male">{t("male", undefined, "Male")}</option>
+                  <option value="Female">{t("female", undefined, "Female")}</option>
+                  <option value="Other">{t("other", undefined, "Other")}</option>
                 </select>
               </div>
 
               <div>
                 <label style={{ display: "block", fontSize: 12, fontWeight: 700, color: "#e2e8f0", marginBottom: 6 }}>
-                  Blood Group
+                  {t("bloodGroup", undefined, "Blood Group")}
                 </label>
                 <select
                   value={bloodGroup}
@@ -276,7 +280,7 @@ export function NewPatientModal({ isOpen, onClose, onPatientCreated }: NewPatien
 
               <div>
                 <label style={{ display: "block", fontSize: 12, fontWeight: 700, color: "#e2e8f0", marginBottom: 6 }}>
-                  Date of Birth
+                  {t("dateOfBirth", undefined, "Date of Birth")}
                 </label>
                 <input
                   type="date"
@@ -300,7 +304,7 @@ export function NewPatientModal({ isOpen, onClose, onPatientCreated }: NewPatien
             {/* Clinical Notes */}
             <div>
               <label style={{ display: "block", fontSize: 12, fontWeight: 700, color: "#e2e8f0", marginBottom: 6 }}>
-                Initial Clinical Notes / Medical History
+                {t("clinicalNotes", undefined, "Initial Clinical Notes / Medical History")}
               </label>
               <textarea
                 rows={3}
@@ -350,7 +354,7 @@ export function NewPatientModal({ isOpen, onClose, onPatientCreated }: NewPatien
                 cursor: "pointer",
               }}
             >
-              Cancel
+              {tCommon("cancel", undefined, "Cancel")}
             </button>
             <button
               type="submit"
@@ -371,7 +375,7 @@ export function NewPatientModal({ isOpen, onClose, onPatientCreated }: NewPatien
               }}
             >
               {isSubmitting && <Loader2 size={14} className="spin-animation" />}
-              <span>{isSubmitting ? "Registering..." : "Save Patient Record"}</span>
+              <span>{isSubmitting ? tCommon("saving", undefined, "Registering...") : t("registerPatientBtn", undefined, "Save Patient Record")}</span>
             </button>
           </div>
         </form>

@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 import { QueueItem, PriorityLevel, CheckInChannel } from "@/types/queue";
 import { issueWalkInTicket } from "@/lib/api/doctor-queue-client";
+import { useTranslation } from "@/lib/i18n/i18n-context";
 
 interface NewTicketModalProps {
   isOpen: boolean;
@@ -50,6 +51,9 @@ export function NewTicketModal({
   chambers,
   currentChamberId,
 }: NewTicketModalProps) {
+  const { t } = useTranslation("queue");
+  const { t: tApp } = useTranslation("appointments");
+  const { t: tCommon } = useTranslation("common");
   const activeDoctorName =
     doctorName ||
     (typeof window !== "undefined"
@@ -276,7 +280,7 @@ export function NewTicketModal({
                   letterSpacing: "-0.01em",
                 }}
               >
-                New Patient Appointment
+                {tApp("newAppointment", undefined, "New Patient Appointment")}
               </h2>
               <p
                 style={{
@@ -389,7 +393,7 @@ export function NewTicketModal({
                       marginTop: 2,
                     }}
                   >
-                    Official OPD Triage Token Slip
+                    {t("officialOpdSlip", undefined, "Official OPD Triage Token Slip")}
                   </div>
                 </div>
                 <div
@@ -407,7 +411,7 @@ export function NewTicketModal({
                   }}
                 >
                   <CheckCircle2 size={13} />
-                  <span>ISSUED</span>
+                  <span>{t("issuedBadge", undefined, "ISSUED")}</span>
                 </div>
               </div>
 
@@ -422,7 +426,7 @@ export function NewTicketModal({
                     fontWeight: 700,
                   }}
                 >
-                  TOKEN NUMBER
+                  {t("tokenNumberLabel", undefined, "TOKEN NUMBER")}
                 </span>
                 <div
                   style={{
@@ -445,7 +449,7 @@ export function NewTicketModal({
                     color: "#94a3b8",
                   }}
                 >
-                  Estimated Wait: ~{ticketIssued.estWaitMinutes} mins
+                  {t("estimatedWaitMinutes", { minutes: ticketIssued.estWaitMinutes }, `Estimated Wait: ~${ticketIssued.estWaitMinutes} mins`)}
                 </span>
               </div>
 
@@ -464,7 +468,7 @@ export function NewTicketModal({
               >
                 <div>
                   <span style={{ color: "#64748b", display: "block" }}>
-                    Patient Name
+                    {t("patientName", undefined, "Patient Name")}
                   </span>
                   <span
                     style={{
@@ -479,7 +483,7 @@ export function NewTicketModal({
                 </div>
                 <div>
                   <span style={{ color: "#64748b", display: "block" }}>
-                    Chamber / Room
+                    {t("chamberRoom", undefined, "Chamber / Room")}
                   </span>
                   <span
                     style={{
@@ -494,7 +498,7 @@ export function NewTicketModal({
                 </div>
                 <div>
                   <span style={{ color: "#64748b", display: "block" }}>
-                    Specialist Doctor
+                    {t("specialistDoctor", undefined, "Specialist Doctor")}
                   </span>
                   <span
                     style={{
@@ -509,7 +513,7 @@ export function NewTicketModal({
                 </div>
                 <div>
                   <span style={{ color: "#64748b", display: "block" }}>
-                    Issue Time
+                    {t("issueTime", undefined, "Issue Time")}
                   </span>
                   <span
                     style={{
@@ -534,7 +538,7 @@ export function NewTicketModal({
                   lineHeight: 1.4,
                 }}
               >
-                Please watch the Waiting Room TV display for your token number.
+                {t("watchTvNotice", undefined, "Please watch the Waiting Room TV display for your token number.")}
               </p>
             </div>
 
@@ -564,7 +568,7 @@ export function NewTicketModal({
                 }}
               >
                 <Printer size={15} />
-                <span>Print Slip</span>
+                <span>{t("printSlip", undefined, "Print Slip")}</span>
               </button>
               <button
                 type="button"
@@ -582,7 +586,7 @@ export function NewTicketModal({
                   boxShadow: "0 4px 15px rgba(229, 184, 105, 0.3)",
                 }}
               >
-                Done
+                {tCommon("close", undefined, "Done")}
               </button>
             </div>
           </div>
@@ -632,10 +636,10 @@ export function NewTicketModal({
                       display: "block",
                     }}
                   >
-                    Allocated Next Serial Token
+                    {t("allocatedNextToken", undefined, "Allocated Next Serial Token")}
                   </span>
                   <span style={{ fontSize: 11, color: "#94a3b8" }}>
-                    Sequential atomic queue assignment
+                    {t("sequentialQueueAssignment", undefined, "Sequential atomic queue assignment")}
                   </span>
                 </div>
               </div>
@@ -690,7 +694,7 @@ export function NewTicketModal({
                 }}
               >
                 <User size={13} color="#e5b869" />
-                <span>Patient Full Name *</span>
+                <span>{tApp("fullNameRequired", undefined, "Patient Full Name *")}</span>
               </label>
               <input
                 type="text"
@@ -737,7 +741,7 @@ export function NewTicketModal({
                 }}
               >
                 <Phone size={13} color="#e5b869" />
-                <span>Mobile Number (Optional)</span>
+                <span>{t("mobileNumberOptional", undefined, "Mobile Number (Optional)")}</span>
               </label>
               <input
                 type="tel"
@@ -783,7 +787,7 @@ export function NewTicketModal({
                 }}
               >
                 <MapPin size={13} color="#e5b869" />
-                <span>Chamber Location</span>
+                <span>{tApp("chamber", undefined, "Chamber Location")}</span>
               </label>
               <select
                 value={selectedChamberId}
@@ -848,7 +852,7 @@ export function NewTicketModal({
                   e.currentTarget.style.background = "rgba(255, 255, 255, 0.04)";
                 }}
               >
-                Cancel
+                {tCommon("cancel", undefined, "Cancel")}
               </button>
 
               <button
@@ -882,8 +886,8 @@ export function NewTicketModal({
                 <Ticket size={16} />
                 <span>
                   {isSubmitting
-                    ? "Booking Appointment..."
-                    : "Create Patient Appointment"}
+                    ? t("bookingAppointment", undefined, "Booking Appointment...")
+                    : t("createAppointment", undefined, "Create Patient Appointment")}
                 </span>
               </button>
             </div>

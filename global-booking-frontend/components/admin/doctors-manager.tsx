@@ -29,8 +29,11 @@ import {
   updateDoctorStatus,
   type CreateDoctorPayload,
 } from "@/lib/api/admin-client";
+import { useTranslation } from "@/lib/i18n/i18n-context";
 
 export function DoctorsManager() {
+  const { t } = useTranslation("admin");
+  const { t: tCommon } = useTranslation("common");
   const [doctors, setDoctors] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -201,7 +204,7 @@ export function DoctorsManager() {
           <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 6 }}>
             <Stethoscope size={24} color="#e5b869" />
             <h1 style={{ fontSize: 24, fontWeight: 700, margin: 0, color: "#fff" }}>
-              Doctors & Specialists
+              {t("doctorsSpecialists", undefined, "Doctors & Specialists")}
             </h1>
             <span
               style={{
@@ -214,11 +217,11 @@ export function DoctorsManager() {
                 fontWeight: 700,
               }}
             >
-              {totalCount} Total Registered
+              {t("totalRegisteredCount", { count: totalCount }, `${totalCount} Total Registered`)}
             </span>
           </div>
           <p style={{ margin: 0, fontSize: 14, color: "#94a3b8" }}>
-            Manage authorized healthcare specialists, assigned Patients, consultation fees, and subscription lifecycles.
+            {t("manageDoctorsSubtitle", undefined, "Manage authorized healthcare specialists, assigned Patients, consultation fees, and subscription lifecycles.")}
           </p>
         </div>
 
@@ -241,7 +244,7 @@ export function DoctorsManager() {
             }}
           >
             <RefreshCw size={16} className={loading ? "animate-spin" : ""} />
-            Refresh
+            {tCommon("refresh", undefined, "Refresh")}
           </button>
 
           <button

@@ -21,6 +21,8 @@ import {
   KeyRound,
 } from "lucide-react";
 import { adminLogin } from "@/lib/api/admin-client";
+import { LanguageSelector } from "@/components/shared/language-selector";
+import { useTranslation } from "@/lib/i18n/i18n-context";
 
 /* =========================================================================
    HEALTHCARE PULSE (ECG) BRAND EMBLEM
@@ -71,6 +73,7 @@ function HealthcarePulseLogo({ size = 48 }: { size?: number }) {
 
 export function LuxuryLoginForm() {
   const router = useRouter();
+  const { t: tAuth } = useTranslation("auth");
 
   const [portalType, setPortalType] = useState<"doctor" | "hospital">("doctor");
   const [email, setEmail] = useState("");
@@ -118,15 +121,19 @@ export function LuxuryLoginForm() {
         }
         return;
       }
-      setError("Authentication failed: Invalid credentials or unverified clinical account.");
+      setError(tAuth("authFailed", undefined, "Authentication failed: Invalid credentials or unverified clinical account."));
     } catch (err) {
       const msg = err instanceof Error ? err.message : "Authentication failed.";
       if (msg.includes("Failed to fetch") || msg.includes("NetworkError")) {
         setError(
-          "Unable to connect to the authentication server. Please check your network connection or verify backend service is running on port 3003."
+          tAuth(
+            "connectionError",
+            undefined,
+            "Unable to connect to the authentication server. Please check your network connection or verify backend service is running on port 3003."
+          )
         );
       } else {
-        setError(msg);
+        setError(tAuth("authFailed", undefined, msg));
       }
     } finally {
       setSubmitting(false);
@@ -142,15 +149,18 @@ export function LuxuryLoginForm() {
       <div className="grid-subtle-pattern" aria-hidden="true" />
 
       {/* Floating Top Utility Bar */}
-      <nav className="top-nav-bar" aria-label="Portal Navigation">
+      <nav className="top-nav-bar" aria-label="Portal Navigation" style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
         <Link href="/" className="nav-return-btn">
           <ArrowLeft size={15} />
           <span>Return Home</span>
         </Link>
 
-        <div className="system-health-pill">
-          <span className="live-radar-dot" />
-          <span className="health-label">Clinical Network Active</span>
+        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+          <LanguageSelector variant="header" />
+          <div className="system-health-pill">
+            <span className="live-radar-dot" />
+            <span className="health-label">Clinical Network Active</span>
+          </div>
         </div>
       </nav>
 
@@ -185,7 +195,7 @@ export function LuxuryLoginForm() {
                 onClick={() => setPortalType("doctor")}
               >
                 <Stethoscope size={15} />
-                <span>Doctor & Specialist</span>
+                <span>{tAuth("doctorTab", undefined, "Doctor & Specialist")}</span>
               </button>
 
               <button
@@ -196,18 +206,20 @@ export function LuxuryLoginForm() {
                 onClick={() => setPortalType("hospital")}
               >
                 <Building2 size={15} />
-                <span>Hospital & Clinic</span>
+                <span>{tAuth("hospitalTab", undefined, "Hospital & Clinic")}</span>
               </button>
             </div>
 
             <div className="greeting-block">
               <h1 className="greeting-title">
-                {portalType === "doctor" ? "Doctor Practice Sign In" : "Hospital Administration Sign In"}
+                {portalType === "doctor"
+                  ? tAuth("doctorPracticeSignIn", undefined, "Doctor Practice Sign In")
+                  : tAuth("hospitalAdminSignIn", undefined, "Hospital Administration Sign In")}
               </h1>
               <p className="greeting-desc">
                 {portalType === "doctor"
-                  ? "Access your live OPD queue, patient appointments, and chamber schedule."
-                  : "Centralize outpatient registration, multi-department intake, and OPD roster."}
+                  ? tAuth("doctorSignInDesc", undefined, "Access your live OPD queue, patient appointments, and chamber schedule.")
+                  : tAuth("hospitalSignInDesc", undefined, "Centralize outpatient registration, multi-department intake, and OPD roster.")}
               </p>
             </div>
           </div>
@@ -225,7 +237,9 @@ export function LuxuryLoginForm() {
             {/* Email Field */}
             <div className="form-field-group">
               <label htmlFor={emailId} className="field-label-text">
-                {portalType === "doctor" ? "Doctor Email or Username" : "Staff or Facility Email"}
+                {portalType === "doctor"
+                  ? tAuth("doctorEmailLabel", undefined, "Doctor Email or Username")
+                  : tAuth("hospitalEmailLabel", undefined, "Staff or Facility Email")}
               </label>
               <div className="field-input-wrapper">
                 <span className="field-leading-icon" aria-hidden="true">
@@ -256,7 +270,7 @@ export function LuxuryLoginForm() {
             {/* Password Field */}
             <div className="form-field-group">
               <label htmlFor={passwordId} className="field-label-text">
-                Password
+                {tAuth("passwordLabel", undefined, "Password")}
               </label>
               <div className="field-input-wrapper">
                 <span className="field-leading-icon" aria-hidden="true">
@@ -299,7 +313,7 @@ export function LuxuryLoginForm() {
                   onChange={(e) => setRememberMe(e.target.checked)}
                   className="indigo-checkbox"
                 />
-                <span>Keep session active</span>
+                <span>{tAuth("keepSessionActive", undefined, "Keep session active")}</span>
               </label>
 
               <button
@@ -307,7 +321,7 @@ export function LuxuryLoginForm() {
                 onClick={() => setSupportModalOpen(true)}
                 className="forgot-pass-btn"
               >
-                Forgot Password?
+                {tAuth("forgotPassword", undefined, "Forgot Password?")}
               </button>
             </div>
 
@@ -320,13 +334,13 @@ export function LuxuryLoginForm() {
               {submitting ? (
                 <>
                   <Loader2 size={18} className="cta-spinner" />
-                  <span>Authenticating Session...</span>
+                  <span>{tAuth("authenticating", undefined, "Authenticating Session...")}</span>
                 </>
               ) : (
                 <>
                   <ShieldCheck size={18} className="cta-icon" />
                   <span>
-                    Sign In to {portalType === "doctor" ? "Doctor Portal" : "Hospital Portal"}
+                    {tAuth("signInToPortal", { portal: portalType === "doctor" ? "Doctor Portal" : "Hospital Portal" }, `Sign In to ${portalType === "doctor" ? "Doctor Portal" : "Hospital Portal"}`)}
                   </span>
                   <ArrowRight size={15} className="cta-arrow" />
                 </>
@@ -336,9 +350,9 @@ export function LuxuryLoginForm() {
 
           {/* Registration Link */}
           <div className="registration-prompt-box">
-            <span>New medical practitioner or facility?</span>
+            <span>{tAuth("newPractitioner", undefined, "New medical practitioner or facility?")}</span>
             <Link href="/register" className="register-now-link">
-              <span>Register Practice</span>
+              <span>{tAuth("registerPractice", undefined, "Register Practice")}</span>
               <ArrowRight size={13} />
             </Link>
           </div>

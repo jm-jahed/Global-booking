@@ -22,6 +22,8 @@ import {
   Sparkles,
   FileCheck,
 } from "lucide-react";
+import { useTranslation } from "@/lib/i18n/i18n-context";
+import { LanguageSelector } from "@/components/shared/language-selector";
 
 /* =========================================================================
    HEALTHCARE PULSE (ECG) BRAND EMBLEM
@@ -95,6 +97,8 @@ const FACILITY_TYPES = [
 
 export function LuxuryRegisterForm() {
   const router = useRouter();
+  const { t } = useTranslation("auth");
+  const { t: tCommon } = useTranslation("common");
 
   const [accountType, setAccountType] = useState<"doctor" | "hospital">("doctor");
   const [fullName, setFullName] = useState("");
@@ -129,8 +133,8 @@ export function LuxuryRegisterForm() {
     if (!fullName.trim()) {
       setError(
         accountType === "doctor"
-          ? "Please provide your full practitioner name with title (e.g. Dr. Fatima Al-Mansoor)."
-          : "Please provide the name of the Authorized Administrative Officer."
+          ? t("errDoctorName", undefined, "Please provide your full practitioner name with title (e.g. Dr. Fatima Al-Mansoor).")
+          : t("errAdminName", undefined, "Please provide the name of the Authorized Administrative Officer.")
       );
       return;
     }
@@ -138,34 +142,34 @@ export function LuxuryRegisterForm() {
     if (!licenseNumber.trim()) {
       setError(
         accountType === "doctor"
-          ? "Please enter your Medical Practitioner Registration / License Number."
-          : "Please enter your Facility Health Authority License / Accreditation Number."
+          ? t("errDoctorLicense", undefined, "Please enter your Medical Practitioner Registration / License Number.")
+          : t("errHospitalLicense", undefined, "Please enter your Facility Health Authority License / Accreditation Number.")
       );
       return;
     }
 
     if (accountType === "doctor" && !organizationName.trim()) {
-      setError("Please specify your Primary Consultation Hospital or Chamber Clinic name.");
+      setError(t("errDoctorChamber", undefined, "Please specify your Primary Consultation Hospital or Chamber Clinic name."));
       return;
     }
 
     if (accountType === "hospital" && !organizationName.trim()) {
-      setError("Please provide the legal Registered Facility or Hospital Name.");
+      setError(t("errHospitalName", undefined, "Please provide the legal Registered Facility or Hospital Name."));
       return;
     }
 
     if (!email.trim() || !email.includes("@")) {
-      setError("Please enter a valid professional or clinical email address.");
+      setError(t("errValidEmail", undefined, "Please enter a valid professional or clinical email address."));
       return;
     }
 
     if (password.length < 8) {
-      setError("Confidential password must be at least 8 characters long.");
+      setError(t("errPasswordLength", undefined, "Confidential password must be at least 8 characters long."));
       return;
     }
 
     if (!agreed) {
-      setError("Please confirm agreement with the HIPAA/GDPR clinical terms to proceed.");
+      setError(t("errAgreementRequired", undefined, "Please confirm agreement with the HIPAA/GDPR clinical terms to proceed."));
       return;
     }
 
@@ -196,7 +200,7 @@ export function LuxuryRegisterForm() {
         localStorage.setItem("gb_last_registration", JSON.stringify(regRecord));
       }
     } catch {
-      setError("Registration transmission encountered an error. Please try again.");
+      setError(t("errTransmission", undefined, "Registration transmission encountered an error. Please try again."));
     } finally {
       setSubmitting(false);
     }
@@ -214,13 +218,16 @@ export function LuxuryRegisterForm() {
       <nav className="top-nav-bar" aria-label="Registration Navigation">
         <Link href="/" className="nav-return-btn">
           <ArrowLeft size={15} />
-          <span>Return Home</span>
+          <span>{t("returnHome", undefined, "Return Home")}</span>
         </Link>
 
-        <Link href="/login" className="nav-signin-btn">
-          <span>Already registered? Sign In</span>
-          <ArrowRight size={14} />
-        </Link>
+        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+          <LanguageSelector variant="header" />
+          <Link href="/login" className="nav-signin-btn">
+            <span>{t("alreadyRegistered", undefined, "Already registered? Sign In")}</span>
+            <ArrowRight size={14} />
+          </Link>
+        </div>
       </nav>
 
       {/* Main Registration Stage */}
@@ -236,7 +243,7 @@ export function LuxuryRegisterForm() {
                 <span className="brand-name-primary">GLOBAL</span>{" "}
                 <span className="brand-name-accent">BOOKING</span>
               </div>
-              <div className="brand-badge-tag">HEALTHCARE PRACTICE PLATFORM</div>
+              <div className="brand-badge-tag">{tCommon("appTagline", undefined, "HEALTHCARE PRACTICE PLATFORM")}</div>
             </div>
           </Link>
         </header>
@@ -259,7 +266,7 @@ export function LuxuryRegisterForm() {
                     }}
                   >
                     <Stethoscope size={16} />
-                    <span>Doctor / Specialist</span>
+                    <span>{t("doctorSpecialistTab", undefined, "Doctor / Specialist")}</span>
                   </button>
 
                   <button
@@ -273,20 +280,20 @@ export function LuxuryRegisterForm() {
                     }}
                   >
                     <Building2 size={16} />
-                    <span>Hospital / Clinic Center</span>
+                    <span>{t("hospitalClinicTab", undefined, "Hospital / Clinic Center")}</span>
                   </button>
                 </div>
 
                 <div className="greeting-block">
                   <h1 className="greeting-title">
                     {accountType === "doctor"
-                      ? "Register Doctor Practice"
-                      : "Register Healthcare Facility"}
+                      ? t("registerDoctorPractice", undefined, "Register Doctor Practice")
+                      : t("registerHealthcareFacility", undefined, "Register Healthcare Facility")}
                   </h1>
                   <p className="greeting-desc">
                     {accountType === "doctor"
-                      ? "Launch your branded patient booking portal, live OPD queue tracker, and acrylic QR standee."
-                      : "Connect departmental consultation chambers, outpatient registration, and central staff desk."}
+                      ? t("doctorRegisterDesc", undefined, "Launch your branded patient booking portal, live OPD queue tracker, and acrylic QR standee.")
+                      : t("hospitalRegisterDesc", undefined, "Connect departmental consultation chambers, outpatient registration, and central staff desk.")}
                   </p>
                 </div>
               </div>
@@ -307,8 +314,8 @@ export function LuxuryRegisterForm() {
                   <div className="form-field-group">
                     <label htmlFor={fullNameId} className="field-label-text">
                       {accountType === "doctor"
-                        ? "Practitioner Full Name"
-                        : "Authorized Administrative Officer"}
+                        ? t("practitionerFullName", undefined, "Practitioner Full Name")
+                        : t("adminOfficerName", undefined, "Authorized Administrative Officer")}
                     </label>
                     <div className="field-input-wrapper">
                       <span className="field-leading-icon" aria-hidden="true">
@@ -326,8 +333,8 @@ export function LuxuryRegisterForm() {
                         }}
                         placeholder={
                           accountType === "doctor"
-                            ? "e.g. Dr. Fatima Al-Mansoor"
-                            : "e.g. Dr. Tariq Rahman (Medical Director)"
+                            ? t("practitionerNamePlaceholder", undefined, "e.g. Dr. Fatima Al-Mansoor")
+                            : t("adminOfficerPlaceholder", undefined, "e.g. Dr. Tariq Rahman (Medical Director)")
                         }
                         className="card-text-input"
                       />
@@ -340,7 +347,7 @@ export function LuxuryRegisterForm() {
                       htmlFor={accountType === "doctor" ? specialtyId : facilityTypeId}
                       className="field-label-text"
                     >
-                      {accountType === "doctor" ? "Primary Medical Specialty" : "Facility Category"}
+                      {accountType === "doctor" ? t("primarySpecialty", undefined, "Primary Medical Specialty") : t("facilityCategory", undefined, "Facility Category")}
                     </label>
                     <div className="field-input-wrapper">
                       <span className="field-leading-icon" aria-hidden="true">
@@ -382,8 +389,8 @@ export function LuxuryRegisterForm() {
                   <div className="form-field-group">
                     <label htmlFor={licenseNumberId} className="field-label-text">
                       {accountType === "doctor"
-                        ? "Practitioner Medical License #"
-                        : "Facility Accreditation / MOH License #"}
+                        ? t("medicalLicenseNumber", undefined, "Practitioner Medical License #")
+                        : t("facilityLicenseNumber", undefined, "Facility Accreditation / MOH License #")}
                     </label>
                     <div className="field-input-wrapper">
                       <span className="field-leading-icon" aria-hidden="true">
@@ -400,7 +407,7 @@ export function LuxuryRegisterForm() {
                           if (error) setError(null);
                         }}
                         placeholder={
-                          accountType === "doctor" ? "e.g. DHA-MD-49201" : "e.g. MOHAP-FAC-88192"
+                          accountType === "doctor" ? t("medicalLicensePlaceholder", undefined, "e.g. DHA-MD-49201") : t("facilityLicensePlaceholder", undefined, "e.g. MOHAP-FAC-88192")
                         }
                         className="card-text-input"
                       />
@@ -411,8 +418,8 @@ export function LuxuryRegisterForm() {
                   <div className="form-field-group">
                     <label htmlFor={organizationNameId} className="field-label-text">
                       {accountType === "doctor"
-                        ? "Primary Chamber / Clinic Hospital"
-                        : "Registered Facility Name"}
+                        ? t("primaryChamberHospital", undefined, "Primary Chamber / Clinic Hospital")
+                        : t("registeredFacilityName", undefined, "Registered Facility Name")}
                     </label>
                     <div className="field-input-wrapper">
                       <span className="field-leading-icon" aria-hidden="true">
@@ -430,8 +437,8 @@ export function LuxuryRegisterForm() {
                         }}
                         placeholder={
                           accountType === "doctor"
-                            ? "e.g. City General Hospital • Wing 4"
-                            : "e.g. Mediclinic City Hospital"
+                            ? t("primaryChamberPlaceholder", undefined, "e.g. City General Hospital • Wing 4")
+                            : t("registeredFacilityPlaceholder", undefined, "e.g. Mediclinic City Hospital")
                         }
                         className="card-text-input"
                       />
@@ -441,7 +448,7 @@ export function LuxuryRegisterForm() {
                   {/* Professional Email */}
                   <div className="form-field-group">
                     <label htmlFor={emailId} className="field-label-text">
-                      Official Clinical Email
+                      {t("officialEmail", undefined, "Official Clinical Email")}
                     </label>
                     <div className="field-input-wrapper">
                       <span className="field-leading-icon" aria-hidden="true">
@@ -470,7 +477,7 @@ export function LuxuryRegisterForm() {
                   {/* Phone Number */}
                   <div className="form-field-group">
                     <label htmlFor={phoneId} className="field-label-text">
-                      Contact Phone / WhatsApp
+                      {t("contactPhone", undefined, "Contact Phone / WhatsApp")}
                     </label>
                     <div className="field-input-wrapper">
                       <span className="field-leading-icon" aria-hidden="true">
@@ -492,7 +499,7 @@ export function LuxuryRegisterForm() {
                 {/* Password Field */}
                 <div className="form-field-group">
                   <label htmlFor={passwordId} className="field-label-text">
-                    Confidential Password (min 8 characters)
+                    {t("confidentialPassword", undefined, "Confidential Password (min 8 characters)")}
                   </label>
                   <div className="field-input-wrapper">
                     <span className="field-leading-icon" aria-hidden="true">
@@ -510,7 +517,7 @@ export function LuxuryRegisterForm() {
                         setPassword(e.target.value);
                         if (error) setError(null);
                       }}
-                      placeholder="Create a strong clinical password"
+                      placeholder={t("passwordFieldPlaceholder", undefined, "Create a strong clinical password")}
                       className="card-text-input has-action"
                     />
                     <button
@@ -536,9 +543,7 @@ export function LuxuryRegisterForm() {
                       className="indigo-checkbox"
                     />
                     <span className="agreement-text">
-                      I verify that I am an authorized practitioner or medical administrator, and agree
-                      to the Global Booking Clinical Terms of Service and HIPAA/GDPR Data Protection
-                      Agreement.
+                      {t("clinicalTermsAgreement", undefined, "I verify that I am an authorized practitioner or medical administrator, and agree to the Global Booking Clinical Terms of Service and HIPAA/GDPR Data Protection Agreement.")}
                     </span>
                   </label>
                 </div>
@@ -552,13 +557,13 @@ export function LuxuryRegisterForm() {
                   {submitting ? (
                     <>
                       <Loader2 size={18} className="cta-spinner" />
-                      <span>Transmitting Practice Onboarding...</span>
+                      <span>{t("transmittingOnboarding", undefined, "Transmitting Practice Onboarding...")}</span>
                     </>
                   ) : (
                     <>
                       <ShieldCheck size={18} className="cta-icon" />
                       <span>
-                        Complete Practice Registration ({accountType === "doctor" ? "Doctor" : "Hospital"})
+                        {t("completePracticeRegistration", { type: accountType === "doctor" ? (t("doctorTab", undefined, "Doctor")) : (t("hospitalTab", undefined, "Hospital")) }, `Complete Practice Registration (${accountType === "doctor" ? "Doctor" : "Hospital"})`)}
                       </span>
                       <ArrowRight size={15} className="cta-arrow" />
                     </>
@@ -568,9 +573,9 @@ export function LuxuryRegisterForm() {
 
               {/* Sign In Shortcut */}
               <div className="signin-prompt-box">
-                <span>Already have an active practitioner or staff account?</span>
+                <span>{t("alreadyHaveAccount", undefined, "Already have an active practitioner or staff account?")}</span>
                 <Link href="/login" className="signin-now-link">
-                  <span>Sign In to Portal</span>
+                  <span>{t("signInToPortalBtn", undefined, "Sign In to Portal")}</span>
                   <ArrowRight size={13} />
                 </Link>
               </div>
@@ -596,38 +601,37 @@ export function LuxuryRegisterForm() {
                 <CheckCircle2 size={38} className="success-check-svg" />
               </div>
 
-              <h2 className="success-title">Practice Registration Submitted!</h2>
+              <h2 className="success-title">{t("registrationSubmitted", undefined, "Practice Registration Submitted!")}</h2>
               <p className="success-desc">
-                Your clinical entity credentials have been verified. An active onboarding record has
-                been initiated on the Global Booking Healthcare Network.
+                {t("registrationSubmittedDesc", undefined, "Your clinical entity credentials have been verified. An active onboarding record has been initiated on the Global Booking Healthcare Network.")}
               </p>
 
               <div className="voucher-details-card">
                 <div className="voucher-top-row">
-                  <span className="voucher-ref-label">APPLICATION REFERENCE</span>
+                  <span className="voucher-ref-label">{t("applicationReference", undefined, "APPLICATION REFERENCE")}</span>
                   <span className="voucher-ref-value">{appRef}</span>
                 </div>
 
                 <div className="voucher-grid">
                   <div className="voucher-item">
-                    <span className="voucher-lbl">Entity Type</span>
+                    <span className="voucher-lbl">{t("entityType", undefined, "Entity Type")}</span>
                     <strong className="voucher-val">
-                      {accountType === "doctor" ? "Doctor / Specialist" : "Hospital / Healthcare Center"}
+                      {accountType === "doctor" ? t("doctorSpecialistTab", undefined, "Doctor / Specialist") : t("hospitalClinicTab", undefined, "Hospital / Clinic Center")}
                     </strong>
                   </div>
 
                   <div className="voucher-item">
-                    <span className="voucher-lbl">Registered Name</span>
+                    <span className="voucher-lbl">{t("registeredName", undefined, "Registered Name")}</span>
                     <strong className="voucher-val">{fullName}</strong>
                   </div>
 
                   <div className="voucher-item">
-                    <span className="voucher-lbl">License #</span>
+                    <span className="voucher-lbl">{t("licenseNo", undefined, "License #")}</span>
                     <strong className="voucher-val">{licenseNumber}</strong>
                   </div>
 
                   <div className="voucher-item">
-                    <span className="voucher-lbl">Official Email</span>
+                    <span className="voucher-lbl">{t("officialEmailLabel", undefined, "Official Email")}</span>
                     <strong className="voucher-val">{email}</strong>
                   </div>
                 </div>
@@ -635,8 +639,7 @@ export function LuxuryRegisterForm() {
                 <div className="voucher-portal-callout">
                   <Sparkles size={16} className="callout-sparkle" />
                   <span>
-                    Your practice workspace is ready. You can sign in immediately to customize your
-                    profile, configure chambers, and manage live queues.
+                    {t("voucherCallout", undefined, "Your practice workspace is ready. You can sign in immediately to customize your profile, configure chambers, and manage live queues.")}
                   </span>
                 </div>
               </div>
@@ -644,18 +647,19 @@ export function LuxuryRegisterForm() {
               <div className="success-actions-row">
                 <Link href="/login" className="action-signin-btn">
                   <ShieldCheck size={16} />
-                  <span>Proceed to Portal Sign In (/login)</span>
+                  <span>{t("proceedToSignIn", undefined, "Proceed to Portal Sign In (/login)")}</span>
                   <ArrowRight size={14} />
                 </Link>
 
                 <Link href="/" className="action-home-btn">
-                  <span>Return to Homepage</span>
+                  <span>{t("returnToHome", undefined, "Return to Homepage")}</span>
                 </Link>
               </div>
             </div>
           )}
         </main>
       </div>
+
 
       {/* Scoped Styling */}
       <style jsx>{`

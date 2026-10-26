@@ -27,6 +27,7 @@ import {
   Filter,
 } from "lucide-react";
 import { ROUTES } from "@/config/routes";
+import { useTranslation } from "@/lib/i18n/i18n-context";
 import {
   getStoredPortalUser,
   getDoctorProfile,
@@ -81,6 +82,10 @@ function getAvatarColor(name: string): string {
 }
 
 export function DashboardView() {
+  const { t: tPortal } = useTranslation("portal");
+  const { t: tCommon } = useTranslation("common");
+  const { t: tQueue } = useTranslation("queue");
+
   // Real Data State
   const [loading, setLoading] = useState<boolean>(true);
   const [refreshing, setRefreshing] = useState<boolean>(false);
@@ -505,10 +510,10 @@ export function DashboardView() {
               color: "#ffffff",
             }}
           >
-            Welcome back, {doctorProfile?.fullName || "Doctor Practice"}
+            {doctorProfile?.fullName ? tPortal("welcomeBack", { name: doctorProfile.fullName }) : tPortal("title")}
           </h1>
           <p style={{ margin: 0, fontSize: 13, color: "#8e9fb5" }}>
-            Live clinical overview — synchronized in real time with Live OPD Queue & Patient Registry.
+            {tPortal("clinicalOverviewSubtitle")}
           </p>
         </div>
 
@@ -566,7 +571,7 @@ export function DashboardView() {
             title="Reload real-time clinical data"
           >
             <RefreshCw size={14} className={refreshing ? "animate-spin text-gold" : ""} />
-            <span>{refreshing ? "Syncing..." : "Refresh"}</span>
+            <span>{refreshing ? tPortal("syncing") : tPortal("refresh")}</span>
           </button>
 
           {/* Quick Issue OPD Token */}
@@ -589,7 +594,7 @@ export function DashboardView() {
             }}
           >
             <Ticket size={16} />
-            <span>Issue OPD Token</span>
+            <span>{tPortal("issueToken")}</span>
             <ChevronRight size={14} />
           </button>
 
@@ -613,7 +618,7 @@ export function DashboardView() {
             }}
           >
             <UserPlus size={16} />
-            <span>Register Patient</span>
+            <span>{tPortal("registerPatient")}</span>
             <ChevronRight size={14} />
           </button>
         </div>
@@ -632,7 +637,7 @@ export function DashboardView() {
         >
           <Calendar size={13} color="#e5b869" />
           <span>{dateInfo.formattedDate}</span>
-          <span className="dashboard-mobile-pill-badge">{dateInfo.isToday ? "Today" : dateInfo.dayOfWeek}</span>
+          <span className="dashboard-mobile-pill-badge">{dateInfo.isToday ? tPortal("today") : dateInfo.dayOfWeek}</span>
           <ChevronDown size={13} color="#8e9fb5" />
         </button>
 
@@ -643,7 +648,7 @@ export function DashboardView() {
           className="dashboard-mobile-pill-refresh"
         >
           <RefreshCw size={13} className={refreshing ? "animate-spin text-gold" : ""} />
-          <span>{refreshing ? "..." : "Refresh"}</span>
+          <span>{refreshing ? "..." : tPortal("refresh")}</span>
         </button>
 
         <button
@@ -652,7 +657,7 @@ export function DashboardView() {
           className="dashboard-mobile-pill-token"
         >
           <Ticket size={14} />
-          <span>Issue OPD Token</span>
+          <span>{tPortal("issueToken")}</span>
           <ChevronRight size={13} />
         </button>
       </div>
@@ -667,13 +672,13 @@ export function DashboardView() {
             </div>
             <div className="queue-kpi-card-body">
               <span className="queue-kpi-card-label" style={{ color: "#e5b869" }}>
-                LIVE OPD
+                {tPortal("liveOpd")}
               </span>
               <div className="queue-kpi-card-value">
                 {(waitingTickets.length || (servingTicket ? 1 : 0)).toString().padStart(2, "0")}
               </div>
               <div className="queue-kpi-card-sub">
-                {servingTicket ? "Currently serving" : "Chamber idle"}
+                {servingTicket ? tPortal("currentlyServing") : tPortal("chamberIdle")}
               </div>
             </div>
             {/* Mini wave chart + chevron */}
@@ -707,13 +712,13 @@ export function DashboardView() {
           </div>
           <div className="queue-kpi-card-body">
             <span className="queue-kpi-card-label" style={{ color: "#38bdf8" }}>
-              {selectedDateKey === chamberTodayDateKey ? "COMPLETED TODAY" : "COMPLETED"}
+              {selectedDateKey === chamberTodayDateKey ? tPortal("completedToday") : tCommon("completed")}
             </span>
             <div className="queue-kpi-card-value">
               {completedTickets.length.toString().padStart(2, "0")}
             </div>
             <div className="queue-kpi-card-sub">
-              Patients completed
+              {tPortal("completedVisits")}
             </div>
           </div>
           <div style={{ flexShrink: 0 }}>
@@ -734,13 +739,13 @@ export function DashboardView() {
             </div>
             <div className="queue-kpi-card-body">
               <span className="queue-kpi-card-label" style={{ color: "#10b981" }}>
-                TOTAL REGISTERED
+                {tPortal("totalRegistered")}
               </span>
               <div className="queue-kpi-card-value">
                 {totalPatientsCount.toString().padStart(2, "0")}
               </div>
               <div className="queue-kpi-card-sub">
-                Patients in system
+                {tPortal("patientsInSystem")}
               </div>
             </div>
             <div style={{ flexShrink: 0 }}>
@@ -762,13 +767,13 @@ export function DashboardView() {
             </div>
             <div className="queue-kpi-card-body">
               <span className="queue-kpi-card-label" style={{ color: "#c084fc" }}>
-                SCHEDULED APPOINTMENTS
+                {tPortal("scheduledAppointments")}
               </span>
               <div className="queue-kpi-card-value">
                 {dayAppointments.length.toString().padStart(2, "0")}
               </div>
               <div className="queue-kpi-card-sub">
-                Online & phone bookings
+                {tPortal("onlinePhoneBookings")}
               </div>
             </div>
             <div style={{ flexShrink: 0 }}>
@@ -834,7 +839,7 @@ export function DashboardView() {
                   <Activity size={18} />
                 </div>
                 <h2 style={{ margin: 0, fontSize: 18, fontWeight: 800, color: "#ffffff", letterSpacing: "0.02em" }}>
-                  Live OPD Queue
+                  {tQueue("title")}
                 </h2>
                 <span
                   style={{
@@ -852,13 +857,13 @@ export function DashboardView() {
                   }}
                 >
                   <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#ef4444", boxShadow: "0 0 8px #ef4444" }} />
-                  Live
+                  {tPortal("liveBadge")}
                 </span>
               </div>
 
               <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
                 <span style={{ fontSize: 13, color: "#94a3b8" }}>
-                  Total Patients: <strong style={{ color: "#e5b869", fontSize: 14 }}>{dayTickets.length}</strong>
+                  {tCommon("total")}: <strong style={{ color: "#e5b869", fontSize: 14 }}>{dayTickets.length}</strong>
                 </span>
                 <Link
                   href="/settings"
@@ -877,7 +882,7 @@ export function DashboardView() {
                   }}
                 >
                   <Settings size={14} color="#e5b869" />
-                  <span>Queue Settings</span>
+                  <span>{tPortal("profileSettings")}</span>
                 </Link>
               </div>
             </div>
@@ -964,7 +969,7 @@ export function DashboardView() {
                       cursor: "pointer",
                     }}
                   >
-                    Today
+                    {tPortal("today")}
                   </button>
                 )}
               </div>
@@ -986,7 +991,7 @@ export function DashboardView() {
                 <Search size={14} color="#64748b" />
                 <input
                   type="text"
-                  placeholder="Search token, name..."
+                  placeholder={tPortal("searchTokenName")}
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   style={{
@@ -1017,7 +1022,7 @@ export function DashboardView() {
                 }}
               >
                 <Filter size={14} color="#38bdf8" />
-                <span>All Services ({Array.from(new Set(queueTickets.map((t) => t.service))).filter(Boolean).length || 1})</span>
+                <span>{tPortal("allServices")} ({Array.from(new Set(queueTickets.map((t) => t.service))).filter(Boolean).length || 1})</span>
               </div>
             </div>
           </div>
@@ -1085,7 +1090,7 @@ export function DashboardView() {
                                   fontWeight: 700,
                                 }}
                               >
-                                Urgent
+                                {tPortal("urgent")}
                               </span>
                             )}
                             <span
@@ -1098,12 +1103,12 @@ export function DashboardView() {
                                 fontWeight: 600,
                               }}
                             >
-                              {ticket.channel === "ONLINE_WEB" ? "Online" : "Walk-in"}
+                              {ticket.channel === "ONLINE_WEB" ? tPortal("online") : tPortal("walkIn")}
                             </span>
                           </div>
 
                           <div style={{ fontSize: 12, color: "#8e9fb5", marginTop: 2 }}>
-                            {ticket.service} • Check-in: {ticket.checkInTime}
+                            {ticket.service} • {tPortal("checkIn")}: {ticket.checkInTime}
                             {ticket.patientPhone ? ` • ${ticket.patientPhone}` : ""}
                           </div>
                         </div>
@@ -1160,7 +1165,7 @@ export function DashboardView() {
                               cursor: "pointer",
                             }}
                           >
-                            Call Next
+                            {tQueue("callNext")}
                           </button>
                         )}
 
@@ -1179,7 +1184,7 @@ export function DashboardView() {
                               cursor: "pointer",
                             }}
                           >
-                            Finish Consultation
+                            {tPortal("finishConsultation")}
                           </button>
                         )}
                       </div>
@@ -1199,10 +1204,10 @@ export function DashboardView() {
                 >
                   <Ticket size={32} color="#64748b" style={{ margin: "0 auto 10px" }} />
                   <div style={{ fontWeight: 700, fontSize: 14, color: "#ffffff" }}>
-                    No queue tokens issued yet today
+                    {tPortal("noTokensToday")}
                   </div>
                   <p style={{ fontSize: 12, maxWidth: 360, margin: "6px auto 14px", color: "#64748b" }}>
-                    Patients arriving at the clinic or booking online will appear here automatically.
+                    {tPortal("noTokensDesc")}
                   </p>
                   <button
                     type="button"
@@ -1218,7 +1223,7 @@ export function DashboardView() {
                       cursor: "pointer",
                     }}
                   >
-                    Issue First OPD Token &rarr;
+                    {tPortal("issueFirstToken")} &rarr;
                   </button>
                 </div>
               )}
@@ -1314,10 +1319,10 @@ export function DashboardView() {
                 >
                   <CalendarDays size={32} color="#64748b" style={{ margin: "0 auto 10px" }} />
                   <div style={{ fontWeight: 700, fontSize: 14, color: "#ffffff" }}>
-                    No upcoming appointments scheduled
+                    {tPortal("noAppointmentsToday")}
                   </div>
                   <p style={{ fontSize: 12, color: "#64748b", margin: "6px auto" }}>
-                    Patients booking through your public profile will appear here.
+                    {tPortal("noTokensDesc")}
                   </p>
                 </div>
               )}
@@ -1399,7 +1404,7 @@ export function DashboardView() {
                         textDecoration: "none",
                       }}
                     >
-                      View File
+                      {tPortal("viewFile")}
                     </Link>
                   </div>
                 ))
@@ -1416,7 +1421,7 @@ export function DashboardView() {
                 >
                   <Users2 size={32} color="#64748b" style={{ margin: "0 auto 10px" }} />
                   <div style={{ fontWeight: 700, fontSize: 14, color: "#ffffff" }}>
-                    No patients in registry yet
+                    {tPortal("noPatientsInRegistry")}
                   </div>
                   <button
                     type="button"
@@ -1433,7 +1438,7 @@ export function DashboardView() {
                       cursor: "pointer",
                     }}
                   >
-                    Register Patient &rarr;
+                    {tPortal("registerPatient")} &rarr;
                   </button>
                 </div>
               )}

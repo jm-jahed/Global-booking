@@ -26,12 +26,15 @@ import {
 } from "lucide-react";
 import { Appointment } from "@/types/appointment";
 import { ROUTES } from "@/config/routes";
+import { useTranslation } from "@/lib/i18n/i18n-context";
 
 interface AppointmentDetailViewProps {
   appointment: Appointment;
 }
 
 export function AppointmentDetailView({ appointment: initialAppointment }: AppointmentDetailViewProps) {
+  const { t } = useTranslation("appointments");
+  const { t: tCommon } = useTranslation("common");
   const [appointment, setAppointment] = useState<Appointment>(initialAppointment);
   const [internalNote, setInternalNote] = useState(
     "Patient reported slight pollen sensitivity. Blood panel results normal. Advised hydration."
@@ -81,10 +84,10 @@ export function AppointmentDetailView({ appointment: initialAppointment }: Appoi
       <nav className="detail-breadcrumb-bar" aria-label="Breadcrumb">
         <Link href={ROUTES.appointments} className="breadcrumb-back-link">
           <ArrowLeft size={15} />
-          <span>Back to Appointments</span>
+          <span>{t("backToAppointments", undefined, "Back to Appointments")}</span>
         </Link>
         <span className="breadcrumb-separator">/</span>
-        <span className="breadcrumb-current">Appointment #{appointment.referenceNumber}</span>
+        <span className="breadcrumb-current">#{appointment.referenceNumber}</span>
       </nav>
 
       {/* Main Top Header Banner */}
@@ -135,7 +138,7 @@ export function AppointmentDetailView({ appointment: initialAppointment }: Appoi
               onClick={handleCheckIn}
             >
               <CheckCircle2 size={16} />
-              <span>Check-in Patient</span>
+              <span>{t("patientCheckIn", undefined, "Check-in Patient")}</span>
             </button>
           )}
 
@@ -146,7 +149,7 @@ export function AppointmentDetailView({ appointment: initialAppointment }: Appoi
               onClick={handleComplete}
             >
               <Check size={16} />
-              <span>Complete Session</span>
+              <span>{t("completeSession", undefined, "Complete Session")}</span>
             </button>
           )}
 
@@ -156,14 +159,14 @@ export function AppointmentDetailView({ appointment: initialAppointment }: Appoi
             onClick={() => showToast("SMS & Email notification reminder re-sent.")}
           >
             <Send size={14} />
-            <span>Send Reminder</span>
+            <span>{t("sendReminder", undefined, "Send Reminder")}</span>
           </button>
 
           <button
             type="button"
             className="secondary-action-button"
             onClick={() => window.print()}
-            title="Print appointment summary"
+            title={tCommon("print", undefined, "Print")}
           >
             <Printer size={15} />
           </button>
@@ -174,7 +177,7 @@ export function AppointmentDetailView({ appointment: initialAppointment }: Appoi
               className="secondary-action-button danger-btn"
               onClick={handleCancel}
             >
-              Cancel
+              {tCommon("cancel", undefined, "Cancel")}
             </button>
           )}
         </div>
@@ -189,42 +192,42 @@ export function AppointmentDetailView({ appointment: initialAppointment }: Appoi
             <div className="panel-header-row">
               <div className="live-header-title-box">
                 <CalendarDays size={18} className="text-gold" />
-                <h2 className="panel-title">Session Schedule & Logistics</h2>
+                <h2 className="panel-title">{t("sessionScheduleLogistics", undefined, "Session Schedule & Logistics")}</h2>
               </div>
               {appointment.serialNumber && (
                 <span className="queue-serial-badge">
-                  Queue Serial {appointment.serialNumber}
+                  {t("serialNumber", undefined, "Serial #")} {appointment.serialNumber}
                 </span>
               )}
             </div>
 
             <div className="detail-logistics-grid">
               <div className="logistic-stat-item">
-                <span className="logistic-label">Date & Time</span>
+                <span className="logistic-label">{t("dateTime", undefined, "Date & Time")}</span>
                 <span className="logistic-val-strong">
                   {appointment.date} ({appointment.time} – {appointment.endTime})
                 </span>
               </div>
 
               <div className="logistic-stat-item">
-                <span className="logistic-label">Duration</span>
-                <span className="logistic-val-strong">{appointment.durationMinutes} Minutes</span>
+                <span className="logistic-label">{tCommon("duration", undefined, "Duration")}</span>
+                <span className="logistic-val-strong">{t("durationMinutes", { minutes: appointment.durationMinutes }, `${appointment.durationMinutes} Minutes`)}</span>
               </div>
 
               <div className="logistic-stat-item">
-                <span className="logistic-label">Channel / Mode</span>
+                <span className="logistic-label">{t("channelMode", undefined, "Channel / Mode")}</span>
                 <span className="logistic-val-strong">{appointment.type}</span>
               </div>
 
               <div className="logistic-stat-item">
-                <span className="logistic-label">Location / Room</span>
+                <span className="logistic-label">{t("locationRoom", undefined, "Location / Room")}</span>
                 <span className="logistic-val-strong">{appointment.roomOrLink || "Suite 302"}</span>
               </div>
             </div>
 
             {appointment.notes && (
               <div className="detail-notes-box">
-                <span className="notes-box-title">Patient Booking Notes:</span>
+                <span className="notes-box-title">{t("patientBookingNotes", undefined, "Patient Booking Notes:")}</span>
                 <p className="notes-box-text">&ldquo;{appointment.notes}&rdquo;</p>
               </div>
             )}
@@ -235,9 +238,9 @@ export function AppointmentDetailView({ appointment: initialAppointment }: Appoi
             <div className="panel-header-row">
               <div className="live-header-title-box">
                 <User size={18} className="text-gold" />
-                <h2 className="panel-title">Patient Information</h2>
+                <h2 className="panel-title">{t("patientInfo", undefined, "Patient Information")}</h2>
               </div>
-              <span className="client-loyalty-badge">Registered Patient (8 Visits)</span>
+              <span className="client-loyalty-badge">{t("registeredPatientVisits", { count: 8 }, "Registered Patient (8 Visits)")}</span>
             </div>
 
             <div className="detail-client-info-grid">
@@ -246,7 +249,7 @@ export function AppointmentDetailView({ appointment: initialAppointment }: Appoi
                   <Mail size={16} className="text-muted" />
                 </div>
                 <div>
-                  <span className="contact-label">Email Address</span>
+                  <span className="contact-label">{tCommon("email", undefined, "Email Address")}</span>
                   <a href={`mailto:${appointment.clientEmail}`} className="contact-link">
                     {appointment.clientEmail}
                   </a>
@@ -258,7 +261,7 @@ export function AppointmentDetailView({ appointment: initialAppointment }: Appoi
                   <Phone size={16} className="text-muted" />
                 </div>
                 <div>
-                  <span className="contact-label">Phone Number</span>
+                  <span className="contact-label">{t("contactNumber", undefined, "Phone Number")}</span>
                   <a href={`tel:${appointment.clientPhone}`} className="contact-link">
                     {appointment.clientPhone}
                   </a>
@@ -272,7 +275,7 @@ export function AppointmentDetailView({ appointment: initialAppointment }: Appoi
             <div className="panel-header-row">
               <div className="live-header-title-box">
                 <Clock size={18} className="text-gold" />
-                <h2 className="panel-title">Booking Timeline & Audit Log</h2>
+                <h2 className="panel-title">{t("bookingTimelineAudit", undefined, "Booking Timeline & Audit Log")}</h2>
               </div>
             </div>
 
@@ -326,7 +329,7 @@ export function AppointmentDetailView({ appointment: initialAppointment }: Appoi
             <div className="panel-header-row">
               <div className="live-header-title-box">
                 <Stethoscope size={18} className="text-gold" />
-                <h2 className="panel-title">Assigned Specialist</h2>
+                <h2 className="panel-title">{t("assignedSpecialist", undefined, "Assigned Specialist")}</h2>
               </div>
             </div>
 
@@ -349,7 +352,7 @@ export function AppointmentDetailView({ appointment: initialAppointment }: Appoi
           {/* Card 2: Billing & Invoice Summary */}
           <article className="dashboard-panel detail-card">
             <div className="panel-header-row">
-              <h2 className="panel-title">Payment & Invoicing</h2>
+              <h2 className="panel-title">{t("paymentInvoicing", undefined, "Payment & Invoicing")}</h2>
               <span
                 className={`payment-indicator ${appointment.paymentStatus
                   .toLowerCase()
@@ -365,12 +368,12 @@ export function AppointmentDetailView({ appointment: initialAppointment }: Appoi
                 <span className="billing-item-price">${appointment.price.toFixed(2)}</span>
               </div>
               <div className="billing-row">
-                <span className="billing-item-name">Booking & Processing Fee</span>
+                <span className="billing-item-name">{t("bookingProcessingFee", undefined, "Booking & Processing Fee")}</span>
                 <span className="billing-item-price">$0.00</span>
               </div>
               <div className="billing-divider" />
               <div className="billing-row total-row">
-                <span className="total-label">Total Amount</span>
+                <span className="total-label">{t("totalAmount", undefined, "Total Amount")}</span>
                 <span className="total-amount">${appointment.price.toFixed(2)}</span>
               </div>
             </div>
@@ -381,17 +384,17 @@ export function AppointmentDetailView({ appointment: initialAppointment }: Appoi
               onClick={() => showToast("Invoice receipt PDF generated.")}
             >
               <Download size={14} />
-              <span>Download Invoice (PDF)</span>
+              <span>{t("downloadInvoice", undefined, "Download Invoice (PDF)")}</span>
             </button>
           </article>
 
           {/* Card 3: Internal Clinical Notes */}
           <article className="dashboard-panel detail-card">
             <div className="panel-header-row">
-              <h2 className="panel-title">Internal Staff Notes</h2>
+              <h2 className="panel-title">{t("internalStaffNotes", undefined, "Internal Staff Notes")}</h2>
             </div>
             <p className="internal-notes-sub">
-              Confidential notes visible only to authorized internal staff and specialists.
+              {t("confidentialNotesSub", undefined, "Confidential notes visible only to authorized internal staff and specialists.")}
             </p>
             <textarea
               rows={4}
@@ -404,7 +407,7 @@ export function AppointmentDetailView({ appointment: initialAppointment }: Appoi
               className="primary-gold-button save-notes-btn"
               onClick={() => showToast("Internal notes saved successfully.")}
             >
-              Save Internal Note
+              {t("saveInternalNote", undefined, "Save Internal Note")}
             </button>
           </article>
         </div>

@@ -22,6 +22,7 @@ import {
   formatPortalDateInfo,
 } from "@/lib/utils/portal-date";
 import { shiftDateIso, getChamberBusinessDate } from "@/lib/utils/timezone";
+import { LanguageSelector } from "@/components/shared/language-selector";
 
 import type { PortalAccountType } from "./portal-sidebar";
 
@@ -246,11 +247,7 @@ export function PortalTopBar({
           </div>
         </div>
 
-        <button type="button" className="topbar-mobile-lang-pill" aria-label="Change language">
-          <Globe size={14} style={{ color: "#e5b869" }} />
-          <span>EN</span>
-          <ChevronDown size={13} style={{ color: "#94a3b8" }} />
-        </button>
+        <LanguageSelector variant="compact" />
       </div>
 
       {/* Search Input Box */}
@@ -542,6 +539,9 @@ export function PortalTopBar({
             </div>
           )}
         </div>
+
+        {/* Global Multilingual Selector */}
+        <LanguageSelector variant="topbar" />
 
         {/* Notification Bell with Badge */}
         <Link

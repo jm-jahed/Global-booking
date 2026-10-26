@@ -26,6 +26,7 @@ import {
 } from "@/lib/api/doctor-patients-client";
 import { PatientDetailModal } from "./patient-detail-modal";
 import { NewPatientModal } from "./new-patient-modal";
+import { useTranslation } from "@/lib/i18n/i18n-context";
 
 const AVATAR_GRADIENTS = [
   "linear-gradient(135deg, #6366f1 0%, #a855f7 100%)",
@@ -43,6 +44,11 @@ function getAvatarColor(name: string): string {
 }
 
 export function PatientsView() {
+  const { t: tPatients } = useTranslation("patients");
+  const { t: tPortal } = useTranslation("portal");
+  const { t: tCommon } = useTranslation("common");
+  const { t: tAppointments } = useTranslation("appointments");
+
   const [patients, setPatients] = useState<PersistentPatient[]>([]);
   const [totalCount, setTotalCount] = useState<number>(0);
   const [loading, setLoading] = useState<boolean>(true);
@@ -226,7 +232,7 @@ export function PatientsView() {
           <div>
             <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
               <h1 style={{ margin: 0, fontSize: 20, fontWeight: 800, color: "#ffffff" }}>
-                Patients Directory
+                {tPatients("title")}
               </h1>
               <span
                 style={{
@@ -239,11 +245,11 @@ export function PatientsView() {
                   border: "1px solid rgba(229, 184, 105, 0.3)",
                 }}
               >
-                {totalCount} Real Patients
+                {totalCount}
               </span>
             </div>
             <p style={{ margin: "3px 0 0", fontSize: 12.5, color: "#94a3b8" }}>
-              Permanent patient health records, deduplicated contacts & Live Queue encounter history
+              {tPatients("subtitle")}
             </p>
           </div>
         </div>
@@ -291,7 +297,7 @@ export function PatientsView() {
             }}
           >
             <RefreshCw size={13} className={isSyncing ? "spin-animation" : ""} />
-            <span>{isSyncing ? "Syncing..." : "Sync Live Queue"}</span>
+            <span>{isSyncing ? "Syncing..." : tPortal("syncLive")}</span>
           </button>
 
           <button
@@ -313,7 +319,7 @@ export function PatientsView() {
             }}
           >
             <UserPlus size={15} strokeWidth={2.4} />
-            <span>Register Patient</span>
+            <span>{tPatients("registerPatient")}</span>
           </button>
         </div>
       </section>
@@ -668,14 +674,14 @@ export function PatientsView() {
                 }}
               >
                 <th style={{ padding: "12px 16px", width: 40 }}>#</th>
-                <th style={{ padding: "12px 16px" }}>PATIENT ID / MRN</th>
-                <th style={{ padding: "12px 16px" }}>PATIENT NAME</th>
-                <th style={{ padding: "12px 16px" }}>CONTACT NUMBER</th>
-                <th style={{ padding: "12px 16px" }}>LAST VISIT</th>
-                <th style={{ padding: "12px 16px" }}>TOTAL VISITS</th>
-                <th style={{ padding: "12px 16px" }}>UPCOMING BOOKING</th>
-                <th style={{ padding: "12px 16px" }}>CLINICAL STATUS</th>
-                <th style={{ padding: "12px 16px", textAlign: "right" }}>ACTIONS</th>
+                <th style={{ padding: "12px 16px" }}>{tPatients("mrn")}</th>
+                <th style={{ padding: "12px 16px" }}>{tAppointments("patientName")}</th>
+                <th style={{ padding: "12px 16px" }}>{tAppointments("contactNumber")}</th>
+                <th style={{ padding: "12px 16px" }}>{tPatients("lastVisit")}</th>
+                <th style={{ padding: "12px 16px" }}>{tPatients("totalVisits")}</th>
+                <th style={{ padding: "12px 16px" }}>{tAppointments("appointmentDate")}</th>
+                <th style={{ padding: "12px 16px" }}>{tAppointments("filterByStatus")}</th>
+                <th style={{ padding: "12px 16px", textAlign: "right" }}>{tCommon("actions")}</th>
               </tr>
             </thead>
             <tbody>

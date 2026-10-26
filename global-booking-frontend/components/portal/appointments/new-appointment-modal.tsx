@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { X, Calendar, Clock, User, Stethoscope, MapPin, FileText, Phone, Activity } from "lucide-react";
 import { DoctorAppointment, getNextDailySerialNumber } from "@/lib/services/doctor-appointments-service";
+import { useTranslation } from "@/lib/i18n/i18n-context";
 
 interface NewAppointmentModalProps {
   isOpen: boolean;
@@ -21,6 +22,9 @@ export function NewAppointmentModal({
   chamberLocation,
   doctorSpecialty,
 }: NewAppointmentModalProps) {
+  const { t } = useTranslation("appointments");
+  const { t: tCommon } = useTranslation("common");
+
   const activeDoctorName =
     doctorName ||
     (typeof window !== "undefined"
@@ -192,7 +196,7 @@ export function NewAppointmentModal({
             </div>
             <div>
               <h2 style={{ margin: 0, fontSize: 16, fontWeight: 700, color: "#ffffff" }}>
-                Book Doctor Patient Consultation
+                {t("bookPatientConsultation", undefined, "Book Doctor Patient Consultation")}
               </h2>
               <p style={{ margin: "2px 0 0", fontSize: 11.5, color: "#94a3b8" }}>
                 {activeDoctorName} • {activeChamber}
@@ -220,7 +224,7 @@ export function NewAppointmentModal({
           <div className="appointment-form-grid-2" style={{ display: "grid", gridTemplateColumns: "1.2fr 1fr", gap: 12 }}>
             <div>
               <label style={{ display: "block", fontSize: 12, fontWeight: 600, color: "#cbd5e1", marginBottom: 5 }}>
-                Patient Full Name *
+                {t("fullNameRequired", undefined, "Patient Full Name *")}
               </label>
               <input
                 type="text"
@@ -243,7 +247,7 @@ export function NewAppointmentModal({
             </div>
             <div>
               <label style={{ display: "block", fontSize: 12, fontWeight: 600, color: "#cbd5e1", marginBottom: 5 }}>
-                Mobile Number *
+                {t("mobileNumberRequired", undefined, "Mobile Number *")}
               </label>
               <input
                 type="tel"
@@ -269,7 +273,7 @@ export function NewAppointmentModal({
           <div className="appointment-form-grid-3" style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 12 }}>
             <div>
               <label style={{ display: "block", fontSize: 12, fontWeight: 600, color: "#cbd5e1", marginBottom: 5 }}>
-                Age & Gender
+                {t("ageGender", undefined, "Age & Gender")}
               </label>
               <input
                 type="text"
@@ -291,7 +295,7 @@ export function NewAppointmentModal({
             </div>
             <div>
               <label style={{ display: "block", fontSize: 12, fontWeight: 600, color: "#cbd5e1", marginBottom: 5 }}>
-                Blood Group
+                {t("bloodGroup", undefined, "Blood Group")}
               </label>
               <select
                 value={bloodGroup}
@@ -315,7 +319,7 @@ export function NewAppointmentModal({
             </div>
             <div>
               <label style={{ display: "block", fontSize: 12, fontWeight: 600, color: "#cbd5e1", marginBottom: 5 }}>
-                Booking Channel
+                {t("consultationChannel", undefined, "Booking Channel")}
               </label>
               <select
                 value={channel}
@@ -332,8 +336,8 @@ export function NewAppointmentModal({
                   boxSizing: "border-box",
                 }}
               >
-                <option value="In-Person Chamber">In-Person Chamber</option>
-                <option value="Phone Booking">Phone Booking (Reception)</option>
+                <option value="In-Person Chamber">{t("inPersonChamber", undefined, "In-Person Chamber")}</option>
+                <option value="Phone Booking">{t("phoneBooking", undefined, "Phone Booking (Reception)")}</option>
               </select>
             </div>
           </div>
@@ -341,7 +345,7 @@ export function NewAppointmentModal({
           {/* Cardiology Service Selection */}
           <div>
             <label style={{ display: "block", fontSize: 12, fontWeight: 600, color: "#cbd5e1", marginBottom: 5 }}>
-              Clinical Cardiology Service
+              {t("selectService", undefined, "Clinical Cardiology Service")}
             </label>
             <select
               value={selectedService}
@@ -369,7 +373,7 @@ export function NewAppointmentModal({
           {/* Chamber Location */}
           <div>
             <label style={{ display: "block", fontSize: 12, fontWeight: 600, color: "#cbd5e1", marginBottom: 5 }}>
-              Visiting Location / Chamber Room
+              {t("selectChamberBranch", undefined, "Visiting Location / Chamber Room")}
             </label>
             <select
               value={selectedChamber}
@@ -396,7 +400,7 @@ export function NewAppointmentModal({
           <div className="appointment-form-grid-2" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
             <div>
               <label style={{ display: "block", fontSize: 12, fontWeight: 600, color: "#cbd5e1", marginBottom: 5 }}>
-                Consultation Date
+                {tCommon("date", undefined, "Consultation Date")}
               </label>
               <input
                 type="date"
@@ -417,7 +421,7 @@ export function NewAppointmentModal({
             </div>
             <div>
               <label style={{ display: "block", fontSize: 12, fontWeight: 600, color: "#cbd5e1", marginBottom: 5 }}>
-                Time Slot
+                {t("appointmentTime", undefined, "Time Slot")}
               </label>
               <input
                 type="text"
@@ -442,7 +446,7 @@ export function NewAppointmentModal({
           {/* Clinical Notes */}
           <div>
             <label style={{ display: "block", fontSize: 12, fontWeight: 600, color: "#cbd5e1", marginBottom: 5 }}>
-              Patient Symptoms & Clinical Notes
+              {t("clinicalNotesSymptoms", undefined, "Patient Symptoms & Clinical Notes")}
             </label>
             <textarea
               rows={2}
@@ -479,7 +483,7 @@ export function NewAppointmentModal({
                 cursor: "pointer",
               }}
             >
-              Cancel
+              {tCommon("cancel", undefined, "Cancel")}
             </button>
             <button
               type="submit"
@@ -495,7 +499,7 @@ export function NewAppointmentModal({
                 boxShadow: "0 4px 14px rgba(229, 184, 105, 0.3)",
               }}
             >
-              Confirm Patient Booking
+              {t("confirmIssueSlot", undefined, "Confirm Patient Booking")}
             </button>
           </div>
         </form>

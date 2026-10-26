@@ -5,6 +5,8 @@ import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
 import { Menu, Bell, ChevronDown, ShieldCheck, LogOut } from "lucide-react";
 import { getAdminMe, adminLogout } from "@/lib/api/admin-client";
+import { LanguageSelector } from "@/components/shared/language-selector";
+import { useTranslation } from "@/lib/i18n/i18n-context";
 
 export interface AdminTopbarProps {
   readonly onToggleSidebar: () => void;
@@ -59,7 +61,25 @@ function getPageTitle(pathname: string): { eyebrow: string; title: string } {
 export function AdminTopbar({ onToggleSidebar, isSidebarOpen = false, adminUser }: AdminTopbarProps) {
   const router = useRouter();
   const pathname = usePathname();
+  const { t } = useTranslation("admin");
+  const { t: tNav } = useTranslation("nav");
   const { eyebrow, title } = getPageTitle(pathname ?? "");
+
+  const translatedEyebrow = t("superAdminTitle", undefined, eyebrow);
+  const translatedTitle =
+    pathname === "/admin" || (pathname && pathname.startsWith("/admin/registrations"))
+      ? t("registrationsTitle", undefined, title)
+      : pathname && pathname.startsWith("/admin/doctors")
+      ? t("doctorsDirectory", undefined, title)
+      : pathname && pathname.startsWith("/admin/hospitals")
+      ? t("hospitalsDirectory", undefined, title)
+      : pathname && pathname.startsWith("/admin/audit-logs")
+      ? t("auditLogsTitle", undefined, title)
+      : pathname && pathname.startsWith("/admin/users")
+      ? t("adminUsersTitle", undefined, title)
+      : pathname && pathname.startsWith("/admin/settings")
+      ? t("platformSettingsTitle", undefined, title)
+      : title;
 
   const [internalAdminUser, setInternalAdminUser] = useState<any>(null);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
@@ -163,8 +183,8 @@ export function AdminTopbar({ onToggleSidebar, isSidebarOpen = false, adminUser 
         </button>
 
         <div className="admin-topbar-titles">
-          <span className="admin-topbar-eyebrow">{eyebrow}</span>
-          <h1 className="admin-topbar-page-title">{title}</h1>
+          <span className="admin-topbar-eyebrow">{translatedEyebrow}</span>
+          <h1 className="admin-topbar-page-title">{translatedTitle}</h1>
         </div>
       </div>
 
@@ -175,8 +195,11 @@ export function AdminTopbar({ onToggleSidebar, isSidebarOpen = false, adminUser 
           className="admin-topbar-info-pill"
           title="Authoritative live production database connected"
         >
-          <span style={{ color: "#10b981", fontWeight: 600 }}>Live Production</span>
+          <span style={{ color: "#10b981", fontWeight: 600 }}>{t("liveProduction", undefined, "Live Production")}</span>
         </div>
+
+        {/* Multilingual Selector */}
+        <LanguageSelector variant="topbar" />
 
         {/* Notifications Button & Popover */}
         <div className="admin-topbar-action-container" ref={notificationRef}>
@@ -345,7 +368,7 @@ export function AdminTopbar({ onToggleSidebar, isSidebarOpen = false, adminUser 
                 }}
               >
                 <LogOut size={13} />
-                <span>{isLoggingOut ? "Signing out..." : "Sign Out"}</span>
+                <span>{isLoggingOut ? tNav("loggingOut", undefined, "Signing out...") : tNav("logout", undefined, "Sign Out")}</span>
               </button>
             </div>
           )}

@@ -19,6 +19,7 @@ import {
   Key,
 } from "lucide-react";
 import { AddStaffModal, type StaffMember } from "./add-staff-modal";
+import { useTranslation } from "@/lib/i18n/i18n-context";
 import {
   getDoctorProfile,
   getStoredPortalUser,
@@ -50,6 +51,8 @@ export function backendRecordToStaffMember(record: BackendStaffRecord): StaffMem
 }
 
 export function StaffView() {
+  const { t } = useTranslation("staff");
+  const { t: tCommon } = useTranslation("common");
   const [doctorName, setDoctorName] = useState("Doctor Practice");
   const [doctorSpecialty, setDoctorSpecialty] = useState("Healthcare Professional");
   const [chambers, setChambers] = useState<DoctorChamberDetail[]>([]);
@@ -257,7 +260,7 @@ export function StaffView() {
           </div>
           <div>
             <h1 style={{ fontSize: 22, fontWeight: 700, margin: 0, color: "#ffffff", letterSpacing: "-0.01em" }}>
-              Staff Management
+              {t("staffManagement", undefined, "Staff Management")}
             </h1>
             <div style={{ fontSize: 13, color: "#94a3b8", marginTop: 2, display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
               <span>{doctorName} • {doctorSpecialty}</span>
@@ -276,7 +279,7 @@ export function StaffView() {
                 }}
               >
                 <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#10b981" }} />
-                RBAC Access Active
+                {t("rbacActive", undefined, "RBAC Access Active")}
               </span>
             </div>
           </div>
@@ -303,7 +306,7 @@ export function StaffView() {
             }}
           >
             <Plus size={16} strokeWidth={2.8} />
-            <span>Invite New Staff Member</span>
+            <span>{t("inviteNewStaff", undefined, "Invite New Staff Member")}</span>
           </button>
         </div>
       </header>
@@ -351,7 +354,7 @@ export function StaffView() {
             <AlertCircle size={20} color="#ef4444" />
             <div>
               <div style={{ fontWeight: 700, color: "#ffffff", fontSize: 13.5 }}>
-                Unable to Retrieve Database Staff Records
+                {t("unableToRetrieve", undefined, "Unable to Retrieve Database Staff Records")}
               </div>
               <div style={{ fontSize: 12, color: "#fca5a5", marginTop: 2 }}>{apiError}</div>
             </div>
@@ -370,7 +373,7 @@ export function StaffView() {
               cursor: "pointer",
             }}
           >
-            Retry Connection
+            {t("retryConnection", undefined, "Retry Connection")}
           </button>
         </div>
       )}
@@ -381,18 +384,18 @@ export function StaffView() {
         <div className="staff-kpi-card">
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 6 }}>
             <span style={{ fontSize: 11, fontWeight: 700, color: "#8e9fb5", textTransform: "uppercase", letterSpacing: "0.06em" }}>
-              Total Practice Staff
+              {t("totalStaff", undefined, "Total Practice Staff")}
             </span>
             <div style={{ width: 28, height: 28, borderRadius: 8, background: "rgba(229,184,105,0.15)", display: "flex", alignItems: "center", justifyContent: "center" }}>
               <Users size={15} color="#e5b869" />
             </div>
           </div>
           <div style={{ fontSize: 20, fontWeight: 800, color: "#ffffff" }}>
-            {totalStaffCount} <span style={{ fontSize: 12, fontWeight: 500, color: "#94a3b8" }}>Members</span>
+            {totalStaffCount} <span style={{ fontSize: 12, fontWeight: 500, color: "#94a3b8" }}>{t("members", undefined, "Members")}</span>
           </div>
           <div style={{ fontSize: 11, color: "#10b981", marginTop: 4, display: "flex", alignItems: "center", gap: 4 }}>
             <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#10b981" }} />
-            <span>{activeCount} Active Accounts</span>
+            <span>{t("activeAccounts", { count: activeCount }, `${activeCount} Active Accounts`)}</span>
           </div>
         </div>
 
@@ -400,17 +403,17 @@ export function StaffView() {
         <div className="staff-kpi-card">
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 6 }}>
             <span style={{ fontSize: 11, fontWeight: 700, color: "#8e9fb5", textTransform: "uppercase", letterSpacing: "0.06em" }}>
-              Front Desk Staff
+              {t("frontDeskStaff", undefined, "Front Desk Staff")}
             </span>
             <div style={{ width: 28, height: 28, borderRadius: 8, background: "rgba(56,189,248,0.15)", display: "flex", alignItems: "center", justifyContent: "center" }}>
               <Phone size={15} color="#38bdf8" />
             </div>
           </div>
           <div style={{ fontSize: 20, fontWeight: 800, color: "#38bdf8" }}>
-            {frontDeskCount} <span style={{ fontSize: 12, fontWeight: 500, color: "#94a3b8" }}>Receptionists</span>
+            {frontDeskCount} <span style={{ fontSize: 12, fontWeight: 500, color: "#94a3b8" }}>{t("receptionists", undefined, "Receptionists")}</span>
           </div>
           <div style={{ fontSize: 11, color: "#94a3b8", marginTop: 4 }}>
-            OPD Queue & Token Callers
+            {t("opdQueueCallers", undefined, "OPD Queue & Token Callers")}
           </div>
         </div>
 
@@ -418,17 +421,17 @@ export function StaffView() {
         <div className="staff-kpi-card">
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 6 }}>
             <span style={{ fontSize: 11, fontWeight: 700, color: "#8e9fb5", textTransform: "uppercase", letterSpacing: "0.06em" }}>
-              Clinical Nurses
+              {t("clinicalNurses", undefined, "Clinical Nurses")}
             </span>
             <div style={{ width: 28, height: 28, borderRadius: 8, background: "rgba(16,185,129,0.15)", display: "flex", alignItems: "center", justifyContent: "center" }}>
               <Sparkles size={15} color="#10b981" />
             </div>
           </div>
           <div style={{ fontSize: 20, fontWeight: 800, color: "#10b981" }}>
-            {nurseCount} <span style={{ fontSize: 12, fontWeight: 500, color: "#94a3b8" }}>Assigned</span>
+            {nurseCount} <span style={{ fontSize: 12, fontWeight: 500, color: "#94a3b8" }}>{t("assigned", undefined, "Assigned")}</span>
           </div>
           <div style={{ fontSize: 11, color: "#94a3b8", marginTop: 4 }}>
-            Patient Prep & Clinical Vitals
+            {t("patientPrepVitals", undefined, "Patient Prep & Clinical Vitals")}
           </div>
         </div>
 
@@ -436,18 +439,18 @@ export function StaffView() {
         <div className="staff-kpi-card">
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 6 }}>
             <span style={{ fontSize: 11, fontWeight: 700, color: "#8e9fb5", textTransform: "uppercase", letterSpacing: "0.06em" }}>
-              Access Control
+              {t("accessControl", undefined, "Access Control")}
             </span>
             <div style={{ width: 28, height: 28, borderRadius: 8, background: "rgba(168,85,247,0.15)", display: "flex", alignItems: "center", justifyContent: "center" }}>
               <Lock size={15} color="#c084fc" />
             </div>
           </div>
           <div style={{ fontSize: 18, fontWeight: 800, color: "#ffffff" }}>
-            Doctor Super Admin
+            {t("doctorSuperAdmin", undefined, "Doctor Super Admin")}
           </div>
           <div style={{ fontSize: 11, color: "#e5b869", marginTop: 4, display: "flex", alignItems: "center", gap: 4 }}>
             <Shield size={11} color="#e5b869" />
-            <span>Strict Least-Privilege Enforced</span>
+            <span>{t("leastPrivilege", undefined, "Strict Least-Privilege Enforced")}</span>
           </div>
         </div>
       </section>

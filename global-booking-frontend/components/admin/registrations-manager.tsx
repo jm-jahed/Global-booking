@@ -21,8 +21,11 @@ import {
   approveRegistration,
   rejectRegistration,
 } from "@/lib/api/admin-client";
+import { useTranslation } from "@/lib/i18n/i18n-context";
 
 export function RegistrationsManager() {
+  const { t } = useTranslation("admin");
+  const { t: tCommon } = useTranslation("common");
   const [items, setItems] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -158,7 +161,7 @@ export function RegistrationsManager() {
           <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 6 }}>
             <ClipboardList size={24} color="#e5b869" />
             <h1 style={{ fontSize: 24, fontWeight: 700, margin: 0, color: "#fff" }}>
-              New Registration Requests
+              {t("registrationRequests", undefined, "New Registration Requests")}
             </h1>
             <span
               style={{
@@ -171,7 +174,7 @@ export function RegistrationsManager() {
                 fontWeight: 700,
               }}
             >
-              {pendingCount} Pending Review
+              {pendingCount} {tCommon("pending", undefined, "Pending Review")}
             </span>
           </div>
           <p style={{ margin: 0, fontSize: 14, color: "#94a3b8" }}>
@@ -198,7 +201,7 @@ export function RegistrationsManager() {
           }}
         >
           <RefreshCw size={16} className={loading ? "animate-spin" : ""} />
-          Refresh Queue
+          {tCommon("refresh", undefined, "Refresh Queue")}
         </button>
       </div>
 
@@ -206,10 +209,10 @@ export function RegistrationsManager() {
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 12 }}>
         <div style={{ display: "flex", gap: 8, background: "#0b1325", padding: 4, borderRadius: 10, border: "1px solid rgba(255,255,255,0.08)" }}>
           {[
-            { key: "ALL", label: "All Requests" },
-            { key: "PENDING", label: `Pending (${pendingCount})` },
-            { key: "APPROVED", label: "Approved" },
-            { key: "REJECTED", label: "Rejected" },
+            { key: "ALL", label: tCommon("all", undefined, "All Requests") },
+            { key: "PENDING", label: `${tCommon("pending", undefined, "Pending")} (${pendingCount})` },
+            { key: "APPROVED", label: tCommon("approved", undefined, "Approved") },
+            { key: "REJECTED", label: tCommon("rejected", undefined, "Rejected") },
           ].map((tab) => (
             <button
               key={tab.key}
@@ -233,9 +236,9 @@ export function RegistrationsManager() {
 
         <div style={{ display: "flex", gap: 8 }}>
           {[
-            { key: "ALL", label: "All Account Types" },
-            { key: "DOCTOR", label: "Doctors & Specialists" },
-            { key: "HOSPITAL", label: "Hospitals & Clinics" },
+            { key: "ALL", label: tCommon("all", undefined, "All Account Types") },
+            { key: "DOCTOR", label: t("doctorsSpecialists", undefined, "Doctors & Specialists") },
+            { key: "HOSPITAL", label: t("hospitalsClinics", undefined, "Hospitals & Clinics") },
           ].map((type) => (
             <button
               key={type.key}
@@ -256,6 +259,7 @@ export function RegistrationsManager() {
           ))}
         </div>
       </div>
+
 
       {/* Error Banner */}
       {error && (

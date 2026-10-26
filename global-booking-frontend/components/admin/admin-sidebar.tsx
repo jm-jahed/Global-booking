@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import { ROUTES } from "@/config/routes";
 import { adminLogout } from "@/lib/api/admin-client";
+import { useTranslation } from "@/lib/i18n/i18n-context";
 
 export interface AdminSidebarProps {
   readonly isOpen?: boolean;
@@ -96,7 +97,27 @@ export const SUPER_ADMIN_NAV_MODULES = [
 export function AdminSidebar({ isOpen = false, onClose, adminUser }: AdminSidebarProps) {
   const pathname = usePathname();
   const router = useRouter();
+  const { t } = useTranslation("nav");
   const [isLoggingOut, setIsLoggingOut] = useState(false);
+
+  const getAdminNavLabel = (href: string, fallback: string): string => {
+    switch (href) {
+      case ROUTES.adminRegistrations:
+        return t("adminRegistrations", undefined, fallback);
+      case ROUTES.adminDoctors:
+        return t("adminDoctors", undefined, fallback);
+      case ROUTES.adminHospitals:
+        return t("adminHospitals", undefined, fallback);
+      case ROUTES.adminAuditLogs:
+        return t("adminAudit", undefined, fallback);
+      case ROUTES.adminUsers:
+        return t("adminUsers", undefined, fallback);
+      case ROUTES.adminSettings:
+        return t("adminSettings", undefined, fallback);
+      default:
+        return fallback;
+    }
+  };
 
   const handleExitSession = async (e: React.MouseEvent) => {
     e.preventDefault();
@@ -202,7 +223,7 @@ export function AdminSidebar({ isOpen = false, onClose, adminUser }: AdminSideba
                 >
                   <div className="admin-nav-link-left">
                     <IconComponent className="admin-nav-icon" aria-hidden="true" />
-                    <span>{item.label}</span>
+                    <span>{getAdminNavLabel(item.href, item.label)}</span>
                   </div>
 
                   {item.badge && (

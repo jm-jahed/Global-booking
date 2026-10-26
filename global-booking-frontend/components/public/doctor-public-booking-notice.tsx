@@ -7,23 +7,13 @@ import {
   Clock,
   MapPin,
   CheckCircle2,
-  Users,
-  User,
-  Sparkles,
-  Radio,
-  Crown,
   Ticket,
   RefreshCw,
-  Phone,
-  Shield,
   ArrowRight,
   Printer,
-  Stethoscope,
   AlertCircle,
   Check,
-  CreditCard,
   Building2,
-  ChevronRight,
   Share2,
   Search,
   Copy,
@@ -31,7 +21,9 @@ import {
   ArrowLeft,
   Activity,
   ShieldCheck,
-  FileText,
+  Crown,
+  Moon,
+  Sun,
 } from "lucide-react";
 import type {
   PublicDoctorProfile,
@@ -50,6 +42,9 @@ import {
   getNextDateForDayOfWeek,
   getWeeklyRosterList,
 } from "@/lib/utils/schedule-formatter";
+import { LanguageSelector } from "@/components/shared/language-selector";
+import { useTranslation } from "@/lib/i18n/i18n-context";
+import { formatLocaleNumber } from "@/lib/i18n/formatters";
 
 export interface DoctorPublicBookingNoticeProps {
   readonly slug: string;
@@ -87,6 +82,110 @@ export const formatDateDDMMYYYY = (dateStr: string): string => {
 };
 
 export function DoctorPublicBookingNotice({ slug }: DoctorPublicBookingNoticeProps) {
+  const { t: tAppointments, locale, isRtl } = useTranslation("appointments");
+  const { t: tCommon } = useTranslation("common");
+
+  // Theme State: Defaults to "dark" (matching /live-queue aesthetic) while allowing light theme toggle
+  const [theme, setTheme] = useState<"dark" | "light">("dark");
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      try {
+        const saved = localStorage.getItem("gb_booking_theme");
+        if (saved === "light" || saved === "dark") {
+          setTheme(saved);
+        } else {
+          setTheme("dark");
+        }
+      } catch {
+        setTheme("dark");
+      }
+    }
+  }, []);
+
+  const toggleTheme = () => {
+    setTheme((prev) => {
+      const next = prev === "dark" ? "light" : "dark";
+      if (typeof window !== "undefined") {
+        try {
+          localStorage.setItem("gb_booking_theme", next);
+        } catch {}
+      }
+      return next;
+    });
+  };
+
+  const isDark = theme === "dark";
+
+  // Unified Theme Design Tokens
+  const th = {
+    pageBg: isDark ? "#060b13" : "#f8faff",
+    ambientGradient: isDark
+      ? "radial-gradient(ellipse 80% 50% at 50% -20%, rgba(99, 102, 241, 0.22), transparent 70%), radial-gradient(circle at 100% 100%, rgba(56, 189, 248, 0.08), transparent 40%)"
+      : "radial-gradient(ellipse at 70% 20%, rgba(199, 210, 254, 0.45) 0%, rgba(224, 231, 255, 0.3) 40%, rgba(248, 250, 255, 0) 75%)",
+    headerBg: isDark ? "rgba(11, 19, 37, 0.92)" : "rgba(255, 255, 255, 0.9)",
+    headerBorder: isDark ? "rgba(255, 255, 255, 0.08)" : "rgba(224, 231, 255, 0.8)",
+    cardBg: isDark ? "#0b1325" : "#ffffff",
+    cardBorder: isDark ? "1.5px solid rgba(255, 255, 255, 0.08)" : "1.5px solid #e0e7ff",
+    cardShadow: isDark ? "0 20px 50px rgba(0, 0, 0, 0.55)" : "0 10px 30px rgba(99, 102, 241, 0.06)",
+    innerBg: isDark ? "#080e1a" : "#f8faff",
+    innerBorder: isDark ? "1px solid rgba(255, 255, 255, 0.08)" : "1px solid #e0e7ff",
+    inputBg: isDark ? "#080e1a" : "#f8faff",
+    inputBorder: isDark ? "1.5px solid rgba(255, 255, 255, 0.12)" : "1.5px solid #e0e7ff",
+    inputFocusBorder: isDark ? "#818cf8" : "#6366f1",
+    inputText: isDark ? "#ffffff" : "#1e1b4b",
+    textPrimary: isDark ? "#ffffff" : "#1e1b4b",
+    textSecondary: isDark ? "#cbd5e1" : "#475569",
+    textMuted: isDark ? "#94a3b8" : "#64748b",
+    divider: isDark ? "rgba(255, 255, 255, 0.08)" : "#f1f5f9",
+    btnSecondaryBg: isDark ? "#111c35" : "#f1f5f9",
+    btnSecondaryBorder: isDark ? "1px solid rgba(255, 255, 255, 0.1)" : "1px solid #e2e8f0",
+    btnSecondaryText: isDark ? "#e2e8f0" : "#475569",
+    kpiServing: {
+      bg: isDark
+        ? "radial-gradient(ellipse at 50% 0%, rgba(245, 158, 11, 0.16) 0%, rgba(11, 19, 37, 0.85) 100%), #0b1325"
+        : "linear-gradient(145deg, #ffffff 0%, #fefcf3 100%)",
+      border: isDark ? "1.5px solid rgba(245, 158, 11, 0.45)" : "1.5px solid #fef3c7",
+      shadow: isDark ? "0 0 25px rgba(245, 158, 11, 0.16)" : "0 8px 24px rgba(245, 158, 11, 0.08)",
+      iconBg: isDark
+        ? "radial-gradient(circle at 50% 30%, rgba(229, 184, 105, 0.25) 0%, rgba(229, 184, 105, 0.08) 100%), rgba(11, 20, 38, 0.8)"
+        : "linear-gradient(135deg, #fef3c7 0%, #fde68a 100%)",
+      iconBorder: isDark ? "1.5px solid rgba(229, 184, 105, 0.5)" : "1px solid rgba(245, 158, 11, 0.3)",
+      iconColor: isDark ? "#e5b869" : "#b45309",
+      labelColor: isDark ? "#e5b869" : "#b45309",
+      numberColor: isDark ? "#fbbf24" : "#1e1b4b",
+      subTextColor: isDark ? "#e2e8f0" : "#64748b",
+    },
+    kpiNext: {
+      bg: isDark
+        ? "radial-gradient(ellipse at 50% 0%, rgba(16, 185, 129, 0.16) 0%, rgba(11, 19, 37, 0.85) 100%), #0b1325"
+        : "linear-gradient(145deg, #ffffff 0%, #f0fdf4 100%)",
+      border: isDark ? "1.5px solid rgba(16, 185, 129, 0.45)" : "1.5px solid #dcfce7",
+      shadow: isDark ? "0 0 25px rgba(16, 185, 129, 0.16)" : "0 8px 24px rgba(16, 185, 129, 0.08)",
+      iconBg: isDark
+        ? "radial-gradient(circle at 50% 30%, rgba(16, 185, 129, 0.25) 0%, rgba(16, 185, 129, 0.08) 100%), rgba(11, 20, 38, 0.8)"
+        : "linear-gradient(135deg, #dcfce7 0%, #bbf7d0 100%)",
+      iconBorder: isDark ? "1.5px solid rgba(16, 185, 129, 0.5)" : "1px solid rgba(16, 185, 129, 0.3)",
+      iconColor: isDark ? "#34d399" : "#059669",
+      labelColor: isDark ? "#34d399" : "#059669",
+      numberColor: isDark ? "#34d399" : "#1e1b4b",
+      subTextColor: isDark ? "#e2e8f0" : "#64748b",
+    },
+    kpiToken: {
+      bg: isDark
+        ? "radial-gradient(ellipse at 50% 0%, rgba(99, 102, 241, 0.2) 0%, rgba(11, 19, 37, 0.85) 100%), #0b1325"
+        : "linear-gradient(145deg, #ffffff 0%, #eef2ff 100%)",
+      border: isDark ? "1.5px solid rgba(99, 102, 241, 0.5)" : "2px solid #6366f1",
+      shadow: isDark ? "0 0 25px rgba(99, 102, 241, 0.18)" : "0 10px 30px rgba(99, 102, 241, 0.18)",
+      iconBg: "linear-gradient(135deg, #4338ca 0%, #6366f1 100%)",
+      iconBorder: isDark ? "1.5px solid rgba(129, 140, 248, 0.4)" : "none",
+      iconColor: "#ffffff",
+      labelColor: isDark ? "#a5b4fc" : "#4338ca",
+      numberColor: isDark ? "#a5b4fc" : "#4338ca",
+      subTextColor: isDark ? "#e2e8f0" : "#64748b",
+    },
+  };
+
   const [profile, setProfile] = useState<PublicDoctorProfile | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [notFoundState, setNotFoundState] = useState<boolean>(false);
@@ -240,12 +339,12 @@ export function DoctorPublicBookingNotice({ slug }: DoctorPublicBookingNoticePro
     const trimmedPhone = patientPhone.trim();
 
     if (!trimmedName || trimmedName.length < 2) {
-      setBookingError("Please enter your full patient name (at least 2 characters).");
+      setBookingError(tAppointments("errNameMinLength", undefined, "Please enter your full patient name (at least 2 characters)."));
       return;
     }
 
     if (!trimmedPhone || trimmedPhone.length < 5) {
-      setBookingError("Please enter a valid contact phone number.");
+      setBookingError(tAppointments("errPhoneInvalid", undefined, "Please enter a valid contact phone number."));
       return;
     }
 
@@ -255,7 +354,12 @@ export function DoctorPublicBookingNotice({ slug }: DoctorPublicBookingNoticePro
     const daySched = dayName && currentChamber?.weeklySchedule ? currentChamber.weeklySchedule[dayName] : undefined;
     if (daySched && !daySched.isOpen) {
       setBookingError(
-        `Dr. ${profile?.fullName || "The doctor"} is not practicing on ${dayName}s (${formatDateDDMMYYYY(selectedDate)}) at ${currentChamber?.facilityName || "this chamber"}. Please choose an open practicing day.`
+        tAppointments("errDoctorOffDay", {
+          doctor: profile?.fullName || "The doctor",
+          day: dayName,
+          date: formatDateDDMMYYYY(selectedDate),
+          chamber: currentChamber?.facilityName || "this chamber",
+        }, `Dr. ${profile?.fullName || "The doctor"} is not practicing on ${dayName}s (${formatDateDDMMYYYY(selectedDate)}) at ${currentChamber?.facilityName || "this chamber"}. Please choose an open practicing day.`)
       );
       return;
     }
@@ -275,7 +379,7 @@ export function DoctorPublicBookingNotice({ slug }: DoctorPublicBookingNoticePro
       });
 
       if (!res.success || !res.appointment) {
-        setBookingError(res.error || "Could not complete booking. Please try again.");
+        setBookingError(res.error || tAppointments("errBookingGeneral", undefined, "Could not complete booking. Please try again."));
         setIsSubmitting(false);
         return;
       }
@@ -296,7 +400,7 @@ export function DoctorPublicBookingNotice({ slug }: DoctorPublicBookingNoticePro
       const displayNum =
         res.appointment.bookingNumberDisplay ||
         `#${String(res.appointment.bookingNumber || 1).padStart(2, "0")}`;
-      showToast(`Appointment confirmed! Voucher ID: ${vId} | Serial No.: ${displayNum}`);
+      showToast(tAppointments("toastBookingSuccess", { voucherId: vId, serial: displayNum }, `Appointment confirmed! Voucher ID: ${vId} | Serial No.: ${displayNum}`));
 
       // Trigger cross-tab event so doctor portal updates immediately
       if (typeof window !== "undefined") {
@@ -306,7 +410,7 @@ export function DoctorPublicBookingNotice({ slug }: DoctorPublicBookingNoticePro
         } catch {}
       }
     } catch (err: any) {
-      setBookingError(err?.message || "An unexpected error occurred while booking.");
+      setBookingError(err?.message || tAppointments("errBookingUnexpected", undefined, "An unexpected error occurred while booking."));
     } finally {
       setIsSubmitting(false);
     }
@@ -320,7 +424,7 @@ export function DoctorPublicBookingNotice({ slug }: DoctorPublicBookingNoticePro
     const cleanPhone = recoverPhone.trim();
 
     if (!cleanRef || !cleanPhone) {
-      setRecoverError("Please provide both your booking reference and registered contact phone.");
+      setRecoverError(tAppointments("errProvideBothRefAndPhone", undefined, "Please provide both your booking reference and registered contact phone."));
       return;
     }
 
@@ -333,7 +437,7 @@ export function DoctorPublicBookingNotice({ slug }: DoctorPublicBookingNoticePro
       });
 
       if (!res.success || !res.appointment) {
-        setRecoverError(res.error || "Invalid booking reference or verification details.");
+        setRecoverError(res.error || tAppointments("errInvalidRefOrDetails", undefined, "Invalid booking reference or verification details."));
         return;
       }
 
@@ -345,9 +449,9 @@ export function DoctorPublicBookingNotice({ slug }: DoctorPublicBookingNoticePro
         } catch {}
       }
       setIsRecoverModalOpen(false);
-      showToast("Appointment successfully retrieved from database!");
+      showToast(tAppointments("toastVoucherRetrieved", undefined, "Appointment successfully retrieved from database!"));
     } catch (err: any) {
-      setRecoverError(err?.message || "Failed to recover appointment. Please check your credentials.");
+      setRecoverError(err?.message || tAppointments("errRecoverGeneral", undefined, "Failed to recover appointment. Please check your credentials."));
     } finally {
       setIsRecovering(false);
     }
@@ -358,7 +462,7 @@ export function DoctorPublicBookingNotice({ slug }: DoctorPublicBookingNoticePro
       navigator.clipboard.writeText(ref);
       setCopiedRef(true);
       setTimeout(() => setCopiedRef(false), 2500);
-      showToast("Booking reference copied to clipboard!");
+      showToast(tAppointments("toastRefCopied", undefined, "Booking reference copied to clipboard!"));
     }
   };
 
@@ -388,7 +492,7 @@ export function DoctorPublicBookingNotice({ slug }: DoctorPublicBookingNoticePro
 
     if (typeof navigator !== "undefined" && navigator.clipboard) {
       navigator.clipboard.writeText(shareText);
-      showToast("Voucher details copied to clipboard!");
+      showToast(tAppointments("toastVoucherCopied", undefined, "Voucher details copied to clipboard!"));
     }
   };
 
@@ -398,8 +502,8 @@ export function DoctorPublicBookingNotice({ slug }: DoctorPublicBookingNoticePro
       <main
         style={{
           minHeight: "100vh",
-          background: "#f8faff",
-          color: "#1e1b4b",
+          background: th.pageBg,
+          color: th.textPrimary,
           display: "flex",
           flexDirection: "column",
           alignItems: "center",
@@ -414,22 +518,22 @@ export function DoctorPublicBookingNotice({ slug }: DoctorPublicBookingNoticePro
             width: 52,
             height: 52,
             borderRadius: "50%",
-            background: "rgba(99, 102, 241, 0.12)",
-            border: "1px solid rgba(99, 102, 241, 0.3)",
+            background: isDark ? "rgba(99, 102, 241, 0.2)" : "rgba(99, 102, 241, 0.12)",
+            border: isDark ? "1px solid rgba(99, 102, 241, 0.4)" : "1px solid rgba(99, 102, 241, 0.3)",
             display: "grid",
             placeItems: "center",
-            color: "#4f46e5",
+            color: isDark ? "#818cf8" : "#4f46e5",
             animation: "pulse 2s infinite",
           }}
         >
           <Activity size={26} className="spin-slow" />
         </div>
         <div style={{ textAlign: "center" }}>
-          <h2 style={{ fontSize: 18, color: "#1e1b4b", margin: "0 0 6px", fontWeight: 700 }}>
-            Connecting to Doctor Live Queue System...
+          <h2 style={{ fontSize: 18, color: th.textPrimary, margin: "0 0 6px", fontWeight: 700 }}>
+            {tAppointments("connectingQueueSystem", undefined, "Connecting to Doctor Live Queue System...")}
           </h2>
-          <p style={{ color: "#64748b", fontSize: 13, margin: 0 }}>
-            Syncing chamber schedules and real-time consultation serials.
+          <p style={{ color: th.textMuted, fontSize: 13, margin: 0 }}>
+            {tAppointments("syncingQueueSchedules", undefined, "Syncing chamber schedules and real-time consultation serials.")}
           </p>
         </div>
       </main>
@@ -442,8 +546,8 @@ export function DoctorPublicBookingNotice({ slug }: DoctorPublicBookingNoticePro
       <main
         style={{
           minHeight: "100vh",
-          background: "#f8faff",
-          color: "#1e1b4b",
+          background: th.pageBg,
+          color: th.textPrimary,
           display: "flex",
           flexDirection: "column",
           alignItems: "center",
@@ -457,11 +561,11 @@ export function DoctorPublicBookingNotice({ slug }: DoctorPublicBookingNoticePro
           style={{
             maxWidth: 480,
             width: "100%",
-            background: "#ffffff",
+            background: th.cardBg,
             borderRadius: 24,
             padding: "44px 32px",
-            border: "1px solid rgba(239, 68, 68, 0.25)",
-            boxShadow: "0 20px 50px rgba(15, 23, 42, 0.08)",
+            border: isDark ? "1px solid rgba(239, 68, 68, 0.35)" : "1px solid rgba(239, 68, 68, 0.25)",
+            boxShadow: th.cardShadow,
           }}
         >
           <div
@@ -469,7 +573,7 @@ export function DoctorPublicBookingNotice({ slug }: DoctorPublicBookingNoticePro
               width: 54,
               height: 54,
               borderRadius: "50%",
-              background: "rgba(239, 68, 68, 0.1)",
+              background: "rgba(239, 68, 68, 0.15)",
               display: "grid",
               placeItems: "center",
               margin: "0 auto 16px",
@@ -478,10 +582,10 @@ export function DoctorPublicBookingNotice({ slug }: DoctorPublicBookingNoticePro
           >
             <AlertCircle size={28} />
           </div>
-          <h1 style={{ fontSize: 22, fontWeight: 800, color: "#0f172a", margin: "0 0 8px" }}>
-            Doctor Not Found
+          <h1 style={{ fontSize: 22, fontWeight: 800, color: th.textPrimary, margin: "0 0 8px" }}>
+            {tCommon("notFound", undefined, "Doctor Not Found")}
           </h1>
-          <p style={{ fontSize: 14, color: "#64748b", margin: "0 0 24px", lineHeight: 1.6 }}>
+          <p style={{ fontSize: 14, color: th.textMuted, margin: "0 0 24px", lineHeight: 1.6 }}>
             The requested doctor booking portal is unpublished or currently unavailable in the GLOBAL BOOKING directory.
           </p>
           <Link
@@ -500,7 +604,7 @@ export function DoctorPublicBookingNotice({ slug }: DoctorPublicBookingNoticePro
               boxShadow: "0 8px 20px rgba(79, 70, 229, 0.25)",
             }}
           >
-            Return to Directory
+            {tAppointments("backToAppointments", undefined, "Return to Directory")}
           </Link>
         </div>
       </main>
@@ -517,15 +621,17 @@ export function DoctorPublicBookingNotice({ slug }: DoctorPublicBookingNoticePro
   const isDayOff = selectedDaySchedule !== undefined ? !selectedDaySchedule.isOpen : false;
   const weeklyRoster = chamberWeeklySchedule ? getWeeklyRosterList(chamberWeeklySchedule) : [];
 
-  // Global fee: numeric amount only, no currency suffix (AED). Only shown if doctor configured an amount > 0.
+  // Global fee: numeric amount only, formatted with locale
   const rawFeeAmount =
     typeof profile.consultationFee?.amount === "number" && profile.consultationFee.amount > 0
       ? profile.consultationFee.amount
       : typeof profile.consultationFee?.amountInFils === "number" && profile.consultationFee.amountInFils > 0
-      ? profile.consultationFee.amountInFils / 100
-      : null;
+        ? profile.consultationFee.amountInFils / 100
+        : null;
 
-  const consultationFeeFormatted = rawFeeAmount ? `${rawFeeAmount}` : null;
+  const consultationFeeFormatted = rawFeeAmount
+    ? `${formatLocaleNumber(rawFeeAmount, locale)} ${profile.consultationFee?.currency || tCommon("currency", undefined, "AED")}`
+    : null;
 
   const doctorInitials =
     (profile.fullName || "")
@@ -542,15 +648,16 @@ export function DoctorPublicBookingNotice({ slug }: DoctorPublicBookingNoticePro
       className="booking-page-root"
       style={{
         minHeight: "100vh",
-        background: "#f8faff",
-        color: "#1e1b4b",
+        background: th.pageBg,
+        color: th.textPrimary,
         fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, sans-serif",
         position: "relative",
         overflowX: "hidden",
         paddingBottom: 70,
+        transition: "background 0.3s ease, color 0.3s ease",
       }}
     >
-      {/* Ambient background lavender gradients */}
+      {/* Ambient background mesh gradients */}
       <div
         style={{
           position: "absolute",
@@ -558,8 +665,7 @@ export function DoctorPublicBookingNotice({ slug }: DoctorPublicBookingNoticePro
           left: 0,
           right: 0,
           height: 600,
-          background:
-            "radial-gradient(ellipse at 70% 20%, rgba(199, 210, 254, 0.45) 0%, rgba(224, 231, 255, 0.3) 40%, rgba(248, 250, 255, 0) 75%)",
+          background: th.ambientGradient,
           pointerEvents: "none",
           zIndex: 0,
         }}
@@ -573,35 +679,38 @@ export function DoctorPublicBookingNotice({ slug }: DoctorPublicBookingNoticePro
             top: 24,
             right: 24,
             zIndex: 99999,
-            background: "#ffffff",
+            background: isDark ? "#0b1325" : "#ffffff",
             border: "1.5px solid #10b981",
             padding: "12px 20px",
             borderRadius: 14,
             display: "flex",
             alignItems: "center",
             gap: 10,
-            boxShadow: "0 12px 36px rgba(15, 23, 42, 0.15)",
+            boxShadow: isDark ? "0 12px 36px rgba(0, 0, 0, 0.6)" : "0 12px 36px rgba(15, 23, 42, 0.15)",
             animation: "slideDown 0.25s ease-out",
           }}
         >
           <CheckCircle2 size={18} color="#10b981" />
-          <span style={{ fontSize: 13, fontWeight: 700, color: "#0f172a" }}>{toastMessage}</span>
+          <span style={{ fontSize: 13, fontWeight: 700, color: isDark ? "#ffffff" : "#0f172a" }}>
+            {toastMessage}
+          </span>
         </div>
       )}
 
       {/* =========================================================================
-          01. TOP LUXURY NAVBAR (Matching Portfolio Topbar)
+          01. TOP LUXURY NAVBAR (Matching Portfolio Topbar & Live Queue)
           ========================================================================= */}
       <header
         style={{
-          borderBottom: "1px solid rgba(224, 231, 255, 0.8)",
-          background: "rgba(255, 255, 255, 0.9)",
+          borderBottom: `1px solid ${th.headerBorder}`,
+          background: th.headerBg,
           backdropFilter: "blur(16px)",
           WebkitBackdropFilter: "blur(16px)",
           position: "sticky",
           top: 0,
           zIndex: 60,
-          boxShadow: "0 2px 12px rgba(99, 102, 241, 0.04)",
+          boxShadow: isDark ? "0 4px 20px rgba(0, 0, 0, 0.4)" : "0 2px 12px rgba(99, 102, 241, 0.04)",
+          transition: "background 0.3s ease, border-color 0.3s ease",
         }}
       >
         <div
@@ -617,7 +726,7 @@ export function DoctorPublicBookingNotice({ slug }: DoctorPublicBookingNoticePro
           }}
           className="booking-header-inner"
         >
-          {/* Left: Back to Doctor Portfolio */}
+          {/* Left: Back to Doctor Portfolio & Live Status Pill */}
           <div className="booking-header-left" style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
             <Link
               href={`/${profile.slug}`}
@@ -626,20 +735,20 @@ export function DoctorPublicBookingNotice({ slug }: DoctorPublicBookingNoticePro
                 alignItems: "center",
                 gap: 6,
                 textDecoration: "none",
-                color: "#4338ca",
+                color: isDark ? "#a5b4fc" : "#4338ca",
                 fontSize: 13,
                 fontWeight: 700,
-                background: "rgba(99, 102, 241, 0.08)",
+                background: isDark ? "rgba(99, 102, 241, 0.16)" : "rgba(99, 102, 241, 0.08)",
                 padding: "8px 14px",
                 borderRadius: 10,
-                border: "1px solid rgba(99, 102, 241, 0.2)",
+                border: isDark ? "1px solid rgba(99, 102, 241, 0.35)" : "1px solid rgba(99, 102, 241, 0.2)",
                 transition: "all 0.15s ease",
               }}
               className="back-btn"
             >
-              <ArrowLeft size={14} />
-              <span className="back-btn-text-full">Doctor Portfolio</span>
-              <span className="back-btn-text-short">Profile</span>
+              {isRtl ? <ArrowRight size={14} /> : <ArrowLeft size={14} />}
+              <span className="back-btn-text-full">{tAppointments("doctorPortfolioBtn", undefined, "Doctor Portfolio")}</span>
+              <span className="back-btn-text-short">{tAppointments("profileBtnShort", undefined, "Profile")}</span>
             </Link>
 
             <div
@@ -648,10 +757,13 @@ export function DoctorPublicBookingNotice({ slug }: DoctorPublicBookingNoticePro
                 display: "inline-flex",
                 alignItems: "center",
                 gap: 6,
-                background: "rgba(16, 185, 129, 0.1)",
-                border: "1px solid rgba(16, 185, 129, 0.3)",
+                background: isDark
+                  ? "radial-gradient(circle at 50% 50%, rgba(16, 185, 129, 0.18) 0%, rgba(6, 78, 59, 0.28) 100%), rgba(4, 30, 24, 0.7)"
+                  : "rgba(16, 185, 129, 0.1)",
+                border: isDark ? "1px solid rgba(20, 184, 166, 0.5)" : "1px solid rgba(16, 185, 129, 0.3)",
                 padding: "6px 12px",
                 borderRadius: 999,
+                boxShadow: isDark ? "0 0 16px rgba(16, 185, 129, 0.2)" : "none",
               }}
             >
               <span
@@ -666,17 +778,59 @@ export function DoctorPublicBookingNotice({ slug }: DoctorPublicBookingNoticePro
                   flexShrink: 0,
                 }}
               />
-              <span className="live-badge-full" style={{ fontSize: 11.5, fontWeight: 800, color: "#059669", letterSpacing: "0.04em" }}>
-                LIVE QUEUE ACTIVE
+              <span
+                className="live-badge-full"
+                style={{
+                  fontSize: 11.5,
+                  fontWeight: 800,
+                  color: isDark ? "#34d399" : "#059669",
+                  letterSpacing: "0.04em",
+                }}
+              >
+                {tAppointments("liveQueueActiveBadge", undefined, "LIVE QUEUE ACTIVE")}
               </span>
-              <span className="live-badge-short" style={{ fontSize: 10.5, fontWeight: 800, color: "#059669", letterSpacing: "0.04em" }}>
-                LIVE
+              <span
+                className="live-badge-short"
+                style={{
+                  fontSize: 10.5,
+                  fontWeight: 800,
+                  color: isDark ? "#34d399" : "#059669",
+                  letterSpacing: "0.04em",
+                }}
+              >
+                {tAppointments("liveBadgeShort", undefined, "LIVE")}
               </span>
             </div>
           </div>
 
-          {/* Right Controls: Sync Live & Retrieve Booking */}
+          {/* Right Controls: Language Selector, Theme Switcher, Sync Live & Retrieve Booking */}
           <div className="booking-header-right" style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <LanguageSelector variant="header" />
+
+            {/* Dark / Light Theme Toggle Button */}
+            <button
+              type="button"
+              onClick={toggleTheme}
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                justifyContent: "center",
+                width: 38,
+                height: 38,
+                borderRadius: 10,
+                background: isDark ? "#111c35" : "#f1f5f9",
+                border: isDark ? "1px solid rgba(255, 255, 255, 0.14)" : "1px solid #e2e8f0",
+                color: isDark ? "#fbbf24" : "#4338ca",
+                cursor: "pointer",
+                transition: "all 0.2s ease",
+              }}
+              className="theme-toggle-btn"
+              title={isDark ? tAppointments("themeToggleLight", undefined, "Light Mode") : tAppointments("themeToggleDark", undefined, "Dark Mode")}
+              aria-label={isDark ? tAppointments("themeToggleLight", undefined, "Light Mode") : tAppointments("themeToggleDark", undefined, "Dark Mode")}
+            >
+              {isDark ? <Sun size={17} /> : <Moon size={17} />}
+            </button>
+
             <button
               type="button"
               onClick={() => refreshQueueStatus(selectedChamberId, false)}
@@ -686,19 +840,19 @@ export function DoctorPublicBookingNotice({ slug }: DoctorPublicBookingNoticePro
                 gap: 6,
                 padding: "8px 14px",
                 borderRadius: 10,
-                background: "#f1f5f9",
-                border: "1px solid #e2e8f0",
-                color: "#475569",
+                background: th.btnSecondaryBg,
+                border: th.btnSecondaryBorder,
+                color: th.btnSecondaryText,
                 fontSize: 12.5,
                 fontWeight: 600,
                 cursor: "pointer",
                 transition: "all 0.15s ease",
               }}
               className="sync-btn"
-              title="Refresh live queue status"
+              title={tAppointments("refreshLiveQueueTooltip", undefined, "Refresh live queue status")}
             >
               <RefreshCw size={13} className={isRefreshingQueue ? "spin-animation" : ""} />
-              <span className="sync-btn-text">Sync Live</span>
+              <span className="sync-btn-text">{tAppointments("syncLiveBtn", undefined, "Sync Live")}</span>
             </button>
 
             <button
@@ -710,19 +864,19 @@ export function DoctorPublicBookingNotice({ slug }: DoctorPublicBookingNoticePro
                 gap: 6,
                 padding: "8px 14px",
                 borderRadius: 10,
-                background: "rgba(99, 102, 241, 0.08)",
-                border: "1px solid rgba(99, 102, 241, 0.25)",
-                color: "#4338ca",
+                background: isDark ? "rgba(99, 102, 241, 0.16)" : "rgba(99, 102, 241, 0.08)",
+                border: isDark ? "1px solid rgba(99, 102, 241, 0.35)" : "1px solid rgba(99, 102, 241, 0.25)",
+                color: isDark ? "#a5b4fc" : "#4338ca",
                 fontSize: 12.5,
                 fontWeight: 700,
                 cursor: "pointer",
                 transition: "all 0.15s ease",
               }}
               className="find-btn"
-              title="Find my appointment voucher"
+              title={tAppointments("findAppointmentVoucherTooltip", undefined, "Find my appointment voucher")}
             >
               <Search size={13} />
-              <span className="find-btn-text">Find Booking</span>
+              <span className="find-btn-text">{tAppointments("findBookingBtn", undefined, "Find Booking")}</span>
             </button>
 
             {consultationFeeFormatted && (
@@ -738,7 +892,7 @@ export function DoctorPublicBookingNotice({ slug }: DoctorPublicBookingNoticePro
                 }}
                 className="fee-pill-top"
               >
-                Fee: {consultationFeeFormatted}
+                {tAppointments("consultationFee", undefined, "Fee")}: {consultationFeeFormatted}
               </div>
             )}
           </div>
@@ -751,16 +905,17 @@ export function DoctorPublicBookingNotice({ slug }: DoctorPublicBookingNoticePro
       <div style={{ maxWidth: 1200, margin: "24px auto 0", padding: "0 20px" }} className="booking-content-wrap">
         <div
           style={{
-            background: "#ffffff",
-            border: "1.5px solid #e0e7ff",
+            background: th.cardBg,
+            border: th.cardBorder,
             borderRadius: 22,
             padding: "24px 28px",
-            boxShadow: "0 10px 30px rgba(99, 102, 241, 0.06)",
+            boxShadow: th.cardShadow,
             display: "flex",
             alignItems: "center",
             justifyContent: "space-between",
             flexWrap: "wrap",
             gap: 20,
+            transition: "all 0.3s ease",
           }}
           className="doctor-summary-card"
         >
@@ -772,8 +927,8 @@ export function DoctorPublicBookingNotice({ slug }: DoctorPublicBookingNoticePro
                 height: 72,
                 borderRadius: 18,
                 overflow: "hidden",
-                border: "2px solid #818cf8",
-                boxShadow: "0 8px 24px rgba(99, 102, 241, 0.2)",
+                border: isDark ? "2px solid #818cf8" : "2px solid #818cf8",
+                boxShadow: isDark ? "0 8px 24px rgba(0, 0, 0, 0.5)" : "0 8px 24px rgba(99, 102, 241, 0.2)",
                 position: "relative",
                 flexShrink: 0,
                 background: "linear-gradient(135deg, #4338ca, #6366f1)",
@@ -803,15 +958,15 @@ export function DoctorPublicBookingNotice({ slug }: DoctorPublicBookingNoticePro
 
             <div>
               <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
-                <h1 className="doctor-name-heading" style={{ fontSize: 22, fontWeight: 850, color: "#1e1b4b", margin: 0, letterSpacing: "-0.01em" }}>
+                <h1 className="doctor-name-heading" style={{ fontSize: 22, fontWeight: 850, color: th.textPrimary, margin: 0, letterSpacing: "-0.01em" }}>
                   {profile.fullName}
                 </h1>
                 <span
                   className="specialist-badge"
                   style={{
-                    background: "rgba(16, 185, 129, 0.12)",
-                    border: "1px solid rgba(16, 185, 129, 0.3)",
-                    color: "#059669",
+                    background: isDark ? "rgba(16, 185, 129, 0.16)" : "rgba(16, 185, 129, 0.12)",
+                    border: isDark ? "1px solid rgba(16, 185, 129, 0.4)" : "1px solid rgba(16, 185, 129, 0.3)",
+                    color: isDark ? "#34d399" : "#059669",
                     padding: "3px 10px",
                     borderRadius: 8,
                     fontSize: 11,
@@ -823,10 +978,10 @@ export function DoctorPublicBookingNotice({ slug }: DoctorPublicBookingNoticePro
                   }}
                 >
                   <ShieldCheck size={12} />
-                  <span>Verified Specialist</span>
+                  <span>{tAppointments("confirmed", undefined, "Verified Specialist")}</span>
                 </span>
               </div>
-              <p className="doctor-specialty-text" style={{ margin: "4px 0 0", fontSize: 14, color: "#4f46e5", fontWeight: 700 }}>
+              <p className="doctor-specialty-text" style={{ margin: "4px 0 0", fontSize: 14, color: isDark ? "#818cf8" : "#4f46e5", fontWeight: 700 }}>
                 {profile.specialty}
               </p>
               <div
@@ -837,19 +992,19 @@ export function DoctorPublicBookingNotice({ slug }: DoctorPublicBookingNoticePro
                   gap: 12,
                   marginTop: 6,
                   fontSize: 12.5,
-                  color: "#64748b",
+                  color: th.textMuted,
                   flexWrap: "wrap",
                 }}
               >
                 <span style={{ display: "flex", alignItems: "center", gap: 5 }}>
-                  <Building2 size={14} color="#4f46e5" />
-                  <strong style={{ color: "#334155" }}>
+                  <Building2 size={14} color={isDark ? "#818cf8" : "#4f46e5"} />
+                  <strong style={{ color: th.textSecondary }}>
                     {selectedChamber?.facilityName || profile.chamberLocationsSummary || "Main Chamber"}
                   </strong>
                 </span>
                 <span>•</span>
                 <span style={{ display: "flex", alignItems: "center", gap: 5 }}>
-                  <Clock size={14} color="#4f46e5" />
+                  <Clock size={14} color={isDark ? "#818cf8" : "#4f46e5"} />
                   <span>{selectedChamber?.visitingSchedule || "Today Open (6:00 PM - 10:00 PM)"}</span>
                 </span>
               </div>
@@ -860,25 +1015,25 @@ export function DoctorPublicBookingNotice({ slug }: DoctorPublicBookingNoticePro
           <div className="doctor-card-right-stats">
             <div
               style={{
-                background: "#f8faff",
-                border: "1px solid #e0e7ff",
+                background: th.innerBg,
+                border: th.innerBorder,
                 borderRadius: 14,
                 padding: "10px 18px",
-                textAlign: "right",
+                textAlign: isRtl ? "left" : "right",
               }}
             >
-              <div style={{ fontSize: 11, color: "#64748b", fontWeight: 700, textTransform: "uppercase" }}>
-                Queue Allocation
+              <div style={{ fontSize: 11, color: th.textMuted, fontWeight: 700, textTransform: "uppercase" }}>
+                {tAppointments("queueAllocationLabel", undefined, "Queue Allocation")}
               </div>
-              <div style={{ fontSize: 15, fontWeight: 800, color: "#1e1b4b", marginTop: 2 }}>
-                Instant Serial Token
+              <div style={{ fontSize: 15, fontWeight: 800, color: th.textPrimary, marginTop: 2 }}>
+                {tAppointments("instantSerialToken", undefined, "Instant Serial Token")}
               </div>
             </div>
           </div>
         </div>
 
         {/* =========================================================================
-            03. TOP 3 LIVE QUEUE METRIC CARDS (Exact Match to Live Queue Style)
+            03. TOP 3 LIVE QUEUE METRIC CARDS (Exact Match to /live-queue Luxury Style)
             ========================================================================= */}
         <section
           style={{
@@ -888,21 +1043,22 @@ export function DoctorPublicBookingNotice({ slug }: DoctorPublicBookingNoticePro
             margin: "20px 0 24px",
           }}
           className="queue-metrics-grid"
-          aria-label="Doctor Live Queue Metrics"
+          aria-label={tAppointments("doctorLiveQueueMetricsAria", undefined, "Doctor Live Queue Metrics")}
         >
           {/* Card 1: Running (Now Serving) */}
           <article
             style={{
-              background: "linear-gradient(145deg, #ffffff 0%, #fefcf3 100%)",
-              border: "1.5px solid #fef3c7",
+              background: th.kpiServing.bg,
+              border: th.kpiServing.border,
               borderRadius: 18,
               padding: "20px 22px",
-              boxShadow: "0 8px 24px rgba(245, 158, 11, 0.08)",
+              boxShadow: th.kpiServing.shadow,
               display: "flex",
               alignItems: "center",
               gap: 16,
               position: "relative",
               overflow: "hidden",
+              transition: "all 0.3s ease",
             }}
             className="kpi-card kpi-now-serving"
           >
@@ -912,11 +1068,11 @@ export function DoctorPublicBookingNotice({ slug }: DoctorPublicBookingNoticePro
                 width: 52,
                 height: 52,
                 borderRadius: 16,
-                background: "linear-gradient(135deg, #fef3c7 0%, #fde68a 100%)",
-                border: "1px solid rgba(245, 158, 11, 0.3)",
+                background: th.kpiServing.iconBg,
+                border: th.kpiServing.iconBorder,
                 display: "grid",
                 placeItems: "center",
-                color: "#b45309",
+                color: th.kpiServing.iconColor,
                 flexShrink: 0,
                 boxShadow: "0 6px 16px rgba(245, 158, 11, 0.2)",
               }}
@@ -930,12 +1086,12 @@ export function DoctorPublicBookingNotice({ slug }: DoctorPublicBookingNoticePro
                   style={{
                     fontSize: 11,
                     fontWeight: 800,
-                    color: "#b45309",
+                    color: th.kpiServing.labelColor,
                     textTransform: "uppercase",
                     letterSpacing: "0.06em",
                   }}
                 >
-                  NOW SERVING
+                  {tAppointments("nowServingKpi", undefined, "NOW SERVING")}
                 </span>
                 <span
                   style={{
@@ -953,7 +1109,7 @@ export function DoctorPublicBookingNotice({ slug }: DoctorPublicBookingNoticePro
                 style={{
                   fontSize: 32,
                   fontWeight: 900,
-                  color: "#1e1b4b",
+                  color: th.kpiServing.numberColor,
                   letterSpacing: "-0.02em",
                   margin: "2px 0",
                   fontFamily: "monospace",
@@ -965,18 +1121,20 @@ export function DoctorPublicBookingNotice({ slug }: DoctorPublicBookingNoticePro
                 className="kpi-sub-text"
                 style={{
                   fontSize: 12,
-                  color: "#64748b",
+                  color: th.kpiServing.subTextColor,
                   whiteSpace: "nowrap",
                   overflow: "hidden",
                   textOverflow: "ellipsis",
                 }}
               >
                 {queueStatus?.servingTicket?.patientName ? (
-                  <span style={{ fontWeight: 700, color: "#1e1b4b" }}>
+                  <span style={{ fontWeight: 700, color: th.textPrimary }}>
                     {queueStatus.servingTicket.patientName}
                   </span>
                 ) : (
-                  <span style={{ color: "#059669", fontWeight: 600 }}>● Chamber Ready</span>
+                  <span style={{ color: isDark ? "#34d399" : "#059669", fontWeight: 600 }}>
+                    ● {tAppointments("chamberReadyStatus", undefined, "Chamber Ready")}
+                  </span>
                 )}
               </div>
             </div>
@@ -985,14 +1143,15 @@ export function DoctorPublicBookingNotice({ slug }: DoctorPublicBookingNoticePro
           {/* Card 2: Next (Next Serial in line) */}
           <article
             style={{
-              background: "linear-gradient(145deg, #ffffff 0%, #f0fdf4 100%)",
-              border: "1.5px solid #dcfce7",
+              background: th.kpiNext.bg,
+              border: th.kpiNext.border,
               borderRadius: 18,
               padding: "20px 22px",
-              boxShadow: "0 8px 24px rgba(16, 185, 129, 0.08)",
+              boxShadow: th.kpiNext.shadow,
               display: "flex",
               alignItems: "center",
               gap: 16,
+              transition: "all 0.3s ease",
             }}
             className="kpi-card kpi-next-serial"
           >
@@ -1002,11 +1161,11 @@ export function DoctorPublicBookingNotice({ slug }: DoctorPublicBookingNoticePro
                 width: 52,
                 height: 52,
                 borderRadius: 16,
-                background: "linear-gradient(135deg, #dcfce7 0%, #bbf7d0 100%)",
-                border: "1px solid rgba(16, 185, 129, 0.3)",
+                background: th.kpiNext.iconBg,
+                border: th.kpiNext.iconBorder,
                 display: "grid",
                 placeItems: "center",
-                color: "#059669",
+                color: th.kpiNext.iconColor,
                 flexShrink: 0,
                 boxShadow: "0 6px 16px rgba(16, 185, 129, 0.2)",
               }}
@@ -1019,19 +1178,19 @@ export function DoctorPublicBookingNotice({ slug }: DoctorPublicBookingNoticePro
                 style={{
                   fontSize: 11,
                   fontWeight: 800,
-                  color: "#059669",
+                  color: th.kpiNext.labelColor,
                   textTransform: "uppercase",
                   letterSpacing: "0.06em",
                 }}
               >
-                NEXT SERIAL
+                {tAppointments("nextSerialKpi", undefined, "NEXT SERIAL")}
               </span>
               <div
                 className="kpi-number-display"
                 style={{
                   fontSize: 32,
                   fontWeight: 900,
-                  color: "#1e1b4b",
+                  color: th.kpiNext.numberColor,
                   letterSpacing: "-0.02em",
                   margin: "2px 0",
                   fontFamily: "monospace",
@@ -1045,7 +1204,7 @@ export function DoctorPublicBookingNotice({ slug }: DoctorPublicBookingNoticePro
                 className="kpi-sub-text"
                 style={{
                   fontSize: 12,
-                  color: "#64748b",
+                  color: th.kpiNext.subTextColor,
                   whiteSpace: "nowrap",
                   overflow: "hidden",
                   textOverflow: "ellipsis",
@@ -1053,12 +1212,14 @@ export function DoctorPublicBookingNotice({ slug }: DoctorPublicBookingNoticePro
               >
                 {queueStatus?.nextTicket?.patientName ||
                 queueStatus?.tickets?.find((t) => t.status === "WAITING")?.patientName ? (
-                  <span style={{ fontWeight: 700, color: "#1e1b4b" }}>
+                  <span style={{ fontWeight: 700, color: th.textPrimary }}>
                     {queueStatus?.nextTicket?.patientName ||
                       queueStatus?.tickets?.find((t) => t.status === "WAITING")?.patientName}
                   </span>
                 ) : (
-                  <span style={{ color: "#64748b" }}>Next patient</span>
+                  <span style={{ color: th.textMuted }}>
+                    {tAppointments("nextPatientStatus", undefined, "Next patient")}
+                  </span>
                 )}
               </div>
             </div>
@@ -1067,18 +1228,15 @@ export function DoctorPublicBookingNotice({ slug }: DoctorPublicBookingNoticePro
           {/* Card 3: Your Live Token / Booking */}
           <article
             style={{
-              background: bookedAppointment
-                ? "linear-gradient(145deg, #ffffff 0%, #eef2ff 100%)"
-                : "#ffffff",
-              border: bookedAppointment ? "2px solid #6366f1" : "1.5px solid #e0e7ff",
+              background: th.kpiToken.bg,
+              border: th.kpiToken.border,
               borderRadius: 18,
               padding: "20px 22px",
-              boxShadow: bookedAppointment
-                ? "0 10px 30px rgba(99, 102, 241, 0.18)"
-                : "0 8px 24px rgba(99, 102, 241, 0.05)",
+              boxShadow: th.kpiToken.shadow,
               display: "flex",
               alignItems: "center",
               gap: 16,
+              transition: "all 0.3s ease",
             }}
             className="kpi-card kpi-your-token"
           >
@@ -1088,13 +1246,11 @@ export function DoctorPublicBookingNotice({ slug }: DoctorPublicBookingNoticePro
                 width: 52,
                 height: 52,
                 borderRadius: 16,
-                background: bookedAppointment
-                  ? "linear-gradient(135deg, #4338ca 0%, #6366f1 100%)"
-                  : "rgba(99, 102, 241, 0.1)",
-                border: bookedAppointment ? "none" : "1px solid rgba(99, 102, 241, 0.25)",
+                background: th.kpiToken.iconBg,
+                border: th.kpiToken.iconBorder,
                 display: "grid",
                 placeItems: "center",
-                color: bookedAppointment ? "#ffffff" : "#4f46e5",
+                color: th.kpiToken.iconColor,
                 flexShrink: 0,
                 boxShadow: bookedAppointment ? "0 6px 18px rgba(79, 70, 229, 0.35)" : "none",
               }}
@@ -1107,19 +1263,19 @@ export function DoctorPublicBookingNotice({ slug }: DoctorPublicBookingNoticePro
                 style={{
                   fontSize: 11,
                   fontWeight: 800,
-                  color: bookedAppointment ? "#4338ca" : "#64748b",
+                  color: th.kpiToken.labelColor,
                   textTransform: "uppercase",
                   letterSpacing: "0.06em",
                 }}
               >
-                YOUR BOOKING
+                {tAppointments("yourBookingKpi", undefined, "YOUR BOOKING")}
               </span>
               <div
                 className="kpi-number-display"
                 style={{
                   fontSize: bookedAppointment ? 28 : 26,
                   fontWeight: 900,
-                  color: bookedAppointment ? "#4338ca" : "#94a3b8",
+                  color: th.kpiToken.numberColor,
                   letterSpacing: "-0.01em",
                   margin: "2px 0",
                   fontFamily: bookedAppointment ? "monospace" : "inherit",
@@ -1128,13 +1284,15 @@ export function DoctorPublicBookingNotice({ slug }: DoctorPublicBookingNoticePro
                 {bookedAppointment
                   ? bookedAppointment.bookingNumberDisplay ||
                     `#${String(bookedAppointment.bookingNumber || 1).padStart(2, "0")}`
-                  : "Not Booked"}
+                  : tAppointments("notBookedStatus", undefined, "Not Booked")}
               </div>
-              <div className="kpi-sub-text" style={{ fontSize: 12, color: "#64748b" }}>
+              <div className="kpi-sub-text" style={{ fontSize: 12, color: th.kpiToken.subTextColor }}>
                 {bookedAppointment ? (
-                  <span style={{ color: "#059669", fontWeight: 700 }}>● Confirmed</span>
+                  <span style={{ color: isDark ? "#34d399" : "#059669", fontWeight: 700 }}>
+                    ● {tAppointments("confirmedStatus", undefined, "Confirmed")}
+                  </span>
                 ) : (
-                  <span>Submit form below</span>
+                  <span>{tAppointments("submitFormBelowHint", undefined, "Submit form below")}</span>
                 )}
               </div>
             </div>
@@ -1156,11 +1314,12 @@ export function DoctorPublicBookingNotice({ slug }: DoctorPublicBookingNoticePro
           {/* LEFT: BOOKING FORM */}
           <div
             style={{
-              background: "#ffffff",
-              border: "1.5px solid #e0e7ff",
+              background: th.cardBg,
+              border: th.cardBorder,
               borderRadius: 22,
               padding: "32px 30px",
-              boxShadow: "0 10px 35px rgba(99, 102, 241, 0.06)",
+              boxShadow: th.cardShadow,
+              transition: "all 0.3s ease",
             }}
             className="booking-form-box"
           >
@@ -1172,15 +1331,15 @@ export function DoctorPublicBookingNotice({ slug }: DoctorPublicBookingNoticePro
                 justifyContent: "space-between",
                 marginBottom: 24,
                 paddingBottom: 18,
-                borderBottom: "1px solid #f1f5f9",
+                borderBottom: `1px solid ${th.divider}`,
               }}
             >
               <div>
-                <h2 className="booking-form-title" style={{ fontSize: 19, fontWeight: 850, margin: 0, color: "#1e1b4b" }}>
-                  Patient Appointment Booking
+                <h2 className="booking-form-title" style={{ fontSize: 19, fontWeight: 850, margin: 0, color: th.textPrimary }}>
+                  {tAppointments("patientBookingHeading", undefined, "Patient Appointment Booking")}
                 </h2>
-                <p className="booking-form-sub" style={{ margin: "4px 0 0", fontSize: 13, color: "#64748b" }}>
-                  Guaranteed consultation serial saved permanently in database
+                <p className="booking-form-sub" style={{ margin: "4px 0 0", fontSize: 13, color: th.textMuted }}>
+                  {tAppointments("guaranteedSerialSub", undefined, "Guaranteed consultation serial saved permanently in database")}
                 </p>
               </div>
               <div
@@ -1188,11 +1347,11 @@ export function DoctorPublicBookingNotice({ slug }: DoctorPublicBookingNoticePro
                   width: 42,
                   height: 42,
                   borderRadius: 12,
-                  background: "rgba(99, 102, 241, 0.1)",
-                  border: "1px solid rgba(99, 102, 241, 0.2)",
+                  background: isDark ? "rgba(99, 102, 241, 0.2)" : "rgba(99, 102, 241, 0.1)",
+                  border: isDark ? "1px solid rgba(99, 102, 241, 0.35)" : "1px solid rgba(99, 102, 241, 0.2)",
                   display: "grid",
                   placeItems: "center",
-                  color: "#4f46e5",
+                  color: isDark ? "#818cf8" : "#4f46e5",
                 }}
               >
                 <Ticket size={20} />
@@ -1202,9 +1361,9 @@ export function DoctorPublicBookingNotice({ slug }: DoctorPublicBookingNoticePro
             {bookingError && (
               <div
                 style={{
-                  background: "#fef2f2",
-                  border: "1px solid #fecaca",
-                  color: "#dc2626",
+                  background: isDark ? "#2a1215" : "#fef2f2",
+                  border: isDark ? "1px solid rgba(239, 68, 68, 0.5)" : "1px solid #fecaca",
+                  color: isDark ? "#fca5a5" : "#dc2626",
                   padding: "14px 16px",
                   borderRadius: 12,
                   fontSize: 13,
@@ -1228,11 +1387,11 @@ export function DoctorPublicBookingNotice({ slug }: DoctorPublicBookingNoticePro
                       display: "block",
                       fontSize: 13,
                       fontWeight: 700,
-                      color: "#1e1b4b",
+                      color: th.textPrimary,
                       marginBottom: 8,
                     }}
                   >
-                    Select Chamber / Hospital Branch <span style={{ color: "#ef4444" }}>*</span>
+                    {tAppointments("selectChamberBranchLabel", undefined, "Select Chamber / Hospital Branch")} <span style={{ color: "#ef4444" }}>*</span>
                   </label>
                   <div style={{ position: "relative" }}>
                     <select
@@ -1241,10 +1400,10 @@ export function DoctorPublicBookingNotice({ slug }: DoctorPublicBookingNoticePro
                       style={{
                         width: "100%",
                         padding: "13px 16px",
-                        background: "#f8faff",
-                        border: "1.5px solid #e0e7ff",
+                        background: th.inputBg,
+                        border: th.inputBorder,
                         borderRadius: 12,
-                        color: "#1e1b4b",
+                        color: th.inputText,
                         fontSize: 14,
                         fontWeight: 600,
                         outline: "none",
@@ -1252,7 +1411,7 @@ export function DoctorPublicBookingNotice({ slug }: DoctorPublicBookingNoticePro
                       }}
                     >
                       {profile.chambers.map((c) => (
-                        <option key={c.id} value={c.id}>
+                        <option key={c.id} value={c.id} style={{ background: isDark ? "#0b1325" : "#ffffff", color: isDark ? "#ffffff" : "#1e1b4b" }}>
                           {c.facilityName} ({c.city})
                         </option>
                       ))}
@@ -1269,34 +1428,34 @@ export function DoctorPublicBookingNotice({ slug }: DoctorPublicBookingNoticePro
                       display: "block",
                       fontSize: 13,
                       fontWeight: 700,
-                      color: "#1e1b4b",
+                      color: th.textPrimary,
                       marginBottom: 8,
                     }}
                   >
-                    Patient Full Name <span style={{ color: "#ef4444" }}>*</span>
+                    {tAppointments("patientFullNameLabel", undefined, "Patient Full Name")} <span style={{ color: "#ef4444" }}>*</span>
                   </label>
                   <div style={{ position: "relative" }}>
                     <input
                       type="text"
                       required
-                      placeholder="e.g. John Smith"
+                      placeholder={tAppointments("patientFullNamePlaceholder", undefined, "e.g. John Smith")}
                       value={patientName}
                       onChange={(e) => setPatientName(e.target.value)}
                       style={{
                         width: "100%",
                         padding: "13px 16px",
-                        background: "#f8faff",
-                        border: "1.5px solid #e0e7ff",
+                        background: th.inputBg,
+                        border: th.inputBorder,
                         borderRadius: 12,
-                        color: "#1e1b4b",
+                        color: th.inputText,
                         fontSize: 14,
                         fontWeight: 500,
                         outline: "none",
                         boxSizing: "border-box",
                         transition: "border-color 0.15s ease",
                       }}
-                      onFocus={(e) => (e.currentTarget.style.borderColor = "#6366f1")}
-                      onBlur={(e) => (e.currentTarget.style.borderColor = "#e0e7ff")}
+                      onFocus={(e) => (e.currentTarget.style.borderColor = th.inputFocusBorder)}
+                      onBlur={(e) => (e.currentTarget.style.borderColor = isDark ? "rgba(255, 255, 255, 0.12)" : "#e0e7ff")}
                     />
                   </div>
                 </div>
@@ -1307,34 +1466,34 @@ export function DoctorPublicBookingNotice({ slug }: DoctorPublicBookingNoticePro
                       display: "block",
                       fontSize: 13,
                       fontWeight: 700,
-                      color: "#1e1b4b",
+                      color: th.textPrimary,
                       marginBottom: 8,
                     }}
                   >
-                    Contact Mobile Number <span style={{ color: "#ef4444" }}>*</span>
+                    {tAppointments("contactMobileLabel", undefined, "Contact Mobile Number")} <span style={{ color: "#ef4444" }}>*</span>
                   </label>
                   <div style={{ position: "relative" }}>
                     <input
                       type="tel"
                       required
-                      placeholder="e.g. +1 234 567 8900"
+                      placeholder={tAppointments("contactMobilePlaceholder", undefined, "e.g. +1 234 567 8900")}
                       value={patientPhone}
                       onChange={(e) => setPatientPhone(e.target.value)}
                       style={{
                         width: "100%",
                         padding: "13px 16px",
-                        background: "#f8faff",
-                        border: "1.5px solid #e0e7ff",
+                        background: th.inputBg,
+                        border: th.inputBorder,
                         borderRadius: 12,
-                        color: "#1e1b4b",
+                        color: th.inputText,
                         fontSize: 14,
                         fontWeight: 500,
                         outline: "none",
                         boxSizing: "border-box",
                         transition: "border-color 0.15s ease",
                       }}
-                      onFocus={(e) => (e.currentTarget.style.borderColor = "#6366f1")}
-                      onBlur={(e) => (e.currentTarget.style.borderColor = "#e0e7ff")}
+                      onFocus={(e) => (e.currentTarget.style.borderColor = th.inputFocusBorder)}
+                      onBlur={(e) => (e.currentTarget.style.borderColor = isDark ? "rgba(255, 255, 255, 0.12)" : "#e0e7ff")}
                     />
                   </div>
                 </div>
@@ -1348,11 +1507,11 @@ export function DoctorPublicBookingNotice({ slug }: DoctorPublicBookingNoticePro
                       display: "block",
                       fontSize: 13,
                       fontWeight: 700,
-                      color: "#1e1b4b",
+                      color: th.textPrimary,
                       marginBottom: 8,
                     }}
                   >
-                    Appointment Date
+                    {tAppointments("appointmentDateLabel", undefined, "Appointment Date")}
                   </label>
                   <div style={{ position: "relative" }}>
                     <div
@@ -1366,10 +1525,10 @@ export function DoctorPublicBookingNotice({ slug }: DoctorPublicBookingNoticePro
                       style={{
                         width: "100%",
                         padding: "13px 16px",
-                        background: "#f8faff",
-                        border: "1.5px solid #e0e7ff",
+                        background: th.inputBg,
+                        border: th.inputBorder,
                         borderRadius: 12,
-                        color: "#1e1b4b",
+                        color: th.inputText,
                         fontSize: 14,
                         fontWeight: 700,
                         fontFamily: "monospace",
@@ -1384,7 +1543,7 @@ export function DoctorPublicBookingNotice({ slug }: DoctorPublicBookingNoticePro
                       }}
                     >
                       <span>{formatDateDDMMYYYY(selectedDate)}</span>
-                      <Calendar size={17} color="#4f46e5" />
+                      <Calendar size={17} color={isDark ? "#818cf8" : "#4f46e5"} />
                     </div>
 
                     <input
@@ -1417,20 +1576,32 @@ export function DoctorPublicBookingNotice({ slug }: DoctorPublicBookingNoticePro
                       display: "block",
                       fontSize: 13,
                       fontWeight: 700,
-                      color: "#1e1b4b",
+                      color: th.textPrimary,
                       marginBottom: 8,
                     }}
                   >
-                    Chamber Schedule & Time
+                    {tAppointments("chamberScheduleTimeLabel", undefined, "Chamber Schedule & Time")}
                   </label>
                   <div
                     style={{
                       width: "100%",
                       padding: "13px 16px",
-                      background: isDayOff ? "#fef2f2" : selectedDaySchedule ? "#f0fdf4" : "#f8faff",
-                      border: isDayOff ? "1.5px solid #fecaca" : selectedDaySchedule ? "1.5px solid #bbf7d0" : "1.5px solid #e0e7ff",
+                      background: isDayOff
+                        ? isDark ? "#2a1215" : "#fef2f2"
+                        : selectedDaySchedule
+                          ? isDark ? "#09241b" : "#f0fdf4"
+                          : th.inputBg,
+                      border: isDayOff
+                        ? isDark ? "1.5px solid rgba(239, 68, 68, 0.45)" : "1.5px solid #fecaca"
+                        : selectedDaySchedule
+                          ? isDark ? "1.5px solid rgba(16, 185, 129, 0.45)" : "1.5px solid #bbf7d0"
+                          : th.inputBorder,
                       borderRadius: 12,
-                      color: isDayOff ? "#b91c1c" : selectedDaySchedule ? "#15803d" : "#4338ca",
+                      color: isDayOff
+                        ? isDark ? "#fca5a5" : "#b91c1c"
+                        : selectedDaySchedule
+                          ? isDark ? "#34d399" : "#15803d"
+                          : isDark ? "#818cf8" : "#4338ca",
                       fontSize: 13,
                       fontWeight: 700,
                       display: "flex",
@@ -1444,14 +1615,14 @@ export function DoctorPublicBookingNotice({ slug }: DoctorPublicBookingNoticePro
                     {isDayOff ? (
                       <AlertCircle size={16} color="#ef4444" style={{ flexShrink: 0 }} />
                     ) : (
-                      <Clock size={16} color={selectedDaySchedule ? "#16a34a" : "#4f46e5"} style={{ flexShrink: 0 }} />
+                      <Clock size={16} color={selectedDaySchedule ? (isDark ? "#34d399" : "#16a34a") : (isDark ? "#818cf8" : "#4f46e5")} style={{ flexShrink: 0 }} />
                     )}
                     <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                       {isDayOff
-                        ? `${selectedDayName}: Closed (Off-Day)`
+                        ? `${selectedDayName}: ${tAppointments("closedOffDayStatus", undefined, "Closed (Off-Day)")}`
                         : selectedDaySchedule
-                        ? `${selectedDayName}: ${selectedDaySchedule.start} – ${selectedDaySchedule.end}`
-                        : selectedChamber?.visitingSchedule || "Daily 05:00 PM – 09:00 PM"}
+                          ? `${selectedDayName}: ${selectedDaySchedule.start} – ${selectedDaySchedule.end}`
+                          : selectedChamber?.visitingSchedule || "Daily 05:00 PM – 09:00 PM"}
                     </span>
                   </div>
                 </div>
@@ -1462,8 +1633,8 @@ export function DoctorPublicBookingNotice({ slug }: DoctorPublicBookingNoticePro
                 <div
                   style={{
                     padding: "13px 16px",
-                    background: "#fef2f2",
-                    border: "1.5px solid #fecaca",
+                    background: isDark ? "#2a1215" : "#fef2f2",
+                    border: isDark ? "1.5px solid rgba(239, 68, 68, 0.4)" : "1.5px solid #fecaca",
                     borderRadius: 14,
                     display: "flex",
                     alignItems: "flex-start",
@@ -1473,16 +1644,20 @@ export function DoctorPublicBookingNotice({ slug }: DoctorPublicBookingNoticePro
                 >
                   <AlertCircle size={20} color="#dc2626" style={{ flexShrink: 0, marginTop: 1 }} />
                   <div style={{ flex: 1 }}>
-                    <strong style={{ fontSize: 13.5, color: "#991b1b", display: "block" }}>
-                      Doctor is Not Practicing on {selectedDayName}s
+                    <strong style={{ fontSize: 13.5, color: isDark ? "#fca5a5" : "#991b1b", display: "block" }}>
+                      {tAppointments("doctorNotPracticingHeading", { day: selectedDayName }, `Doctor is Not Practicing on ${selectedDayName}s`)}
                     </strong>
-                    <p style={{ margin: "3px 0 8px", color: "#b91c1c", fontSize: 12.5, lineHeight: 1.45 }}>
-                      Dr. {profile.fullName} has marked {selectedDayName} as an <strong>OFF-DAY</strong> at {selectedChamber?.facilityName || "this chamber"}. Consultation appointments cannot be booked on off-duty days.
+                    <p style={{ margin: "3px 0 8px", color: isDark ? "#f87171" : "#b91c1c", fontSize: 12.5, lineHeight: 1.45 }}>
+                      {tAppointments("doctorNotPracticingNotice", {
+                        doctor: profile.fullName,
+                        day: selectedDayName,
+                        chamber: selectedChamber?.facilityName || "this chamber",
+                      }, `Dr. ${profile.fullName} has marked ${selectedDayName} as an OFF-DAY at ${selectedChamber?.facilityName || "this chamber"}. Consultation appointments cannot be booked on off-duty days.`)}
                     </p>
                     {chamberWeeklySchedule && (
                       <div style={{ display: "flex", gap: 6, flexWrap: "wrap", alignItems: "center" }}>
-                        <span style={{ fontSize: 11.5, fontWeight: 700, color: "#7f1d1d" }}>
-                          Choose Next Open Day:
+                        <span style={{ fontSize: 11.5, fontWeight: 700, color: isDark ? "#fca5a5" : "#7f1d1d" }}>
+                          {tAppointments("chooseNextOpenDayLabel", undefined, "Choose Next Open Day:")}
                         </span>
                         {Object.entries(chamberWeeklySchedule)
                           .filter(([_, s]) => s.isOpen)
@@ -1495,9 +1670,9 @@ export function DoctorPublicBookingNotice({ slug }: DoctorPublicBookingNoticePro
                                 if (nextDate) setSelectedDate(nextDate);
                               }}
                               style={{
-                                background: "#ffffff",
-                                border: "1px solid #f87171",
-                                color: "#b91c1c",
+                                background: isDark ? "#111c35" : "#ffffff",
+                                border: isDark ? "1px solid rgba(239, 68, 68, 0.5)" : "1px solid #f87171",
+                                color: isDark ? "#fca5a5" : "#b91c1c",
                                 padding: "4px 10px",
                                 borderRadius: 8,
                                 fontSize: 11.5,
@@ -1510,7 +1685,7 @@ export function DoctorPublicBookingNotice({ slug }: DoctorPublicBookingNoticePro
                               }}
                             >
                               <span>👉 {openDay}</span>
-                              <span style={{ fontSize: 10, color: "#64748b" }}>({s.start} - {s.end})</span>
+                              <span style={{ fontSize: 10, color: th.textMuted }}>({s.start} - {s.end})</span>
                             </button>
                           ))}
                       </div>
@@ -1528,7 +1703,7 @@ export function DoctorPublicBookingNotice({ slug }: DoctorPublicBookingNoticePro
                   padding: "15px 24px",
                   borderRadius: 14,
                   background: isSubmitting || isDayOff
-                    ? "#94a3b8"
+                    ? isDark ? "#334155" : "#94a3b8"
                     : "linear-gradient(135deg, #4338ca 0%, #6366f1 100%)",
                   border: "none",
                   color: "#ffffff",
@@ -1557,12 +1732,12 @@ export function DoctorPublicBookingNotice({ slug }: DoctorPublicBookingNoticePro
                         animation: "spin 0.8s linear infinite",
                       }}
                     />
-                    <span>Allocating Serial in Database...</span>
+                    <span>{tAppointments("allocatingSerialBtn", undefined, "Allocating Serial in Database...")}</span>
                   </>
                 ) : (
                   <>
                     <Ticket size={18} strokeWidth={2.4} />
-                    <span>Confirm & Book Appointment</span>
+                    <span>{tAppointments("confirmBookAppointmentBtn", undefined, "Confirm & Book Appointment")}</span>
                   </>
                 )}
               </button>
@@ -1575,14 +1750,14 @@ export function DoctorPublicBookingNotice({ slug }: DoctorPublicBookingNoticePro
                   style={{
                     background: "none",
                     border: "none",
-                    color: "#4f46e5",
+                    color: isDark ? "#818cf8" : "#4f46e5",
                     fontSize: 13,
                     fontWeight: 600,
                     cursor: "pointer",
                     textDecoration: "underline",
                   }}
                 >
-                  Already booked? Retrieve your appointment voucher slip
+                  {tAppointments("alreadyBookedRetrieveLink", undefined, "Already booked? Retrieve your appointment voucher slip")}
                 </button>
               </div>
             </form>
@@ -1592,21 +1767,22 @@ export function DoctorPublicBookingNotice({ slug }: DoctorPublicBookingNoticePro
           {bookedAppointment ? (
             <div
               style={{
-                background: "#ffffff",
-                border: "2px solid #6366f1",
+                background: th.cardBg,
+                border: isDark ? "2px solid rgba(99, 102, 241, 0.6)" : "2px solid #6366f1",
                 borderRadius: 22,
                 padding: "30px 28px",
-                boxShadow: "0 14px 40px rgba(99, 102, 241, 0.15)",
+                boxShadow: isDark ? "0 16px 50px rgba(0, 0, 0, 0.6)" : "0 14px 40px rgba(99, 102, 241, 0.15)",
                 display: "flex",
                 flexDirection: "column",
                 gap: 18,
+                transition: "all 0.3s ease",
               }}
               className="voucher-card"
             >
               <div
                 style={{
                   textAlign: "center",
-                  borderBottom: "1.5px dashed #cbd5e1",
+                  borderBottom: isDark ? "1.5px dashed rgba(255, 255, 255, 0.15)" : "1.5px dashed #cbd5e1",
                   paddingBottom: 20,
                 }}
               >
@@ -1615,9 +1791,9 @@ export function DoctorPublicBookingNotice({ slug }: DoctorPublicBookingNoticePro
                     display: "inline-flex",
                     alignItems: "center",
                     gap: 6,
-                    background: "rgba(16, 185, 129, 0.12)",
-                    border: "1px solid rgba(16, 185, 129, 0.3)",
-                    color: "#059669",
+                    background: isDark ? "rgba(16, 185, 129, 0.16)" : "rgba(16, 185, 129, 0.12)",
+                    border: isDark ? "1px solid rgba(16, 185, 129, 0.4)" : "1px solid rgba(16, 185, 129, 0.3)",
+                    color: isDark ? "#34d399" : "#059669",
                     padding: "4px 14px",
                     borderRadius: 20,
                     fontSize: 12,
@@ -1626,7 +1802,7 @@ export function DoctorPublicBookingNotice({ slug }: DoctorPublicBookingNoticePro
                   }}
                 >
                   <CheckCircle2 size={14} />
-                  <span>CONFIRMED & SAVED TO DATABASE</span>
+                  <span>{tAppointments("confirmedSavedDbBadge", undefined, "CONFIRMED & SAVED TO DATABASE")}</span>
                 </div>
 
                 <div
@@ -1634,22 +1810,22 @@ export function DoctorPublicBookingNotice({ slug }: DoctorPublicBookingNoticePro
                     fontSize: 12,
                     fontWeight: 800,
                     letterSpacing: "0.12em",
-                    color: "#64748b",
+                    color: th.textMuted,
                     textTransform: "uppercase",
                     marginBottom: 4,
                   }}
                 >
-                  GLOBAL BOOKING • CLINICAL VOUCHER
+                  {tAppointments("clinicalVoucherSub", undefined, "GLOBAL BOOKING • CLINICAL VOUCHER")}
                 </div>
-                <h3 style={{ margin: 0, fontSize: 20, fontWeight: 850, color: "#1e1b4b" }}>
-                  Appointment Serial Token
+                <h3 style={{ margin: 0, fontSize: 20, fontWeight: 850, color: th.textPrimary }}>
+                  {tAppointments("serialTokenHeading", undefined, "Appointment Serial Token")}
                 </h3>
                 <div
                   className="voucher-token-number"
                   style={{
                     fontSize: 42,
                     fontWeight: 900,
-                    color: "#4338ca",
+                    color: isDark ? "#818cf8" : "#4338ca",
                     letterSpacing: "0.04em",
                     margin: "12px 0 6px",
                     fontFamily: "monospace",
@@ -1658,9 +1834,9 @@ export function DoctorPublicBookingNotice({ slug }: DoctorPublicBookingNoticePro
                   {bookedAppointment.bookingNumberDisplay ||
                     `#${String(bookedAppointment.bookingNumber || 1).padStart(2, "0")}`}
                 </div>
-                <p style={{ margin: 0, fontSize: 13.5, color: "#475569" }}>
-                  Patient:{" "}
-                  <strong style={{ color: "#0f172a" }}>
+                <p style={{ margin: 0, fontSize: 13.5, color: th.textSecondary }}>
+                  {tAppointments("patientNameLabel", undefined, "Patient:")}{" "}
+                  <strong style={{ color: th.textPrimary }}>
                     {"patientName" in bookedAppointment
                       ? bookedAppointment.patientName
                       : bookedAppointment.patientNameMasked}
@@ -1673,14 +1849,14 @@ export function DoctorPublicBookingNotice({ slug }: DoctorPublicBookingNoticePro
                   style={{
                     display: "flex",
                     justifyContent: "space-between",
-                    background: "#f8faff",
+                    background: th.innerBg,
                     padding: "10px 14px",
                     borderRadius: 10,
-                    border: "1px solid #e0e7ff",
+                    border: th.innerBorder,
                   }}
                 >
-                  <span style={{ fontWeight: 700, color: "#64748b" }}>Appointment Date:</span>
-                  <strong style={{ color: "#4338ca", fontFamily: "monospace", fontSize: 15 }}>
+                  <span style={{ fontWeight: 700, color: th.textMuted }}>{tAppointments("appointmentDateLabelVoucher", undefined, "Appointment Date:")}</span>
+                  <strong style={{ color: isDark ? "#818cf8" : "#4338ca", fontFamily: "monospace", fontSize: 15 }}>
                     {formatDateDDMMYYYY(bookedAppointment.appointmentDate)}
                   </strong>
                 </div>
@@ -1689,49 +1865,49 @@ export function DoctorPublicBookingNotice({ slug }: DoctorPublicBookingNoticePro
                   style={{
                     display: "flex",
                     justifyContent: "space-between",
-                    background: "#f8faff",
+                    background: th.innerBg,
                     padding: "10px 14px",
                     borderRadius: 10,
-                    border: "1px solid #e0e7ff",
+                    border: th.innerBorder,
                   }}
                 >
-                  <span style={{ fontWeight: 700, color: "#64748b" }}>Serial No.:</span>
-                  <strong style={{ color: "#4338ca", fontFamily: "monospace", fontSize: 15 }}>
+                  <span style={{ fontWeight: 700, color: th.textMuted }}>{tAppointments("serialNoLabelVoucher", undefined, "Serial No.:")}</span>
+                  <strong style={{ color: isDark ? "#818cf8" : "#4338ca", fontFamily: "monospace", fontSize: 15 }}>
                     {bookedAppointment.bookingNumberDisplay ||
                       `#${String(bookedAppointment.bookingNumber || 1).padStart(2, "0")}`}
                   </strong>
                 </div>
 
-                <div style={{ display: "flex", justifyContent: "space-between", color: "#475569" }}>
-                  <span>Specialist Doctor:</span>
-                  <strong style={{ color: "#0f172a" }}>
+                <div style={{ display: "flex", justifyContent: "space-between", color: th.textSecondary }}>
+                  <span>{tAppointments("specialistDoctorLabel", undefined, "Specialist Doctor:")}</span>
+                  <strong style={{ color: th.textPrimary }}>
                     {bookedAppointment.doctorName || profile.fullName}
                   </strong>
                 </div>
 
-                <div style={{ display: "flex", justifyContent: "space-between", color: "#475569" }}>
-                  <span>Facility / Chamber:</span>
-                  <strong style={{ color: "#0f172a" }}>
+                <div style={{ display: "flex", justifyContent: "space-between", color: th.textSecondary }}>
+                  <span>{tAppointments("facilityChamberLabel", undefined, "Facility / Chamber:")}</span>
+                  <strong style={{ color: th.textPrimary }}>
                     {"chamberName" in bookedAppointment
                       ? bookedAppointment.chamberName
                       : bookedAppointment.facilityName ||
-                        selectedChamber?.facilityName ||
-                        "Main Chamber"}
+                      selectedChamber?.facilityName ||
+                      "Main Chamber"}
                   </strong>
                 </div>
 
-                <div style={{ display: "flex", justifyContent: "space-between", color: "#475569" }}>
-                  <span>Time:</span>
-                  <strong style={{ color: "#0f172a" }}>
+                <div style={{ display: "flex", justifyContent: "space-between", color: th.textSecondary }}>
+                  <span>{tAppointments("timeLabelVoucher", undefined, "Time:")}</span>
+                  <strong style={{ color: th.textPrimary }}>
                     {("appointmentTime" in bookedAppointment && bookedAppointment.appointmentTime) ||
                       selectedChamber?.visitingSchedule ||
                       "Daily 05:00 PM – 09:00 PM"}
                   </strong>
                 </div>
 
-                <div style={{ display: "flex", justifyContent: "space-between", color: "#475569" }}>
-                  <span>Status:</span>
-                  <span style={{ color: "#059669", fontWeight: 700 }}>
+                <div style={{ display: "flex", justifyContent: "space-between", color: th.textSecondary }}>
+                  <span>{tAppointments("statusLabelVoucher", undefined, "Status:")}</span>
+                  <span style={{ color: isDark ? "#34d399" : "#059669", fontWeight: 700 }}>
                     ● {bookedAppointment.status || "CONFIRMED"}
                   </span>
                 </div>
@@ -1741,15 +1917,15 @@ export function DoctorPublicBookingNotice({ slug }: DoctorPublicBookingNoticePro
                     display: "flex",
                     justifyContent: "space-between",
                     alignItems: "center",
-                    color: "#94a3b8",
+                    color: th.textMuted,
                     fontSize: 11.5,
                     paddingTop: 6,
-                    borderTop: "1px solid #f1f5f9",
+                    borderTop: `1px solid ${th.divider}`,
                   }}
                 >
-                  <span>Tracking Reference:</span>
+                  <span>{tAppointments("trackingReferenceLabel", undefined, "Tracking Reference:")}</span>
                   <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                    <span style={{ fontFamily: "monospace", fontWeight: 700, color: "#1e1b4b" }}>
+                    <span style={{ fontFamily: "monospace", fontWeight: 700, color: th.textPrimary }}>
                       {bookedAppointment.referenceNumber}
                     </span>
                     <button
@@ -1759,13 +1935,13 @@ export function DoctorPublicBookingNotice({ slug }: DoctorPublicBookingNoticePro
                         background: "none",
                         border: "none",
                         cursor: "pointer",
-                        color: "#6366f1",
+                        color: isDark ? "#818cf8" : "#6366f1",
                         display: "inline-flex",
                         alignItems: "center",
                         padding: "2px 4px",
                         borderRadius: 4,
                       }}
-                      title="Copy reference number"
+                      title={tAppointments("copyRefTooltip", undefined, "Copy reference number")}
                     >
                       {copiedRef ? <Check size={13} color="#10b981" /> : <Copy size={13} />}
                     </button>
@@ -1775,20 +1951,20 @@ export function DoctorPublicBookingNotice({ slug }: DoctorPublicBookingNoticePro
 
               <div
                 style={{
-                  background: "rgba(99, 102, 241, 0.08)",
-                  border: "1px solid rgba(99, 102, 241, 0.2)",
+                  background: isDark ? "rgba(99, 102, 241, 0.14)" : "rgba(99, 102, 241, 0.08)",
+                  border: isDark ? "1px solid rgba(99, 102, 241, 0.3)" : "1px solid rgba(99, 102, 241, 0.2)",
                   borderRadius: 12,
                   padding: "12px 14px",
                   fontSize: 12.5,
-                  color: "#4338ca",
+                  color: isDark ? "#a5b4fc" : "#4338ca",
                   display: "flex",
                   alignItems: "center",
                   gap: 10,
                 }}
               >
-                <Clock size={16} color="#4f46e5" style={{ flexShrink: 0 }} />
+                <Clock size={16} color={isDark ? "#818cf8" : "#4f46e5"} style={{ flexShrink: 0 }} />
                 <span>
-                  Your appointment is confirmed and synced to the chamber live queue. Please present this serial number upon arrival.
+                  {tAppointments("voucherSyncNotice", undefined, "Your appointment is confirmed and synced to the chamber live queue. Please present this serial number upon arrival.")}
                 </span>
               </div>
 
@@ -1815,7 +1991,7 @@ export function DoctorPublicBookingNotice({ slug }: DoctorPublicBookingNoticePro
                   }}
                 >
                   <Printer size={16} />
-                  <span>Print Slip</span>
+                  <span>{tAppointments("printSlipBtn", undefined, "Print Slip")}</span>
                 </button>
 
                 <button
@@ -1824,9 +2000,9 @@ export function DoctorPublicBookingNotice({ slug }: DoctorPublicBookingNoticePro
                   style={{
                     padding: "12px 16px",
                     borderRadius: 12,
-                    background: "rgba(99, 102, 241, 0.08)",
-                    border: "1px solid rgba(99, 102, 241, 0.25)",
-                    color: "#4338ca",
+                    background: isDark ? "rgba(99, 102, 241, 0.16)" : "rgba(99, 102, 241, 0.08)",
+                    border: isDark ? "1px solid rgba(99, 102, 241, 0.35)" : "1px solid rgba(99, 102, 241, 0.25)",
+                    color: isDark ? "#a5b4fc" : "#4338ca",
                     fontSize: 13,
                     fontWeight: 700,
                     cursor: "pointer",
@@ -1835,10 +2011,10 @@ export function DoctorPublicBookingNotice({ slug }: DoctorPublicBookingNoticePro
                     justifyContent: "center",
                     gap: 6,
                   }}
-                  title="Share or copy booking voucher"
+                  title={tAppointments("shareVoucherTooltip", undefined, "Share or copy booking voucher")}
                 >
                   <Share2 size={15} />
-                  <span>Share</span>
+                  <span>{tAppointments("shareVoucherBtn", undefined, "Share")}</span>
                 </button>
 
                 <button
@@ -1855,9 +2031,9 @@ export function DoctorPublicBookingNotice({ slug }: DoctorPublicBookingNoticePro
                   style={{
                     padding: "12px 16px",
                     borderRadius: 12,
-                    background: "#f1f5f9",
-                    border: "1px solid #e2e8f0",
-                    color: "#475569",
+                    background: th.btnSecondaryBg,
+                    border: th.btnSecondaryBorder,
+                    color: th.btnSecondaryText,
                     fontSize: 13,
                     fontWeight: 700,
                     cursor: "pointer",
@@ -1866,30 +2042,31 @@ export function DoctorPublicBookingNotice({ slug }: DoctorPublicBookingNoticePro
                     justifyContent: "center",
                   }}
                 >
-                  Book Another
+                  {tAppointments("bookAnotherBtn", undefined, "Book Another")}
                 </button>
               </div>
             </div>
           ) : (
             <div
               style={{
-                background: "#ffffff",
-                border: "1.5px solid #e0e7ff",
+                background: th.cardBg,
+                border: th.cardBorder,
                 borderRadius: 22,
                 padding: "30px 26px",
                 display: "flex",
                 flexDirection: "column",
                 gap: 20,
-                boxShadow: "0 10px 30px rgba(99, 102, 241, 0.05)",
+                boxShadow: th.cardShadow,
+                transition: "all 0.3s ease",
               }}
               className="guidelines-card"
             >
               <div>
-                <h3 style={{ fontSize: 17, fontWeight: 800, margin: "0 0 6px", color: "#1e1b4b" }}>
-                  Chamber Guidelines & Hours
+                <h3 style={{ fontSize: 17, fontWeight: 800, margin: "0 0 6px", color: th.textPrimary }}>
+                  {tAppointments("chamberGuidelinesHeading", undefined, "Chamber Guidelines & Hours")}
                 </h3>
-                <p style={{ margin: 0, fontSize: 13, color: "#64748b" }}>
-                  Automated live queue booking ensures zero physical wait time.
+                <p style={{ margin: 0, fontSize: 13, color: th.textMuted }}>
+                  {tAppointments("zeroWaitSub", undefined, "Automated live queue booking ensures zero physical wait time.")}
                 </p>
               </div>
 
@@ -1898,18 +2075,18 @@ export function DoctorPublicBookingNotice({ slug }: DoctorPublicBookingNoticePro
                   style={{
                     display: "flex",
                     gap: 12,
-                    background: "#f8faff",
-                    border: "1px solid #e0e7ff",
+                    background: th.innerBg,
+                    border: th.innerBorder,
                     padding: "14px 16px",
                     borderRadius: 14,
                   }}
                 >
-                  <Clock size={20} color="#4f46e5" style={{ flexShrink: 0, marginTop: 2 }} />
+                  <Clock size={20} color={isDark ? "#818cf8" : "#4f46e5"} style={{ flexShrink: 0, marginTop: 2 }} />
                   <div>
-                    <strong style={{ fontSize: 13.5, color: "#1e1b4b", display: "block" }}>
-                      Visiting Schedule
+                    <strong style={{ fontSize: 13.5, color: th.textPrimary, display: "block" }}>
+                      {tAppointments("visitingScheduleHeading", undefined, "Visiting Schedule")}
                     </strong>
-                    <span style={{ fontSize: 12.5, color: "#64748b", marginTop: 2, display: "block" }}>
+                    <span style={{ fontSize: 12.5, color: th.textMuted, marginTop: 2, display: "block" }}>
                       {selectedChamber?.visitingSchedule ||
                         "Daily Evening 6:00 PM - 10:00 PM (Except Friday)"}
                     </span>
@@ -1932,15 +2109,19 @@ export function DoctorPublicBookingNotice({ slug }: DoctorPublicBookingNoticePro
                               borderRadius: 6,
                               fontSize: 10,
                               fontWeight: 700,
-                              background: item.isOpen ? "rgba(16, 185, 129, 0.12)" : "rgba(239, 68, 68, 0.08)",
-                              color: item.isOpen ? "#059669" : "#94a3b8",
+                              background: item.isOpen
+                                ? isDark ? "rgba(16, 185, 129, 0.2)" : "rgba(16, 185, 129, 0.12)"
+                                : isDark ? "rgba(239, 68, 68, 0.15)" : "rgba(239, 68, 68, 0.08)",
+                              color: item.isOpen
+                                ? isDark ? "#34d399" : "#059669"
+                                : isDark ? "#64748b" : "#94a3b8",
                               border: item.isOpen
-                                ? "1px solid rgba(16, 185, 129, 0.3)"
-                                : "1px solid rgba(239, 68, 68, 0.15)",
+                                ? isDark ? "1px solid rgba(16, 185, 129, 0.4)" : "1px solid rgba(16, 185, 129, 0.3)"
+                                : isDark ? "1px solid rgba(239, 68, 68, 0.3)" : "1px solid rgba(239, 68, 68, 0.15)",
                             }}
                           >
                             <div>{item.abbr}</div>
-                            <div style={{ fontSize: 8.5, marginTop: 1 }}>{item.isOpen ? "OPEN" : "OFF"}</div>
+                            <div style={{ fontSize: 8.5, marginTop: 1 }}>{item.isOpen ? tAppointments("openStatusBadge", undefined, "OPEN") : tAppointments("offStatusBadge", undefined, "OFF")}</div>
                           </div>
                         ))}
                       </div>
@@ -1952,18 +2133,18 @@ export function DoctorPublicBookingNotice({ slug }: DoctorPublicBookingNoticePro
                   style={{
                     display: "flex",
                     gap: 12,
-                    background: "#f8faff",
-                    border: "1px solid #e0e7ff",
+                    background: th.innerBg,
+                    border: th.innerBorder,
                     padding: "14px 16px",
                     borderRadius: 14,
                   }}
                 >
-                  <MapPin size={20} color="#4f46e5" style={{ flexShrink: 0, marginTop: 2 }} />
+                  <MapPin size={20} color={isDark ? "#818cf8" : "#4f46e5"} style={{ flexShrink: 0, marginTop: 2 }} />
                   <div>
-                    <strong style={{ fontSize: 13.5, color: "#1e1b4b", display: "block" }}>
-                      Location & Room
+                    <strong style={{ fontSize: 13.5, color: th.textPrimary, display: "block" }}>
+                      {tAppointments("locationRoomHeading", undefined, "Location & Room")}
                     </strong>
-                    <span style={{ fontSize: 12.5, color: "#64748b", marginTop: 2, display: "block" }}>
+                    <span style={{ fontSize: 12.5, color: th.textMuted, marginTop: 2, display: "block" }}>
                       {selectedChamber?.facilityName || "Main Specialized Chamber"}
                       {selectedChamber?.city ? `, ${selectedChamber.city}` : ""}
                     </span>
@@ -1974,19 +2155,19 @@ export function DoctorPublicBookingNotice({ slug }: DoctorPublicBookingNoticePro
                   style={{
                     display: "flex",
                     gap: 12,
-                    background: "rgba(16, 185, 129, 0.08)",
-                    border: "1px solid rgba(16, 185, 129, 0.25)",
+                    background: isDark ? "rgba(16, 185, 129, 0.12)" : "rgba(16, 185, 129, 0.08)",
+                    border: isDark ? "1px solid rgba(16, 185, 129, 0.35)" : "1px solid rgba(16, 185, 129, 0.25)",
                     padding: "14px 16px",
                     borderRadius: 14,
                   }}
                 >
-                  <ShieldCheck size={20} color="#059669" style={{ flexShrink: 0, marginTop: 2 }} />
+                  <ShieldCheck size={20} color={isDark ? "#34d399" : "#059669"} style={{ flexShrink: 0, marginTop: 2 }} />
                   <div>
-                    <strong style={{ fontSize: 13.5, color: "#065f46", display: "block" }}>
-                      Direct Database Queue
+                    <strong style={{ fontSize: 13.5, color: isDark ? "#34d399" : "#065f46", display: "block" }}>
+                      {tAppointments("directDbQueueHeading", undefined, "Direct Database Queue")}
                     </strong>
-                    <span style={{ fontSize: 12.5, color: "#047857", marginTop: 2, display: "block" }}>
-                      Bookings are atomically allocated a chamber serial number and immediately broadcast to the doctor&apos;s live screen.
+                    <span style={{ fontSize: 12.5, color: isDark ? "#a7f3d0" : "#047857", marginTop: 2, display: "block" }}>
+                      {tAppointments("directDbQueueDesc", undefined, "Bookings are atomically allocated a chamber serial number and immediately broadcast to the doctor's live screen.")}
                     </span>
                   </div>
                 </div>
@@ -1995,22 +2176,24 @@ export function DoctorPublicBookingNotice({ slug }: DoctorPublicBookingNoticePro
               {consultationFeeFormatted && (
                 <div
                   style={{
-                    background: "linear-gradient(135deg, rgba(99, 102, 241, 0.08) 0%, rgba(99, 102, 241, 0.02) 100%)",
-                    border: "1.5px solid #c7d2fe",
+                    background: isDark
+                      ? "linear-gradient(135deg, rgba(99, 102, 241, 0.16) 0%, rgba(99, 102, 241, 0.04) 100%)"
+                      : "linear-gradient(135deg, rgba(99, 102, 241, 0.08) 0%, rgba(99, 102, 241, 0.02) 100%)",
+                    border: isDark ? "1.5px solid rgba(99, 102, 241, 0.35)" : "1.5px solid #c7d2fe",
                     borderRadius: 14,
                     padding: "16px 18px",
                   }}
                 >
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                    <span style={{ fontSize: 13, color: "#4338ca", fontWeight: 700 }}>
-                      Consultation Fee:
+                    <span style={{ fontSize: 13, color: isDark ? "#818cf8" : "#4338ca", fontWeight: 700 }}>
+                      {tAppointments("consultationFee", undefined, "Consultation Fee:")}
                     </span>
-                    <strong style={{ fontSize: 18, color: "#1e1b4b" }}>
+                    <strong style={{ fontSize: 18, color: th.textPrimary }}>
                       {consultationFeeFormatted}
                     </strong>
                   </div>
-                  <span style={{ fontSize: 12, color: "#64748b", display: "block", marginTop: 4 }}>
-                    Payable at chamber reception during visit or via card.
+                  <span style={{ fontSize: 12, color: th.textMuted, display: "block", marginTop: 4 }}>
+                    {tAppointments("payableAtReceptionHint", undefined, "Payable at chamber reception during visit or via card.")}
                   </span>
                 </div>
               )}
@@ -2031,7 +2214,7 @@ export function DoctorPublicBookingNotice({ slug }: DoctorPublicBookingNoticePro
             right: 0,
             bottom: 0,
             zIndex: 9999,
-            background: "rgba(15, 23, 42, 0.6)",
+            background: "rgba(3, 7, 18, 0.75)",
             backdropFilter: "blur(8px)",
             WebkitBackdropFilter: "blur(8px)",
             display: "grid",
@@ -2043,13 +2226,13 @@ export function DoctorPublicBookingNotice({ slug }: DoctorPublicBookingNoticePro
           <div
             className="recover-modal-box"
             style={{
-              background: "#ffffff",
+              background: th.cardBg,
               borderRadius: 22,
               padding: "28px 26px",
               maxWidth: 440,
               width: "100%",
-              boxShadow: "0 20px 60px rgba(15, 23, 42, 0.2)",
-              border: "1.5px solid #e0e7ff",
+              boxShadow: isDark ? "0 25px 70px rgba(0, 0, 0, 0.75)" : "0 20px 60px rgba(15, 23, 42, 0.2)",
+              border: th.cardBorder,
             }}
             onClick={(e) => e.stopPropagation()}
           >
@@ -2061,14 +2244,14 @@ export function DoctorPublicBookingNotice({ slug }: DoctorPublicBookingNoticePro
                 marginBottom: 16,
               }}
             >
-              <h3 style={{ margin: 0, fontSize: 18, fontWeight: 800, color: "#1e1b4b" }}>
-                Find Your Appointment
+              <h3 style={{ margin: 0, fontSize: 18, fontWeight: 800, color: th.textPrimary }}>
+                {tAppointments("findYourAppointmentHeading", undefined, "Find Your Appointment")}
               </h3>
               <button
                 type="button"
                 onClick={() => setIsRecoverModalOpen(false)}
                 style={{
-                  background: "#f1f5f9",
+                  background: th.btnSecondaryBg,
                   border: "none",
                   borderRadius: 8,
                   width: 36,
@@ -2076,23 +2259,23 @@ export function DoctorPublicBookingNotice({ slug }: DoctorPublicBookingNoticePro
                   display: "grid",
                   placeItems: "center",
                   cursor: "pointer",
-                  color: "#64748b",
+                  color: th.textMuted,
                 }}
               >
                 <X size={16} />
               </button>
             </div>
 
-            <p style={{ fontSize: 13, color: "#64748b", margin: "0 0 20px", lineHeight: 1.5 }}>
-              Enter your booking reference and contact phone to retrieve your confirmed appointment slip.
+            <p style={{ fontSize: 13, color: th.textMuted, margin: "0 0 20px", lineHeight: 1.5 }}>
+              {tAppointments("findYourAppointmentSub", undefined, "Enter your booking reference and contact phone to retrieve your confirmed appointment slip.")}
             </p>
 
             {recoverError && (
               <div
                 style={{
-                  background: "#fef2f2",
-                  border: "1px solid #fecaca",
-                  color: "#dc2626",
+                  background: isDark ? "#2a1215" : "#fef2f2",
+                  border: isDark ? "1px solid rgba(239, 68, 68, 0.5)" : "1px solid #fecaca",
+                  color: isDark ? "#fca5a5" : "#dc2626",
                   padding: "10px 14px",
                   borderRadius: 10,
                   fontSize: 12.5,
@@ -2105,50 +2288,54 @@ export function DoctorPublicBookingNotice({ slug }: DoctorPublicBookingNoticePro
 
             <form onSubmit={handleRecoverBooking} style={{ display: "flex", flexDirection: "column", gap: 14 }}>
               <div>
-                <label style={{ display: "block", fontSize: 12.5, fontWeight: 700, color: "#1e1b4b", marginBottom: 6 }}>
-                  Booking Reference Number
+                <label style={{ display: "block", fontSize: 12.5, fontWeight: 700, color: th.textPrimary, marginBottom: 6 }}>
+                  {tAppointments("bookingReferenceInputLabel", undefined, "Booking Reference Number")}
                 </label>
                 <input
                   type="text"
                   required
-                  placeholder="e.g. GB-XXXXXX"
+                  placeholder={tAppointments("bookingReferencePlaceholder", undefined, "e.g. GB-XXXXXX")}
                   value={recoverReference}
                   onChange={(e) => setRecoverReference(e.target.value)}
                   style={{
                     width: "100%",
                     padding: "12px 14px",
-                    background: "#f8faff",
-                    border: "1.5px solid #e0e7ff",
+                    background: th.inputBg,
+                    border: th.inputBorder,
                     borderRadius: 10,
                     fontSize: 14,
-                    color: "#1e1b4b",
+                    color: th.inputText,
                     boxSizing: "border-box",
                     outline: "none",
                   }}
+                  onFocus={(e) => (e.currentTarget.style.borderColor = th.inputFocusBorder)}
+                  onBlur={(e) => (e.currentTarget.style.borderColor = isDark ? "rgba(255, 255, 255, 0.12)" : "#e0e7ff")}
                 />
               </div>
 
               <div>
-                <label style={{ display: "block", fontSize: 12.5, fontWeight: 700, color: "#1e1b4b", marginBottom: 6 }}>
-                  Registered Contact Phone
+                <label style={{ display: "block", fontSize: 12.5, fontWeight: 700, color: th.textPrimary, marginBottom: 6 }}>
+                  {tAppointments("registeredPhoneInputLabel", undefined, "Registered Contact Phone")}
                 </label>
                 <input
                   type="tel"
                   required
-                  placeholder="Enter phone number used at booking"
+                  placeholder={tAppointments("registeredPhonePlaceholder", undefined, "Enter phone number used at booking")}
                   value={recoverPhone}
                   onChange={(e) => setRecoverPhone(e.target.value)}
                   style={{
                     width: "100%",
                     padding: "12px 14px",
-                    background: "#f8faff",
-                    border: "1.5px solid #e0e7ff",
+                    background: th.inputBg,
+                    border: th.inputBorder,
                     borderRadius: 10,
                     fontSize: 14,
-                    color: "#1e1b4b",
+                    color: th.inputText,
                     boxSizing: "border-box",
                     outline: "none",
                   }}
+                  onFocus={(e) => (e.currentTarget.style.borderColor = th.inputFocusBorder)}
+                  onBlur={(e) => (e.currentTarget.style.borderColor = isDark ? "rgba(255, 255, 255, 0.12)" : "#e0e7ff")}
                 />
               </div>
 
@@ -2173,11 +2360,11 @@ export function DoctorPublicBookingNotice({ slug }: DoctorPublicBookingNoticePro
                 }}
               >
                 {isRecovering ? (
-                  <span>Checking database...</span>
+                  <span>{tAppointments("checkingDbBtn", undefined, "Checking database...")}</span>
                 ) : (
                   <>
                     <Search size={15} />
-                    <span>Retrieve Appointment</span>
+                    <span>{tAppointments("retrieveAppointmentBtn", undefined, "Retrieve Appointment")}</span>
                   </>
                 )}
               </button>

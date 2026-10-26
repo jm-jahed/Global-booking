@@ -1,7 +1,9 @@
-import Link from "next/link";
+"use client";
 
+import Link from "next/link";
 import { PageContainer } from "@/components/layout/page-container";
 import type { PageContent } from "@/types/common";
+import { useTranslation } from "@/lib/i18n/i18n-context";
 
 export function FoundationPage({
   eyebrow,
@@ -12,6 +14,8 @@ export function FoundationPage({
   secondaryAction,
   points,
 }: PageContent) {
+  const { t } = useTranslation("common");
+
   return (
     <main>
       <section className="page-hero section-shell">
@@ -30,7 +34,7 @@ export function FoundationPage({
       {(notice || points) && (
         <section className="content-section">
           <PageContainer>
-            {notice && <div className="notice-card"><span>Foundation note</span><p>{notice}</p></div>}
+            {notice && <div className="notice-card"><span>{t("foundationNote", undefined, "Foundation note")}</span><p>{notice}</p></div>}
             {points && (
               <div className="content-grid">
                 {points.map((point) => (

@@ -43,6 +43,9 @@ import {
 } from "lucide-react";
 import type { PublicDoctorProfile } from "@/lib/api/doctor-public-client";
 import { getPublicDoctorProfile } from "@/lib/api/doctor-public-client";
+import { LanguageSelector } from "@/components/shared/language-selector";
+import { useTranslation } from "@/lib/i18n/i18n-context";
+import { formatLocaleNumber } from "@/lib/i18n/formatters";
 
 function getSpecialtyQuote(specialty?: string): string {
   const s = (specialty || "").toLowerCase();
@@ -116,6 +119,8 @@ export function DoctorPublicPortfolio({
   slug,
   initialData = null,
 }: DoctorPublicPortfolioProps) {
+  const { t: tPortal, locale } = useTranslation("portal");
+  const { t: tCommon } = useTranslation("common");
   const [profile, setProfile] = useState<PublicDoctorProfile | null>(initialData);
   const [loading, setLoading] = useState<boolean>(!initialData);
   const [notFoundState, setNotFoundState] = useState<boolean>(false);
@@ -222,10 +227,10 @@ export function DoctorPublicPortfolio({
             <Stethoscope size={28} />
           </div>
           <h2 style={{ fontSize: 20, color: "#1e1b4b", margin: "0 0 8px", fontWeight: 700 }}>
-            Loading Doctor Portfolio...
+            {tPortal("loadingPortfolio")}
           </h2>
           <p style={{ color: "#64748b", fontSize: 13, margin: 0 }}>
-            Connecting to clinical directory & chamber schedules.
+            {tPortal("connectingDirectory")}
           </p>
         </div>
       </main>
@@ -281,11 +286,10 @@ export function DoctorPublicPortfolio({
               fontWeight: 800,
             }}
           >
-            Doctor Profile Unavailable
+            {tPortal("doctorProfileUnavailable")}
           </h1>
           <p style={{ color: "#64748b", fontSize: 14, lineHeight: 1.65, margin: "0 0 28px" }}>
-            The requested practitioner profile is currently private, unpublished, or does not exist
-            in the GLOBAL BOOKING directory.
+            {tPortal("doctorProfileUnavailableDesc")}
           </p>
           <Link
             href="/"
@@ -303,7 +307,7 @@ export function DoctorPublicPortfolio({
               boxShadow: "0 8px 20px rgba(79, 70, 229, 0.25)",
             }}
           >
-            Return to Homepage
+            {tPortal("returnToHome")}
           </Link>
         </div>
       </main>
@@ -456,7 +460,7 @@ export function DoctorPublicPortfolio({
                 onMouseEnter={(e) => (e.currentTarget.style.color = "#4338ca")}
                 onMouseLeave={(e) => (e.currentTarget.style.color = "#475569")}
               >
-                About
+                {tPortal("aboutDoctor")}
               </a>
             )}
             {isServicesVisible && (
@@ -472,7 +476,7 @@ export function DoctorPublicPortfolio({
                 onMouseEnter={(e) => (e.currentTarget.style.color = "#4338ca")}
                 onMouseLeave={(e) => (e.currentTarget.style.color = "#475569")}
               >
-                Services
+                {tPortal("portfolioServices")}
               </a>
             )}
             {isEducationVisible && (
@@ -488,7 +492,7 @@ export function DoctorPublicPortfolio({
                 onMouseEnter={(e) => (e.currentTarget.style.color = "#4338ca")}
                 onMouseLeave={(e) => (e.currentTarget.style.color = "#475569")}
               >
-                Qualifications
+                {tPortal("qualifications")}
               </a>
             )}
             {isExperienceVisible && (
@@ -504,7 +508,7 @@ export function DoctorPublicPortfolio({
                 onMouseEnter={(e) => (e.currentTarget.style.color = "#4338ca")}
                 onMouseLeave={(e) => (e.currentTarget.style.color = "#475569")}
               >
-                Experience
+                {tPortal("experience")}
               </a>
             )}
             {isChambersVisible && (
@@ -520,7 +524,7 @@ export function DoctorPublicPortfolio({
                 onMouseEnter={(e) => (e.currentTarget.style.color = "#4338ca")}
                 onMouseLeave={(e) => (e.currentTarget.style.color = "#475569")}
               >
-                Visiting Schedule
+                {tPortal("visitingSchedule")}
               </a>
             )}
             {isContactVisible && (
@@ -536,13 +540,14 @@ export function DoctorPublicPortfolio({
                 onMouseEnter={(e) => (e.currentTarget.style.color = "#4338ca")}
                 onMouseLeave={(e) => (e.currentTarget.style.color = "#475569")}
               >
-                Contact
+                {tPortal("contact")}
               </a>
             )}
           </nav>
 
-          {/* Right Controls: Share, Direct Booking CTA & Mobile Menu Toggle */}
+          {/* Right Controls: Language Selector, Share, Direct Booking CTA & Mobile Menu Toggle */}
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <LanguageSelector variant="header" />
             <button
               type="button"
               onClick={handleShare}
@@ -560,10 +565,10 @@ export function DoctorPublicPortfolio({
                 cursor: "pointer",
                 transition: "all 0.15s ease",
               }}
-              title="Share Doctor Profile"
+              title={tPortal("share")}
             >
               {copiedLink ? <Check size={14} /> : <Share2 size={14} />}
-              <span className="share-btn-text">{copiedLink ? "Copied" : "Share"}</span>
+              <span className="share-btn-text">{copiedLink ? tPortal("copied") : tPortal("share")}</span>
             </button>
 
             <Link
@@ -587,7 +592,7 @@ export function DoctorPublicPortfolio({
               onMouseLeave={(e) => (e.currentTarget.style.transform = "translateY(0)")}
             >
               <Calendar size={14} />
-              <span>Book Appointment</span>
+              <span>{tPortal("bookAppointment")}</span>
             </Link>
 
             <button
@@ -625,7 +630,7 @@ export function DoctorPublicPortfolio({
                   onClick={() => setMobileMenuOpen(false)}
                   className="mobile-nav-link"
                 >
-                  About Practitioner
+                  {tPortal("aboutPractitionerNav")}
                 </a>
               )}
               {isServicesVisible && (
@@ -634,7 +639,7 @@ export function DoctorPublicPortfolio({
                   onClick={() => setMobileMenuOpen(false)}
                   className="mobile-nav-link"
                 >
-                  Clinical Services
+                  {tPortal("clinicalServicesNav")}
                 </a>
               )}
               {isEducationVisible && (
@@ -643,7 +648,7 @@ export function DoctorPublicPortfolio({
                   onClick={() => setMobileMenuOpen(false)}
                   className="mobile-nav-link"
                 >
-                  Qualifications & Degrees
+                  {tPortal("qualificationsDegreesNav")}
                 </a>
               )}
               {isExperienceVisible && (
@@ -652,7 +657,7 @@ export function DoctorPublicPortfolio({
                   onClick={() => setMobileMenuOpen(false)}
                   className="mobile-nav-link"
                 >
-                  Career & Appointments
+                  {tPortal("careerAppointmentsNav")}
                 </a>
               )}
               {isChambersVisible && (
@@ -661,7 +666,7 @@ export function DoctorPublicPortfolio({
                   onClick={() => setMobileMenuOpen(false)}
                   className="mobile-nav-link"
                 >
-                  Visiting Schedule & Chambers
+                  {tPortal("visitingScheduleChambersNav")}
                 </a>
               )}
               {isContactVisible && (
@@ -670,7 +675,7 @@ export function DoctorPublicPortfolio({
                   onClick={() => setMobileMenuOpen(false)}
                   className="mobile-nav-link"
                 >
-                  Contact & Inquiries
+                  {tPortal("contactInquiriesNav")}
                 </a>
               )}
             </div>
@@ -695,7 +700,7 @@ export function DoctorPublicPortfolio({
                 }}
               >
                 <Calendar size={16} />
-                <span>Book Appointment</span>
+                <span>{tPortal("bookAppointment")}</span>
               </Link>
             </div>
           </div>
@@ -721,37 +726,37 @@ export function DoctorPublicPortfolio({
         {isServicesVisible && (
           <a href="#services" className="quick-jump-pill">
             <Stethoscope size={13} color="#4f46e5" />
-            <span>Services</span>
+            <span>{tPortal("portfolioServices")}</span>
           </a>
         )}
         {isAboutVisible && (
           <a href="#about" className="quick-jump-pill">
             <Heart size={13} color="#4f46e5" />
-            <span>About</span>
+            <span>{tPortal("aboutDoctor")}</span>
           </a>
         )}
         {isEducationVisible && (
           <a href="#qualifications" className="quick-jump-pill">
             <GraduationCap size={13} color="#4f46e5" />
-            <span>Qualifications</span>
+            <span>{tPortal("qualifications")}</span>
           </a>
         )}
         {isExperienceVisible && (
           <a href="#experience" className="quick-jump-pill">
             <Briefcase size={13} color="#4f46e5" />
-            <span>Experience</span>
+            <span>{tPortal("experience")}</span>
           </a>
         )}
         {isChambersVisible && (
           <a href="#chambers" className="quick-jump-pill">
             <Building2 size={13} color="#4f46e5" />
-            <span>Chambers</span>
+            <span>{tCommon("chamber")}</span>
           </a>
         )}
         {isContactVisible && (
           <a href="#contact" className="quick-jump-pill">
             <Phone size={13} color="#4f46e5" />
-            <span>Contact</span>
+            <span>{tPortal("contact")}</span>
           </a>
         )}
       </div>
@@ -811,7 +816,7 @@ export function DoctorPublicPortfolio({
                 margin: "0 0 20px",
               }}
             >
-              Better care for <br />
+              {tPortal("betterCareHeadlinePrefix")} <br />
               <span
                 style={{
                   background: "linear-gradient(135deg, #3730a3 0%, #4f46e5 50%, #6366f1 100%)",
@@ -819,7 +824,7 @@ export function DoctorPublicPortfolio({
                   WebkitTextFillColor: "transparent",
                 }}
               >
-                your health
+                {tPortal("betterCareHeadlineSuffix")}
               </span>
             </h1>
 
@@ -860,7 +865,7 @@ export function DoctorPublicPortfolio({
                 onMouseEnter={(e) => (e.currentTarget.style.transform = "translateY(-2px)")}
                 onMouseLeave={(e) => (e.currentTarget.style.transform = "translateY(0)")}
               >
-                <span>View our services</span>
+                <span>{tPortal("viewOurServices")}</span>
                 <ChevronRight size={16} />
               </a>
 
@@ -886,7 +891,7 @@ export function DoctorPublicPortfolio({
                 onMouseLeave={(e) => (e.currentTarget.style.transform = "translateY(0)")}
               >
                 <PhoneCall size={16} />
-                <span>Book Consultation</span>
+                <span>{tPortal("bookConsultation")}</span>
               </Link>
             </div>
 
@@ -895,13 +900,13 @@ export function DoctorPublicPortfolio({
               <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                 <CheckCircle2 size={16} color="#10b981" />
                 <span style={{ fontSize: 13, fontWeight: 600, color: "#334155" }}>
-                  {profile.yearsOfExperience}+ Years Experience
+                  {tPortal("yearsExperienceBadge", { years: locale === "bn" ? formatLocaleNumber(profile.yearsOfExperience || 5, "bn") : String(profile.yearsOfExperience || 5) })}
                 </span>
               </div>
               <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                 <CheckCircle2 size={16} color="#10b981" />
                 <span style={{ fontSize: 13, fontWeight: 600, color: "#334155" }}>
-                  Verified Specialist
+                  {tPortal("verifiedSpecialist")}
                 </span>
               </div>
               {primaryChamber && (
@@ -1078,10 +1083,10 @@ export function DoctorPublicPortfolio({
               </div>
               <div>
                 <div style={{ fontSize: 12, fontWeight: 800, color: "#0f172a" }}>
-                  Verified Practice
+                  {tPortal("verifiedPractice")}
                 </div>
                 <div style={{ fontSize: 11, color: "#64748b", fontWeight: 500 }}>
-                  Active Practitioner
+                  {tPortal("activePractitioner")}
                 </div>
               </div>
             </div>
@@ -1115,7 +1120,7 @@ export function DoctorPublicPortfolio({
                   marginBottom: 8,
                 }}
               >
-                Medical Expertise & Services
+                {tPortal("medicalExpertiseSubtitle")}
               </div>
               <h2
                 style={{
@@ -1126,7 +1131,7 @@ export function DoctorPublicPortfolio({
                   letterSpacing: "-0.02em",
                 }}
               >
-                {sec.services?.customTitle || "Comprehensive Clinical Care"}
+                {sec.services?.customTitle || tPortal("comprehensiveCareHeading")}
               </h2>
             </div>
 
@@ -1296,7 +1301,7 @@ export function DoctorPublicPortfolio({
               >
                 <Award size={18} color="#4f46e5" />
                 <span style={{ fontSize: 13, fontWeight: 700, color: "#1e1b4b" }}>
-                  {profile.yearsOfExperience} Years Clinical Practice
+                  {tPortal("yearsExperienceBadge", { years: locale === "bn" ? formatLocaleNumber(profile.yearsOfExperience || 5, "bn") : String(profile.yearsOfExperience || 5) })}
                 </span>
               </div>
             </div>
@@ -1313,7 +1318,7 @@ export function DoctorPublicPortfolio({
                   marginBottom: 8,
                 }}
               >
-                About the Practitioner
+                {tPortal("aboutPractitionerSubtitle")}
               </div>
               <h2
                 style={{
@@ -1325,7 +1330,7 @@ export function DoctorPublicPortfolio({
                   letterSpacing: "-0.02em",
                 }}
               >
-                {sec.about?.customTitle || "Dedicated to Your Health & Well-being"}
+                {sec.about?.customTitle || tPortal("dedicatedHealthHeading")}
               </h2>
 
               {/* Quote Pill */}
@@ -1372,7 +1377,7 @@ export function DoctorPublicPortfolio({
                 >
                   <HeartHandshake size={20} color="#4f46e5" />
                   <span style={{ fontSize: 13, fontWeight: 700, color: "#1e1b4b" }}>
-                    Patient-Centered Care
+                    {tPortal("patientCenteredCare")}
                   </span>
                 </div>
 
@@ -1390,7 +1395,7 @@ export function DoctorPublicPortfolio({
                 >
                   <Microscope size={20} color="#4f46e5" />
                   <span style={{ fontSize: 13, fontWeight: 700, color: "#1e1b4b" }}>
-                    Evidence-Based Medicine
+                    {tPortal("evidenceBasedMedicine")}
                   </span>
                 </div>
 
@@ -1408,7 +1413,7 @@ export function DoctorPublicPortfolio({
                 >
                   <Activity size={20} color="#4f46e5" />
                   <span style={{ fontSize: 13, fontWeight: 700, color: "#1e1b4b" }}>
-                    Modern Clinical Tech
+                    {tPortal("modernClinicalTech")}
                   </span>
                 </div>
 
@@ -1426,7 +1431,7 @@ export function DoctorPublicPortfolio({
                 >
                   <Clock size={20} color="#4f46e5" />
                   <span style={{ fontSize: 13, fontWeight: 700, color: "#1e1b4b" }}>
-                    Continuous Follow-up
+                    {tPortal("continuousFollowUp")}
                   </span>
                 </div>
               </div>
@@ -1459,7 +1464,7 @@ export function DoctorPublicPortfolio({
                   marginBottom: 8,
                 }}
               >
-                Academic Background
+                {tPortal("academicBackgroundSubtitle")}
               </div>
               <h2
                 style={{
@@ -1469,7 +1474,7 @@ export function DoctorPublicPortfolio({
                   margin: 0,
                 }}
               >
-                {sec.education?.customTitle || "Qualifications & Credentials"}
+                {sec.education?.customTitle || tPortal("qualificationsHeading")}
               </h2>
             </div>
 
@@ -1518,7 +1523,7 @@ export function DoctorPublicPortfolio({
                         {edu.institution}
                       </div>
                       <div style={{ display: "flex", gap: 12, marginTop: 6, fontSize: 12, color: "#64748b", flexWrap: "wrap" }}>
-                        {edu.graduationYear && <span>Class of {edu.graduationYear}</span>}
+                        {edu.graduationYear && <span>{tPortal("classOfGraduation", { year: locale === "bn" ? formatLocaleNumber(Number(edu.graduationYear), "bn") : edu.graduationYear })}</span>}
                         {edu.fieldOfStudy && <span>• {edu.fieldOfStudy}</span>}
                       </div>
                     </div>
@@ -1557,7 +1562,7 @@ export function DoctorPublicPortfolio({
                         {deg}
                       </div>
                       <div style={{ fontSize: 12, color: "#64748b", marginTop: 2 }}>
-                        Verified Medical Degree & Qualification
+                        {tPortal("verifiedMedicalDegree")}
                       </div>
                     </div>
                   </div>
@@ -1589,10 +1594,10 @@ export function DoctorPublicPortfolio({
                   </div>
                   <div>
                     <div style={{ fontSize: 16, fontWeight: 700, color: "#1e1b4b" }}>
-                      Verified Specialist Practitioner
+                      {tPortal("verifiedPractitionerTitle")}
                     </div>
                     <div style={{ fontSize: 12, color: "#64748b", marginTop: 2 }}>
-                      Licensed in {profile.specialty}
+                      {tPortal("licensedInSpecialty", { specialty: profile.specialty })}
                     </div>
                   </div>
                 </div>
@@ -1626,7 +1631,7 @@ export function DoctorPublicPortfolio({
                   marginBottom: 8,
                 }}
               >
-                Career & Hospital Appointments
+                {tPortal("careerAppointmentsSubtitle")}
               </div>
               <h2
                 style={{
@@ -1636,7 +1641,7 @@ export function DoctorPublicPortfolio({
                   margin: 0,
                 }}
               >
-                {sec.experience?.customTitle || "Clinical Appointments & Experience"}
+                {sec.experience?.customTitle || tPortal("clinicalExperienceHeading")}
               </h2>
             </div>
 
@@ -1675,11 +1680,11 @@ export function DoctorPublicPortfolio({
                           border: `1px solid ${exp.isCurrent ? "rgba(16, 185, 129, 0.3)" : "rgba(148, 163, 184, 0.3)"}`,
                         }}
                       >
-                        {exp.isCurrent ? "Current Appointment" : "Previous Appointment"}
+                        {exp.isCurrent ? tPortal("currentAppointment") : tPortal("previousAppointment")}
                       </span>
 
                       <span style={{ fontSize: 12, fontWeight: 700, color: "#4f46e5" }}>
-                        {exp.startYear} – {exp.isCurrent ? "Present" : exp.endYear || ""}
+                        {formatLocaleNumber(exp.startYear, locale)} – {exp.isCurrent ? tPortal("presentPeriod") : formatLocaleNumber(exp.endYear || "", locale)}
                       </span>
                     </div>
 
@@ -1726,7 +1731,7 @@ export function DoctorPublicPortfolio({
                   marginBottom: 8,
                 }}
               >
-                Honors & Distinctions
+                {tPortal("honorsDistinctionsSubtitle")}
               </div>
               <h2
                 style={{
@@ -1736,7 +1741,7 @@ export function DoctorPublicPortfolio({
                   margin: 0,
                 }}
               >
-                {sec.awards?.customTitle || "Awards & Honors"}
+                {sec.awards?.customTitle || tPortal("awardsHonorsHeading")}
               </h2>
             </div>
 
@@ -1784,7 +1789,7 @@ export function DoctorPublicPortfolio({
                       </h3>
                       {awd.year && (
                         <span style={{ fontSize: 12, fontWeight: 700, color: "#4f46e5" }}>
-                          {awd.year}
+                          {formatLocaleNumber(awd.year, locale)}
                         </span>
                       )}
                     </div>
@@ -1828,7 +1833,7 @@ export function DoctorPublicPortfolio({
                   marginBottom: 8,
                 }}
               >
-                Academic Research
+                {tPortal("academicResearchSubtitle")}
               </div>
               <h2
                 style={{
@@ -1838,7 +1843,7 @@ export function DoctorPublicPortfolio({
                   margin: 0,
                 }}
               >
-                {sec.publications?.customTitle || "Publications & Clinical Research"}
+                {sec.publications?.customTitle || tPortal("publicationsHeading")}
               </h2>
             </div>
 
@@ -1867,7 +1872,7 @@ export function DoctorPublicPortfolio({
                   <div>
                     <div style={{ display: "flex", alignItems: "center", gap: 8, color: "#4f46e5", fontSize: 12, fontWeight: 700, marginBottom: 8 }}>
                       <BookOpen size={15} />
-                      <span>{pub.year || "Published Paper"}</span>
+                      <span>{pub.year ? formatLocaleNumber(pub.year, locale) : tPortal("publishedPaper")}</span>
                     </div>
 
                     <h3 style={{ fontSize: 16, fontWeight: 700, color: "#1e1b4b", margin: "0 0 6px", lineHeight: 1.35 }}>
@@ -1896,7 +1901,7 @@ export function DoctorPublicPortfolio({
                           textDecoration: "none",
                         }}
                       >
-                        <span>View Publication / PubMed</span>
+                        <span>{tPortal("viewPublication")}</span>
                         <ExternalLink size={12} />
                       </a>
                     </div>
@@ -1932,7 +1937,7 @@ export function DoctorPublicPortfolio({
                   marginBottom: 8,
                 }}
               >
-                Colleges & Societies
+                {tPortal("collegesSocietiesSubtitle")}
               </div>
               <h2
                 style={{
@@ -1942,7 +1947,7 @@ export function DoctorPublicPortfolio({
                   margin: 0,
                 }}
               >
-                {sec.memberships?.customTitle || "Professional Societies & Fellowships"}
+                {sec.memberships?.customTitle || tPortal("professionalSocietiesHeading")}
               </h2>
             </div>
 
@@ -1986,7 +1991,7 @@ export function DoctorPublicPortfolio({
                       {mem.organizationName}
                     </div>
                     <div style={{ fontSize: 12, color: "#64748b", marginTop: 2 }}>
-                      {mem.role || "Active Member"} {mem.sinceYear && `• Since ${mem.sinceYear}`}
+                      {mem.role || tPortal("activeMember")} {mem.sinceYear && `• ${tPortal("sinceYear", { year: formatLocaleNumber(mem.sinceYear, locale) })}`}
                     </div>
                   </div>
                 </div>
@@ -2012,7 +2017,7 @@ export function DoctorPublicPortfolio({
             <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 20 }}>
               <FileCheck size={20} color="#10b981" />
               <h3 style={{ fontSize: 18, fontWeight: 800, color: "#1e1b4b", margin: 0 }}>
-                Verified Credentials & Medical Accreditations
+                {tPortal("verifiedCredentialsHeading")}
               </h3>
             </div>
 
@@ -2041,7 +2046,7 @@ export function DoctorPublicPortfolio({
                       {doc.title}
                     </div>
                     <div style={{ fontSize: 11, color: "#64748b" }}>
-                      {doc.documentType} • Click to verify
+                      {doc.documentType} • {tPortal("clickToVerify")}
                     </div>
                   </div>
                   <ExternalLink size={13} color="#94a3b8" />
@@ -2076,7 +2081,7 @@ export function DoctorPublicPortfolio({
                   marginBottom: 8,
                 }}
               >
-                Consultation Locations
+                {tPortal("consultationLocationsSubtitle")}
               </div>
               <h2
                 style={{
@@ -2086,7 +2091,7 @@ export function DoctorPublicPortfolio({
                   margin: 0,
                 }}
               >
-                {sec.chambers?.customTitle || "Chamber & Visiting Schedule"}
+                {sec.chambers?.customTitle || tPortal("chamberVisitingScheduleHeading")}
               </h2>
             </div>
 
@@ -2199,7 +2204,7 @@ export function DoctorPublicPortfolio({
                     >
                       <div>
                         <div style={{ fontSize: 11, color: "#94a3b8", fontWeight: 600 }}>
-                          CONSULTATION FEE
+                          {tPortal("consultationFeeLabel")}
                         </div>
                         <div style={{ fontSize: 16, fontWeight: 800, color: "#1e1b4b", marginTop: 2 }}>
                           {fees.initial}
@@ -2221,7 +2226,7 @@ export function DoctorPublicPortfolio({
                           textDecoration: "none",
                         }}
                       >
-                        Book Chamber
+                        {tPortal("bookChamberBtn")}
                       </Link>
                     </div>
                   </div>
@@ -2239,10 +2244,10 @@ export function DoctorPublicPortfolio({
                 >
                   <MapPin size={28} color="#4f46e5" style={{ margin: "0 auto 12px" }} />
                   <h3 style={{ fontSize: 17, fontWeight: 700, color: "#1e1b4b", margin: "0 0 6px" }}>
-                    Visiting Schedule
+                    {tPortal("chamberVisitingScheduleHeading")}
                   </h3>
                   <p style={{ fontSize: 13, color: "#64748b", margin: 0 }}>
-                    Please contact the practice clinic for current chamber hours and consultation appointments.
+                    {tPortal("chamberContactClinicHint")}
                   </p>
                 </div>
               )}
@@ -2275,7 +2280,7 @@ export function DoctorPublicPortfolio({
                   marginBottom: 8,
                 }}
               >
-                Get in Touch
+                {tPortal("getInTouchSubtitle")}
               </div>
               <h2
                 style={{
@@ -2285,7 +2290,7 @@ export function DoctorPublicPortfolio({
                   margin: 0,
                 }}
               >
-                {sec.contact?.customTitle || "Contact & Inquiries"}
+                {sec.contact?.customTitle || tPortal("contactInquiriesHeading")}
               </h2>
             </div>
 
@@ -2337,7 +2342,7 @@ export function DoctorPublicPortfolio({
                       <Phone size={20} />
                     </div>
                     <div>
-                      <div style={{ fontSize: 12, color: "#64748b", fontWeight: 600 }}>CLINIC DESK</div>
+                      <div style={{ fontSize: 12, color: "#64748b", fontWeight: 600 }}>{tPortal("clinicDeskLabel")}</div>
                       <div style={{ fontSize: 15, fontWeight: 700, color: "#1e1b4b", marginTop: 2 }}>
                         {profile.publicContact.clinicPhone}
                       </div>
@@ -2388,7 +2393,7 @@ export function DoctorPublicPortfolio({
                       <MessageCircle size={20} />
                     </div>
                     <div>
-                      <div style={{ fontSize: 12, color: "#64748b", fontWeight: 600 }}>WHATSAPP INQUIRY</div>
+                      <div style={{ fontSize: 12, color: "#64748b", fontWeight: 600 }}>{tPortal("whatsappInquiryLabel")}</div>
                       <div style={{ fontSize: 15, fontWeight: 700, color: "#1e1b4b", marginTop: 2 }}>
                         {profile.publicContact.inquiryWhatsApp}
                       </div>
@@ -2437,7 +2442,7 @@ export function DoctorPublicPortfolio({
                       <Mail size={20} />
                     </div>
                     <div>
-                      <div style={{ fontSize: 12, color: "#64748b", fontWeight: 600 }}>PUBLIC INQUIRIES</div>
+                      <div style={{ fontSize: 12, color: "#64748b", fontWeight: 600 }}>{tPortal("publicInquiriesLabel")}</div>
                       <div style={{ fontSize: 15, fontWeight: 700, color: "#1e1b4b", marginTop: 2 }}>
                         {profile.publicContact.publicEmail}
                       </div>
@@ -2459,10 +2464,10 @@ export function DoctorPublicPortfolio({
                 >
                   <Building2 size={24} color="#4f46e5" style={{ margin: "0 auto 8px" }} />
                   <div style={{ fontSize: 15, fontWeight: 700, color: "#1e1b4b" }}>
-                    Consultation Appointments
+                    {tPortal("consultationAppointmentsHeading")}
                   </div>
                   <div style={{ fontSize: 13, color: "#64748b", marginTop: 4 }}>
-                    Use the online booking system below to schedule visits with {profile.fullName}.
+                    {tPortal("onlineBookingBelowHint", { name: profile.fullName })}
                   </div>
                 </div>
               )}
@@ -2503,7 +2508,7 @@ export function DoctorPublicPortfolio({
                 marginBottom: 10,
               }}
             >
-              Ready to schedule?
+              {tPortal("readyToScheduleSubtitle")}
             </div>
             <h2
               style={{
@@ -2514,11 +2519,11 @@ export function DoctorPublicPortfolio({
                 letterSpacing: "-0.02em",
               }}
             >
-              Your Health Deserves <br />
-              the Best Care
+              {tPortal("yourHealthDeservesHeadingPrefix")} <br />
+              {tPortal("yourHealthDeservesHeadingSuffix")}
             </h2>
             <p style={{ fontSize: 15, color: "#e0e7ff", lineHeight: 1.6, margin: 0 }}>
-              Schedule a comprehensive consultation with {profile.fullName} today. Convenient chamber appointments and patient-first medical attention.
+              {tPortal("scheduleConsultationDesc", { name: profile.fullName })}
             </p>
           </div>
 
@@ -2543,7 +2548,7 @@ export function DoctorPublicPortfolio({
               onMouseLeave={(e) => (e.currentTarget.style.transform = "translateY(0)")}
             >
               <Calendar size={18} color="#4338ca" />
-              <span>Book Appointment</span>
+              <span>{tPortal("bookAppointment")}</span>
             </Link>
           </div>
         </div>
@@ -2592,13 +2597,13 @@ export function DoctorPublicPortfolio({
                 {profile.fullName}
               </div>
               <div style={{ fontSize: 11, color: "#64748b" }}>
-                {profile.specialty} Practice Suite
+                {tPortal("practiceSuiteFooter", { specialty: profile.specialty })}
               </div>
             </div>
           </div>
 
           <div style={{ fontSize: 12, color: "#64748b" }}>
-            © {new Date().getFullYear()} {profile.fullName}. Verified Doctor Portfolio • Powered by GLOBAL BOOKING
+            {tPortal("verifiedDoctorPortfolioFooter", { year: formatLocaleNumber(new Date().getFullYear(), locale), name: profile.fullName })}
           </div>
         </div>
       </footer>
@@ -2655,7 +2660,7 @@ export function DoctorPublicPortfolio({
               {profile.fullName}
             </div>
             <div style={{ fontSize: 11, color: "#64748b", fontWeight: 600 }}>
-              Fee: <span style={{ color: "#4f46e5", fontWeight: 800 }}>{fees.initial}</span>
+              {tPortal("feeLabel")} <span style={{ color: "#4f46e5", fontWeight: 800 }}>{fees.initial}</span>
             </div>
           </div>
         </div>
@@ -2679,7 +2684,7 @@ export function DoctorPublicPortfolio({
           }}
         >
           <Calendar size={15} />
-          <span>Book Appointment</span>
+          <span>{tPortal("bookAppointment")}</span>
         </Link>
       </div>
 

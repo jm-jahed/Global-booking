@@ -38,6 +38,7 @@ import {
   getAdminMe,
 } from "@/lib/api/admin-client";
 import { DoctorQrModal } from "./qr-code/doctor-qr-modal";
+import { useTranslation } from "@/lib/i18n/i18n-context";
 
 export type PortalAccountType = "DOCTOR" | "HOSPITAL" | "STAFF";
 
@@ -313,6 +314,7 @@ export function PortalSidebar({
 }: PortalSidebarProps = {}) {
   const pathname = usePathname();
   const router = useRouter();
+  const { t } = useTranslation("nav");
 
   const [accountType, setAccountType] = useState<PortalAccountType>(propAccountType || "DOCTOR");
   const [currentUser, setCurrentUser] = useState<any>(propUser || null);
@@ -320,6 +322,39 @@ export function PortalSidebar({
   const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
   const [copiedLink, setCopiedLink] = useState(false);
   const [mounted, setMounted] = useState(false);
+
+  const getNavItemLabel = (id: string, defaultLabel: string): string => {
+    switch (id) {
+      case "dashboard":
+        return t("dashboard", undefined, defaultLabel);
+      case "live-queue":
+        return t("liveQueue", undefined, defaultLabel);
+      case "my-patients":
+      case "patients":
+      case "clients":
+      case "customers":
+        return t("patients", undefined, defaultLabel);
+      case "availability":
+        return t("availability", undefined, defaultLabel);
+      case "services":
+        return t("services", undefined, defaultLabel);
+      case "staff":
+        return t("staff", undefined, defaultLabel);
+      case "reports":
+        return t("reports", undefined, defaultLabel);
+      case "notifications":
+        return t("notifications", undefined, defaultLabel);
+      case "profile-settings":
+      case "settings":
+        return t("settings", undefined, defaultLabel);
+      case "qr-code":
+        return t("qrCode", undefined, defaultLabel);
+      case "logout":
+        return t("logout", undefined, defaultLabel);
+      default:
+        return defaultLabel;
+    }
+  };
 
   useEffect(() => {
     setMounted(true);
@@ -551,7 +586,7 @@ export function PortalSidebar({
                       <span className="sidebar-nav-icon">
                         <Icon size={18} />
                       </span>
-                      <span className="sidebar-nav-label">{item.label}</span>
+                      <span className="sidebar-nav-label">{getNavItemLabel(item.id, item.label)}</span>
                     </div>
 
                     {item.actionKey === "QR_CODE" && (
@@ -575,7 +610,7 @@ export function PortalSidebar({
                     <span className="sidebar-nav-icon">
                       <Icon size={18} strokeWidth={isActive ? 2.2 : 1.9} />
                     </span>
-                    <span className="sidebar-nav-label">{item.label}</span>
+                    <span className="sidebar-nav-label">{getNavItemLabel(item.id, item.label)}</span>
                   </div>
 
                   <div style={{ display: "flex", alignItems: "center", gap: 6 }}>

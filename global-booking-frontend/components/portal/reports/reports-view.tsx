@@ -28,6 +28,7 @@ import {
   type DoctorReportsResponse,
   type DoctorReportEncounterItem,
 } from "@/lib/api/doctor-reports-client";
+import { useTranslation } from "@/lib/i18n/i18n-context";
 
 type DateRangePreset = "THIS_MONTH" | "LAST_30" | "LAST_7" | "TODAY" | "CUSTOM";
 
@@ -120,6 +121,8 @@ const PRESET_OPTIONS: PresetOption[] = [
 ];
 
 export function ReportsView() {
+  const { t } = useTranslation("reports");
+  const { t: tCommon } = useTranslation("common");
   const [loading, setLoading] = useState<boolean>(true);
   const [refreshing, setRefreshing] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
@@ -463,7 +466,7 @@ export function ReportsView() {
               Global Booking Healthcare Network
             </div>
             <div style={{ fontSize: 13, color: "#4b5563", fontWeight: 600, marginTop: 2 }}>
-              Official Clinical Consultation &amp; Throughput Report
+              {t("officialReportLetterhead", undefined, "Official Clinical Consultation & Throughput Report")}
             </div>
           </div>
           <div style={{ textAlign: "right" }}>
@@ -483,7 +486,7 @@ export function ReportsView() {
 
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", borderTop: "1px solid #e5e7eb", paddingTop: 8, fontSize: 11, color: "#4b5563" }}>
           <div>
-            <strong>Reporting Window:</strong> {dateRangeDates.displayLabel}
+            <strong>{t("reportingWindow", undefined, "Reporting Window:")}</strong> {dateRangeDates.displayLabel}
           </div>
           <div>
             <strong>Generated:</strong> {new Date().toLocaleString("en-US", { dateStyle: "medium", timeStyle: "short" })}
@@ -498,10 +501,10 @@ export function ReportsView() {
             <CalendarPlus size={24} strokeWidth={2.4} />
           </div>
           <div>
-            <h1 className="reports-header-title-text">Reports</h1>
+            <h1 className="reports-header-title-text">{t("reportsHeaderTitle", undefined, "Reports")}</h1>
             <p className="reports-header-subtitle-text">
               {doctorProfile?.fullName ? `${doctorProfile.fullName} • ` : ""}
-              Authentic patient history, visit records and clinical reporting
+              {t("reportsHeaderSubtitle", undefined, "Authentic patient history, visit records and clinical reporting")}
             </p>
           </div>
         </div>
@@ -516,7 +519,7 @@ export function ReportsView() {
             title="Refresh clinical reports from backend"
           >
             <RefreshCw size={15} style={{ color: "#f5c270" }} className={refreshing ? "animate-spin" : ""} />
-            <span>{refreshing ? "Refreshing..." : "Refresh"}</span>
+            <span>{refreshing ? t("refreshing", undefined, "Refreshing...") : tCommon("refresh", undefined, "Refresh")}</span>
           </button>
 
           {/* Interactive Date Range Dropdown with Custom Date Picker */}

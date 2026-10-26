@@ -24,6 +24,8 @@ import {
   Sparkles,
   Activity,
 } from "lucide-react";
+import { LanguageSelector } from "@/components/shared/language-selector";
+import { useTranslation } from "@/lib/i18n/i18n-context";
 
 /* =========================================================================
    HEALTHCARE PULSE (ECG) BRAND EMBLEM (MATCHING DR. PORTFOLIO THEME)
@@ -73,6 +75,10 @@ function HealthcarePulseLogo({ size = 40 }: { size?: number }) {
 }
 
 export default function HomePage() {
+  const { t: tHome } = useTranslation("home");
+  const { t: tNav } = useTranslation("nav");
+  const { t: tCommon } = useTranslation("common");
+
   const [activeModal, setActiveModal] = useState<"doctor" | "hospital" | null>(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [selectedDay, setSelectedDay] = useState<number>(0);
@@ -109,7 +115,7 @@ export default function HomePage() {
             <HealthcarePulseLogo size={42} />
             <div className="brand-labels">
               <span className="brand-title">GLOBAL BOOKING</span>
-              <span className="brand-subtitle">HEALTHCARE PRACTICE PLATFORM</span>
+              <span className="brand-subtitle">{tCommon("appTagline", undefined, "HEALTHCARE PRACTICE PLATFORM")}</span>
             </div>
           </Link>
 
@@ -133,10 +139,13 @@ export default function HomePage() {
           </nav>
 
           {/* Right Action Buttons */}
-          <div className="header-actions">
+          <div className="header-actions" style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            {/* Global Multilingual Selector */}
+            <LanguageSelector variant="header" />
+
             <Link href="/login" className="sign-in-btn">
               <User size={18} className="sign-in-icon" />
-              <span>Sign In</span>
+              <span>{tNav("login", undefined, "Sign In")}</span>
             </Link>
 
             <button
@@ -144,7 +153,7 @@ export default function HomePage() {
               className="get-started-btn"
               onClick={() => setActiveModal("doctor")}
             >
-              Get Started
+              {tHome("bookAppointment", undefined, "Get Started")}
             </button>
 
             {/* Mobile Hamburger Toggle */}
@@ -227,7 +236,11 @@ export default function HomePage() {
               </Link>
             </div>
 
-            <div className="mobile-drawer-footer">
+            <div className="mobile-drawer-footer" style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "0 4px" }}>
+                <span style={{ fontSize: 12, color: "#94a3b8" }}>Language / ভাষা:</span>
+                <LanguageSelector variant="compact" />
+              </div>
               <Link
                 href="/login"
                 className="mobile-login-btn"
@@ -248,16 +261,14 @@ export default function HomePage() {
         <div className="hero-container">
           {/* Left Column: Real Typography, Description & 3 Interactive CTAs */}
           <div className="hero-text-col">
-            <span className="hero-pretitle">YOUR HEALTHCARE PRACTICE.</span>
+            <span className="hero-pretitle">{tHome("badge", undefined, "YOUR HEALTHCARE PRACTICE.")}</span>
 
             <h1 className="hero-headline">
-              <span className="serif-italic-title">Digitally Connected.</span>
+              <span className="serif-italic-title">{tHome("heroHeadline", undefined, "Digitally Connected.")}</span>
             </h1>
 
             <p className="hero-description">
-              GLOBAL BOOKING helps doctors build their professional online presence and
-              helps hospitals and clinics showcase their facilities while making online
-              appointments easier for patients.
+              {tHome("heroDescription", undefined, "GLOBAL BOOKING helps doctors build their professional online presence and helps hospitals and clinics showcase their facilities while making online appointments easier for patients.")}
             </p>
 
             <div className="hero-cta-group">
@@ -268,7 +279,7 @@ export default function HomePage() {
                 onClick={() => setActiveModal("doctor")}
               >
                 <span className="cta-icon-avatar">👨‍⚕️</span>
-                <span>For Doctors</span>
+                <span>{tHome("forDoctors", undefined, "For Doctors")}</span>
                 <ArrowRight size={14} className="cta-arrow" />
               </button>
 
@@ -279,7 +290,7 @@ export default function HomePage() {
                 onClick={() => setActiveModal("hospital")}
               >
                 <Building2 size={16} className="cta-gold-icon" />
-                <span>For Hospitals & Clinics</span>
+                <span>{tHome("forHospitals", undefined, "For Hospitals & Clinics")}</span>
                 <ArrowRight size={14} className="cta-arrow" />
               </button>
             </div>
@@ -354,17 +365,17 @@ export default function HomePage() {
                 <div className="practice-metrics-bar">
                   <div className="metric-item">
                     <span className="metric-val">12+ Yrs</span>
-                    <span className="metric-lbl">Experience</span>
+                    <span className="metric-lbl">{tHome("experience", undefined, "Experience")}</span>
                   </div>
                   <div className="metric-divider" />
                   <div className="metric-item">
                     <span className="metric-val">4.9 ★</span>
-                    <span className="metric-lbl">Patient Rating</span>
+                    <span className="metric-lbl">{tHome("patientRating", undefined, "Patient Rating")}</span>
                   </div>
                   <div className="metric-divider" />
                   <div className="metric-item">
                     <span className="metric-val">500</span>
-                    <span className="metric-lbl">Consultation</span>
+                    <span className="metric-lbl">{tHome("consultation", undefined, "Consultation")}</span>
                   </div>
                 </div>
 
@@ -372,9 +383,9 @@ export default function HomePage() {
                 <div className="schedule-section">
                   <div className="schedule-header">
                     <span className="schedule-label">
-                      <Calendar size={13} /> Select Chamber Schedule
+                      <Calendar size={13} /> {tHome("selectChamberSchedule", undefined, "Select Chamber Schedule")}
                     </span>
-                    <span className="live-slots-pill">Next Slot Today</span>
+                    <span className="live-slots-pill">{tHome("nextSlotToday", undefined, "Next Slot Today")}</span>
                   </div>
 
                   <div className="days-pills-row">

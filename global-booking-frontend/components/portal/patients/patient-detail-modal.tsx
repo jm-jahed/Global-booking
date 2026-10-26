@@ -18,6 +18,7 @@ import {
   Ticket,
 } from "lucide-react";
 import type { PersistentPatient } from "@/lib/api/doctor-patients-client";
+import { useTranslation } from "@/lib/i18n/i18n-context";
 
 interface PatientDetailModalProps {
   patient: PersistentPatient | null;
@@ -26,6 +27,8 @@ interface PatientDetailModalProps {
 }
 
 export function PatientDetailModal({ patient, onClose, onBookAppointment }: PatientDetailModalProps) {
+  const { t } = useTranslation("patients");
+  const { t: tCommon } = useTranslation("common");
   if (!patient) return null;
 
   return (
@@ -112,7 +115,7 @@ export function PatientDetailModal({ patient, onClose, onBookAppointment }: Pati
                 </span>
               </div>
               <p style={{ margin: "4px 0 0", fontSize: 12.5, color: "#94a3b8" }}>
-                Patient ID: <strong style={{ color: "#e2e8f0" }}>{patient.id}</strong> • Total Attended Visits:{" "}
+                {t("patientId", undefined, "Patient ID")}: <strong style={{ color: "#e2e8f0" }}>{patient.id}</strong> • {t("totalAttendedVisits", undefined, "Total Attended Visits")}:{" "}
                 <strong style={{ color: "#e5b869" }}>{patient.totalVisits}</strong>
               </p>
             </div>
@@ -155,10 +158,10 @@ export function PatientDetailModal({ patient, onClose, onBookAppointment }: Pati
               }}
             >
               <span style={{ fontSize: 11, color: "#94a3b8", display: "block", textTransform: "uppercase" }}>
-                Contact Number
+                {t("contactNumber", undefined, "Contact Number")}
               </span>
               <strong style={{ fontSize: 13.5, color: "#ffffff", marginTop: 4, display: "block" }}>
-                {patient.phone || "Not Provided"}
+                {patient.phone || t("notProvided", undefined, "Not Provided")}
               </strong>
             </div>
 
@@ -171,10 +174,10 @@ export function PatientDetailModal({ patient, onClose, onBookAppointment }: Pati
               }}
             >
               <span style={{ fontSize: 11, color: "#94a3b8", display: "block", textTransform: "uppercase" }}>
-                Last Visit Date
+                {t("lastVisitDate", undefined, "Last Visit Date")}
               </span>
               <strong style={{ fontSize: 13.5, color: "#e5b869", marginTop: 4, display: "block" }}>
-                {patient.lastVisit ? patient.lastVisit.split("-").reverse().join("-") : "None recorded"}
+                {patient.lastVisit ? patient.lastVisit.split("-").reverse().join("-") : t("noneRecorded", undefined, "None recorded")}
               </strong>
             </div>
 
@@ -187,14 +190,14 @@ export function PatientDetailModal({ patient, onClose, onBookAppointment }: Pati
               }}
             >
               <span style={{ fontSize: 11, color: "#94a3b8", display: "block", textTransform: "uppercase" }}>
-                Upcoming Booking
+                {t("upcomingBooking", undefined, "Upcoming Booking")}
               </span>
               <strong style={{ fontSize: 13.5, color: "#34d399", marginTop: 4, display: "block" }}>
                 {patient.nextAppointment?.date
                   ? `${patient.nextAppointment.date.split("-").reverse().join("-")}${
                       patient.nextAppointment.time ? ` (${patient.nextAppointment.time})` : ""
                     }`
-                  : "None scheduled"}
+                  : t("noneScheduled", undefined, "None scheduled")}
               </strong>
             </div>
 
@@ -207,10 +210,10 @@ export function PatientDetailModal({ patient, onClose, onBookAppointment }: Pati
               }}
             >
               <span style={{ fontSize: 11, color: "#94a3b8", display: "block", textTransform: "uppercase" }}>
-                Blood Group / Gender
+                {t("bloodGroupGender", undefined, "Blood Group / Gender")}
               </span>
               <strong style={{ fontSize: 13.5, color: "#ffffff", marginTop: 4, display: "block" }}>
-                {patient.bloodGroup || "—"} • {patient.gender || "Not specified"}
+                {patient.bloodGroup || "—"} • {patient.gender || "—"}
               </strong>
             </div>
           </div>
@@ -228,7 +231,7 @@ export function PatientDetailModal({ patient, onClose, onBookAppointment }: Pati
             <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 14 }}>
               <History size={16} color="#e5b869" />
               <h3 style={{ margin: 0, fontSize: 14, fontWeight: 700, color: "#ffffff" }}>
-                Encounter & Visit History ({patient.visitHistory?.length || 0})
+                {t("encounterVisitHistory", { count: patient.visitHistory?.length || 0 }, `Encounter & Visit History (${patient.visitHistory?.length || 0})`)}
               </h3>
             </div>
 
@@ -302,12 +305,12 @@ export function PatientDetailModal({ patient, onClose, onBookAppointment }: Pati
                         }}
                       >
                         {v.status === "COMPLETED" || v.status === "ATTENDED"
-                          ? "Attended ✓"
+                          ? t("attended", undefined, "Attended ✓")
                           : v.status === "SKIPPED_ABSENT"
-                          ? "Absent (Skipped)"
+                          ? t("absentSkipped", undefined, "Absent (Skipped)")
                           : v.status === "CANCELLED"
-                          ? "Cancelled"
-                          : "In Progress"}
+                          ? tCommon("cancelled", undefined, "Cancelled")
+                          : tCommon("active", undefined, "In Progress")}
                       </span>
                     </div>
                   </div>
@@ -315,7 +318,7 @@ export function PatientDetailModal({ patient, onClose, onBookAppointment }: Pati
               </div>
             ) : (
               <p style={{ margin: 0, fontSize: 12.5, color: "#64748b" }}>
-                No past visit records found for this patient.
+                {t("noPastVisits", undefined, "No past visit records found for this patient.")}
               </p>
             )}
           </div>
@@ -332,11 +335,11 @@ export function PatientDetailModal({ patient, onClose, onBookAppointment }: Pati
             <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
               <FileText size={16} color="#e5b869" />
               <h3 style={{ margin: 0, fontSize: 14, fontWeight: 700, color: "#ffffff" }}>
-                Clinical Remarks & History
+                {t("clinicalRemarksHistory", undefined, "Clinical Remarks & History")}
               </h3>
             </div>
             <p style={{ margin: 0, fontSize: 13, color: "#cbd5e1", lineHeight: 1.6 }}>
-              {patient.notes || "No clinical remarks recorded for this patient file."}
+              {patient.notes || t("noClinicalRemarks", undefined, "No clinical remarks recorded for this patient file.")}
             </p>
           </div>
         </div>
@@ -369,7 +372,7 @@ export function PatientDetailModal({ patient, onClose, onBookAppointment }: Pati
             }}
           >
             <Printer size={14} />
-            <span>Print Chart</span>
+            <span>{t("printChart", undefined, "Print Chart")}</span>
           </button>
           <button
             type="button"
@@ -385,7 +388,7 @@ export function PatientDetailModal({ patient, onClose, onBookAppointment }: Pati
               cursor: "pointer",
             }}
           >
-            Close Chart
+            {t("closeChart", undefined, "Close Chart")}
           </button>
         </div>
       </div>

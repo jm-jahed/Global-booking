@@ -26,6 +26,8 @@ import { MOCK_SERVICES } from "@/lib/data/mock-services";
 import { ClinicalService, ServiceCategory } from "@/types/service";
 import { NewServiceModal } from "./new-service-modal";
 import { ServiceDetailModal } from "./service-detail-modal";
+import { useTranslation } from "@/lib/i18n/i18n-context";
+import { formatLocaleTime } from "@/lib/i18n/formatters";
 
 type ViewMode = "cards" | "table";
 
@@ -42,6 +44,9 @@ const CATEGORIES: ServiceCategory[] = [
 ];
 
 export function ServicesView() {
+  const { t, locale } = useTranslation("services");
+  const { t: tCommon } = useTranslation("common");
+
   const [services, setServices] = useState<ClinicalService[]>(MOCK_SERVICES);
   const [viewMode, setViewMode] = useState<ViewMode>("cards");
   const [searchQuery, setSearchQuery] = useState("");
@@ -51,13 +56,13 @@ export function ServicesView() {
   const [isNewModalOpen, setIsNewModalOpen] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
-  // Live UAE Clock
+  // Live UAE Clock (locale-aware, preserving chamber timezone)
   const [currentTime, setCurrentTime] = useState("");
   useEffect(() => {
     const updateTime = () => {
       const now = new Date();
       setCurrentTime(
-        now.toLocaleTimeString("en-US", {
+        formatLocaleTime(now, locale, "Asia/Dubai", {
           hour: "2-digit",
           minute: "2-digit",
           second: "2-digit",
@@ -68,7 +73,7 @@ export function ServicesView() {
     updateTime();
     const interval = setInterval(updateTime, 1000);
     return () => clearInterval(interval);
-  }, []);
+  }, [locale]);
 
   const showToast = (msg: string) => {
     setToastMessage(msg);
@@ -150,13 +155,13 @@ export function ServicesView() {
             </div>
             <div>
               <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                <h1 className="hero-title-text">Clinical Services Catalog</h1>
+                <h1 className="hero-title-text">{t("title", undefined, "Clinical Services Catalog")}</h1>
                 <span className="patient-total-chip">{services.length} Procedures</span>
               </div>
             </div>
           </div>
           <p className="hero-tagline">
-            Manage hospital specialties, procedural tariffs, insurance coverage, and clinical specialist allocation.
+            {t("subtitle", undefined, "Manage hospital specialties, procedural tariffs, insurance coverage, and clinical specialist allocation.")}
           </p>
         </div>
 
