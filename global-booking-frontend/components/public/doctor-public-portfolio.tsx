@@ -2135,20 +2135,56 @@ export function DoctorPublicPortfolio({
                     {ch.visitingSchedule && (
                       <div
                         style={{
-                          display: "flex",
-                          alignItems: "center",
-                          gap: 8,
-                          fontSize: 13,
-                          color: "#334155",
                           background: "#ffffff",
                           border: "1px solid #e2e8f0",
-                          padding: "8px 12px",
+                          padding: "10px 12px",
                           borderRadius: 10,
                           marginBottom: 16,
                         }}
                       >
-                        <Clock size={15} color="#4f46e5" />
-                        <span>{ch.visitingSchedule}</span>
+                        <div
+                          style={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: 8,
+                            fontSize: 13,
+                            color: "#334155",
+                            fontWeight: 600,
+                          }}
+                        >
+                          <Clock size={15} color="#4f46e5" style={{ flexShrink: 0 }} />
+                          <span>{ch.visitingSchedule}</span>
+                        </div>
+                        {ch.weeklySchedule && (
+                          <div
+                            style={{
+                              display: "flex",
+                              gap: 4,
+                              flexWrap: "wrap",
+                              marginTop: 6,
+                              paddingLeft: 23,
+                            }}
+                          >
+                            {Object.entries(ch.weeklySchedule)
+                              .filter(([_, s]) => s.isOpen)
+                              .map(([day]) => (
+                                <span
+                                  key={day}
+                                  style={{
+                                    fontSize: 10,
+                                    fontWeight: 700,
+                                    background: "rgba(16, 185, 129, 0.12)",
+                                    color: "#059669",
+                                    padding: "1px 6px",
+                                    borderRadius: 4,
+                                    border: "1px solid rgba(16, 185, 129, 0.25)",
+                                  }}
+                                >
+                                  {day.slice(0, 3)}
+                                </span>
+                              ))}
+                          </div>
+                        )}
                       </div>
                     )}
 

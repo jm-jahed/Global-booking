@@ -8,6 +8,7 @@ import type {
   DoctorRecord,
   SafeDoctorProfile,
   DoctorChamberDetail,
+  DaySchedule,
   MoneyAmount,
   DoctorEducationItem,
   DoctorExperienceItem,
@@ -352,17 +353,43 @@ export async function registerDoctorPortalRoutes(app: FastifyInstance): Promise<
           }
         }
 
+        const VALID_SCHEDULE_DAYS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
+        const sanitizeWeeklySchedule = (raw: any): Record<string, DaySchedule> | undefined => {
+          if (!raw || typeof raw !== "object") return undefined;
+          const result: Record<string, DaySchedule> = {};
+          for (const day of VALID_SCHEDULE_DAYS) {
+            const item = raw[day];
+            if (item && typeof item === "object") {
+              result[day] = {
+                isOpen: Boolean(item.isOpen),
+                start: String(item.start || "09:00 AM").trim().slice(0, 25),
+                end: String(item.end || "05:00 PM").trim().slice(0, 25),
+                ...(typeof item.maxPatients === "number" && !isNaN(item.maxPatients) && item.maxPatients >= 0
+                  ? { maxPatients: Math.floor(item.maxPatients) }
+                  : {}),
+              };
+            }
+          }
+          return Object.keys(result).length > 0 ? result : undefined;
+        };
+
         const cleanedChambers: DoctorChamberDetail[] = body.chambers.map((ch, idx) => {
           const existingChamber = currentDoctor.chambers?.find((c) => c.id === ch.id);
           const resolvedTimezone =
             (ch.timezone && String(ch.timezone).trim()) || existingChamber?.timezone || undefined;
+          const sanitizedSchedule =
+            ch.weeklySchedule !== undefined
+              ? sanitizeWeeklySchedule(ch.weeklySchedule)
+              : existingChamber?.weeklySchedule;
+
           return {
             id: String(ch.id || `CH-${idx + 1}`).trim(),
             facilityName: String(ch.facilityName || "").trim().slice(0, 100),
             city: String(ch.city || "").trim().slice(0, 50),
             address: ch.address ? String(ch.address).trim().slice(0, 200) : undefined,
             roomNumber: ch.roomNumber ? String(ch.roomNumber).trim().slice(0, 40) : undefined,
-            visitingSchedule: ch.visitingSchedule ? String(ch.visitingSchedule).trim().slice(0, 120) : undefined,
+            visitingSchedule: ch.visitingSchedule ? String(ch.visitingSchedule).trim().slice(0, 150) : undefined,
+            weeklySchedule: sanitizedSchedule,
             contactPhone: ch.contactPhone ? String(ch.contactPhone).trim().slice(0, 30) : undefined,
             timezone: resolvedTimezone,
           };

@@ -6,7 +6,7 @@ import {
   HOSPITAL_NAV_ITEMS,
 } from "../components/portal/portal-sidebar";
 
-test("Doctor Dashboard Sidebar contains exactly 11 approved menus in strict order", () => {
+test("Doctor Dashboard Sidebar contains exactly 10 approved menus in strict order", () => {
   const expectedDoctorLabels = [
     "Dashboard",
     "Live Queue",
@@ -15,7 +15,6 @@ test("Doctor Dashboard Sidebar contains exactly 11 approved menus in strict orde
     "Reports",
     "QR Code & Booking Link",
     "Staff Management",
-    "Subscription & Billing",
     "Notifications",
     "My Profile & Portfolio",
     "Logout",
@@ -23,8 +22,8 @@ test("Doctor Dashboard Sidebar contains exactly 11 approved menus in strict orde
 
   assert.equal(
     DOCTOR_NAV_ITEMS.length,
-    11,
-    `Expected exactly 11 Doctor sidebar menus, found ${DOCTOR_NAV_ITEMS.length}`,
+    10,
+    `Expected exactly 10 Doctor sidebar menus, found ${DOCTOR_NAV_ITEMS.length}`,
   );
 
   const actualLabels = DOCTOR_NAV_ITEMS.map((m) => m.label);
@@ -91,7 +90,7 @@ test("Hospital / Clinic Dashboard Sidebar contains exactly 14 approved menus in 
   );
 });
 
-test("Staff login restrictions: Staff Management & Subscription & Billing hidden by default", () => {
+test("Staff login restrictions: Staff Management & Reports hidden by default", () => {
   // Staff restricted items in Doctor dashboard
   const staffRestrictedInDoctor = DOCTOR_NAV_ITEMS.filter((item) => !item.staffAccessible).map(
     (item) => item.label,
@@ -100,7 +99,6 @@ test("Staff login restrictions: Staff Management & Subscription & Billing hidden
   assert.deepEqual(staffRestrictedInDoctor, [
     "Reports",
     "Staff Management",
-    "Subscription & Billing",
   ]);
 
   // Live Queue allows phone booking for staff
@@ -108,6 +106,6 @@ test("Staff login restrictions: Staff Management & Subscription & Billing hidden
   assert.ok(queueItem);
   assert.equal(queueItem?.phoneBookingAllowed, true);
 
-  // Doctor has full access to all 11 items
-  assert.equal(DOCTOR_NAV_ITEMS.length, 11);
+  // Doctor has full access to all 10 items
+  assert.equal(DOCTOR_NAV_ITEMS.length, 10);
 });

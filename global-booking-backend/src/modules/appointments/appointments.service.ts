@@ -325,6 +325,24 @@ export async function createGuestAppointment(
     );
   }
 
+  // 1b. Validate working schedule: prevent bookings on doctor OFF-DAY
+  if (chamber.weeklySchedule) {
+    const parts = appointmentDate.split("-").map(Number);
+    const y = parts[0] ?? 2026;
+    const m = parts[1] ?? 1;
+    const d = parts[2] ?? 1;
+    const dateObj = new Date(Date.UTC(y, m - 1, d, 12, 0, 0));
+    const dayOfWeek = dateObj.toLocaleDateString("en-US", { weekday: "long", timeZone: "UTC" });
+    const dayConfig = chamber.weeklySchedule[dayOfWeek];
+    if (dayConfig && !dayConfig.isOpen) {
+      throw new AppointmentServiceError(
+        "OFF_DAY_UNAVAILABLE",
+        `Dr. ${doctor.fullName} is not practicing on ${dayOfWeek}s at ${chamber.facilityName}. Please select an open practicing day.`,
+        400,
+      );
+    }
+  }
+
   const aptCol = mongoAdapter.getAppointmentCollection();
   const idempotencyKey = input.idempotencyKey ? input.idempotencyKey.trim() : undefined;
 

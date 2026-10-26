@@ -554,6 +554,13 @@ export async function updatePlatformSettings(
    DOCTOR PORTAL SELF-SERVICE API
    ========================================================================= */
 
+export interface DaySchedule {
+  isOpen: boolean;
+  start: string;
+  end: string;
+  maxPatients?: number;
+}
+
 export interface DoctorChamberDetail {
   id: string;
   facilityName: string;
@@ -561,6 +568,7 @@ export interface DoctorChamberDetail {
   address?: string;
   roomNumber?: string;
   visitingSchedule?: string;
+  weeklySchedule?: Record<string, DaySchedule>;
   contactPhone?: string;
   timezone?: string;
 }

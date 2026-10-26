@@ -170,7 +170,7 @@ test("4. Staff cannot see Reports in sidebar for Doctor and Hospital navigation"
     "Reports in Hospital nav must be staffAccessible: false",
   );
 
-  // Staff restricted items in Doctor dashboard must include Reports, Staff Management, and Subscription & Billing
+  // Staff restricted items in Doctor dashboard must include Reports and Staff Management
   const staffRestrictedDoctorItems = DOCTOR_NAV_ITEMS.filter((item) => !item.staffAccessible).map(
     (item) => item.label,
   );
@@ -182,9 +182,14 @@ test("4. Staff cannot see Reports in sidebar for Doctor and Hospital navigation"
     staffRestrictedDoctorItems.includes("Staff Management"),
     "Staff restricted doctor items must include 'Staff Management'",
   );
+
+  // Hospital navigation retains Subscription & Billing as staff-restricted
+  const staffRestrictedHospitalItems = HOSPITAL_NAV_ITEMS.filter((item) => !item.staffAccessible).map(
+    (item) => item.label,
+  );
   assert.ok(
-    staffRestrictedDoctorItems.includes("Subscription & Billing"),
-    "Staff restricted doctor items must include 'Subscription & Billing'",
+    staffRestrictedHospitalItems.includes("Subscription & Billing"),
+    "Staff restricted hospital items must include 'Subscription & Billing'",
   );
 });
 

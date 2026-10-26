@@ -54,7 +54,7 @@ export interface PortalNavItem {
 }
 
 /**
- * 11 Approved Menus for DOCTOR DASHBOARD SIDEBAR (Strict Order)
+ * 10 Approved Menus for DOCTOR DASHBOARD SIDEBAR (Strict Order)
  * 1. Dashboard
  * 2. Live Queue
  * 3. My Patients
@@ -62,10 +62,10 @@ export interface PortalNavItem {
  * 5. Reports
  * 6. QR Code & Booking Link
  * 7. Staff Management (Doctor full access, hidden for Staff by default)
- * 8. Subscription & Billing (Doctor full access, hidden for Staff by default)
- * 9. Notifications
- * 10. My Profile & Portfolio
- * 11. Logout
+ * 8. Notifications
+ * 9. My Profile & Portfolio
+ * 10. Logout
+ * (Note: Subscription & Billing temporarily removed for future addition)
  */
 export const DOCTOR_NAV_ITEMS: readonly PortalNavItem[] = [
   {
@@ -129,15 +129,7 @@ export const DOCTOR_NAV_ITEMS: readonly PortalNavItem[] = [
     activeMatch: (path) => path.startsWith("/staff"),
     staffAccessible: false, // Staff restricted by default
   },
-  {
-    id: "subscription-billing",
-    label: "Subscription & Billing",
-    href: "/pricing",
-    icon: CreditCard,
-    activeMatch: (path) =>
-      path.startsWith("/pricing") || path.startsWith("/subscription"),
-    staffAccessible: false, // Staff restricted by default
-  },
+  // Note: Subscription & Billing temporarily removed from doctor navigation - will be re-added in future.
   {
     id: "notifications",
     label: "Notifications",

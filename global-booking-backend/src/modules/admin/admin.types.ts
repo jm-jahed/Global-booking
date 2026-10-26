@@ -87,6 +87,13 @@ export interface HospitalRegistrationRecord extends BaseRegistrationRecord {
 
 export type RegistrationRecord = DoctorRegistrationRecord | HospitalRegistrationRecord;
 
+export interface DaySchedule {
+  readonly isOpen: boolean;
+  readonly start: string;
+  readonly end: string;
+  readonly maxPatients?: number | undefined;
+}
+
 export interface DoctorChamberDetail {
   readonly id: string;
   readonly facilityName: string;
@@ -94,6 +101,7 @@ export interface DoctorChamberDetail {
   readonly address?: string | undefined;
   readonly roomNumber?: string | undefined;
   readonly visitingSchedule?: string | undefined;
+  readonly weeklySchedule?: Record<string, DaySchedule> | undefined;
   readonly contactPhone?: string | undefined;
   readonly timezone?: string | undefined;
 }

@@ -1,7 +1,7 @@
 import type { FastifyInstance, FastifyRequest, FastifyReply } from "fastify";
 import { mongoAdapter } from "../../infrastructure/database/mongo.adapter.js";
 import { isValidDoctorSlug, generateSafeDoctorSlug } from "../portal/doctor-portal.routes.js";
-import type { MoneyAmount, DoctorChamberDetail } from "../admin/admin.types.js";
+import type { MoneyAmount, DoctorChamberDetail, DaySchedule } from "../admin/admin.types.js";
 import { createQueueTicket, getDoctorQueueTickets, QueueServiceError } from "../queue/queue.service.js";
 import { getChamberBusinessDate } from "../queue/queue.timezone.js";
 
@@ -10,6 +10,7 @@ export interface PublicChamberInfo {
   readonly facilityName: string;
   readonly city: string;
   readonly visitingSchedule?: string | undefined;
+  readonly weeklySchedule?: Record<string, DaySchedule> | undefined;
 }
 
 export interface PublicEducationItem {
@@ -254,6 +255,7 @@ export async function registerDoctorPublicRoutes(app: FastifyInstance): Promise<
               facilityName: String(ch.facilityName),
               city: String(ch.city),
               ...(ch.visitingSchedule ? { visitingSchedule: String(ch.visitingSchedule) } : {}),
+              ...(ch.weeklySchedule ? { weeklySchedule: ch.weeklySchedule } : {}),
             }))
           : undefined;
 
@@ -536,6 +538,24 @@ export async function registerDoctorPublicRoutes(app: FastifyInstance): Promise<
         ...chamber,
         timezone: chamber.timezone || "Asia/Dubai",
       };
+
+      if (chamberWithTz.weeklySchedule) {
+        const todayDate = getChamberBusinessDate(chamberWithTz.timezone || "Asia/Dubai");
+        const parts = todayDate.split("-").map(Number);
+        const y = parts[0] ?? 2026;
+        const m = parts[1] ?? 1;
+        const d = parts[2] ?? 1;
+        const dateObj = new Date(Date.UTC(y, m - 1, d, 12, 0, 0));
+        const dayOfWeek = dateObj.toLocaleDateString("en-US", { weekday: "long", timeZone: "UTC" });
+        const dayConfig = chamberWithTz.weeklySchedule[dayOfWeek];
+        if (dayConfig && !dayConfig.isOpen) {
+          return reply.status(400).send({
+            statusCode: 400,
+            error: "Bad Request",
+            message: `Dr. ${doctor.fullName} is not practicing today (${dayOfWeek}) at ${chamberWithTz.facilityName}. Please visit during scheduled practicing hours.`,
+          });
+        }
+      }
 
       try {
         const result = await createQueueTicket(

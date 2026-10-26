@@ -25,13 +25,10 @@ import {
   type DoctorChamberDetail,
   type DoctorProfileRecord,
 } from "@/lib/api/admin-client";
-
-interface DaySchedule {
-  isOpen: boolean;
-  start: string;
-  end: string;
-  maxPatients: number;
-}
+import {
+  formatVisitingScheduleSummary,
+  type DaySchedule,
+} from "@/lib/utils/schedule-formatter";
 
 const DEFAULT_WEEKLY_SCHEDULE: Record<string, DaySchedule> = {
   Monday: { isOpen: true, start: "05:00 AM", end: "09:00 PM", maxPatients: 45 },
@@ -47,7 +44,8 @@ const DEFAULT_CHAMBER: DoctorChamberDetail = {
   id: "chamber-main",
   facilityName: "Main Consultation Chamber",
   city: "",
-  visitingSchedule: "Daily 05:00 AM – 09:00 PM",
+  visitingSchedule: "Daily: 05:00 AM – 09:00 PM",
+  weeklySchedule: DEFAULT_WEEKLY_SCHEDULE,
   roomNumber: "Suite 405, 4th Floor",
   contactPhone: "",
   timezone: "Asia/Dubai",
@@ -95,19 +93,43 @@ export function AvailabilityView() {
         const feeInFils = doc.consultationFee?.amountInFils;
         if (typeof feeInFils === "number" && !Number.isNaN(feeInFils)) {
           setConsultationFeeAed(feeInFils / 100);
-        }
-
-        if (Array.isArray(doc.chambers) && doc.chambers.length > 0) {
-          setChambers(doc.chambers);
-          setSelectedChamberId(doc.chambers[0].id || "chamber-0");
+        }        if (Array.isArray(doc.chambers) && doc.chambers.length > 0) {
+          const loaded: DoctorChamberDetail[] = doc.chambers.map((c) => {
+            const hasSplit = c.visitingSchedule?.toLowerCase().includes("split");
+            const fallbackSchedule = hasSplit
+              ? {
+                  Monday: { isOpen: false, start: "09:00 AM", end: "01:00 PM", maxPatients: 0 },
+                  Tuesday: { isOpen: true, start: "05:00 PM", end: "09:00 PM", maxPatients: 20 },
+                  Wednesday: { isOpen: false, start: "09:00 AM", end: "01:00 PM", maxPatients: 0 },
+                  Thursday: { isOpen: true, start: "05:00 PM", end: "09:00 PM", maxPatients: 20 },
+                  Friday: { isOpen: false, start: "09:00 AM", end: "01:00 PM", maxPatients: 0 },
+                  Saturday: { isOpen: true, start: "10:00 AM", end: "04:00 PM", maxPatients: 25 },
+                  Sunday: { isOpen: false, start: "09:00 AM", end: "01:00 PM", maxPatients: 0 },
+                }
+              : DEFAULT_WEEKLY_SCHEDULE;
+            const sched = c.weeklySchedule || fallbackSchedule;
+            return {
+              ...c,
+              weeklySchedule: sched,
+              visitingSchedule: c.visitingSchedule || formatVisitingScheduleSummary(sched),
+            };
+          });
+          setChambers(loaded);
+          const firstId = loaded[0]?.id || "chamber-0";
+          setSelectedChamberId(firstId);
+          if (loaded[0]?.weeklySchedule) {
+            setWeeklySchedule(loaded[0].weeklySchedule);
+          }
         } else {
           setChambers([DEFAULT_CHAMBER]);
           setSelectedChamberId(DEFAULT_CHAMBER.id);
+          setWeeklySchedule(DEFAULT_WEEKLY_SCHEDULE);
         }
       }
     } catch {
       setChambers([DEFAULT_CHAMBER]);
       setSelectedChamberId(DEFAULT_CHAMBER.id);
+      setWeeklySchedule(DEFAULT_WEEKLY_SCHEDULE);
     } finally {
       setLoading(false);
     }
@@ -124,6 +146,13 @@ export function AvailabilityView() {
   );
   const activeChamber = chambers[activeIndex] || DEFAULT_CHAMBER;
 
+  // Keep weeklySchedule in sync when active chamber switches
+  useEffect(() => {
+    if (activeChamber && activeChamber.weeklySchedule) {
+      setWeeklySchedule(activeChamber.weeklySchedule);
+    }
+  }, [selectedChamberId]);
+
   // Add Chamber Handler
   const handleAddChamber = () => {
     const newId = `chamber-${Date.now()}`;
@@ -131,7 +160,16 @@ export function AvailabilityView() {
       id: newId,
       facilityName: `Consultation Chamber #${chambers.length + 1}`,
       city: "",
-      visitingSchedule: "Mon - Fri: 09:00 AM – 05:00 PM",
+      visitingSchedule: "Mon – Fri: 09:00 AM – 05:00 PM",
+      weeklySchedule: {
+        Monday: { isOpen: true, start: "09:00 AM", end: "05:00 PM", maxPatients: 30 },
+        Tuesday: { isOpen: true, start: "09:00 AM", end: "05:00 PM", maxPatients: 30 },
+        Wednesday: { isOpen: true, start: "09:00 AM", end: "05:00 PM", maxPatients: 30 },
+        Thursday: { isOpen: true, start: "09:00 AM", end: "05:00 PM", maxPatients: 30 },
+        Friday: { isOpen: true, start: "09:00 AM", end: "05:00 PM", maxPatients: 30 },
+        Saturday: { isOpen: false, start: "09:00 AM", end: "05:00 PM", maxPatients: 0 },
+        Sunday: { isOpen: false, start: "09:00 AM", end: "05:00 PM", maxPatients: 0 },
+      },
       roomNumber: "Room 101",
       contactPhone: "",
       timezone: "Asia/Dubai",
@@ -139,6 +177,9 @@ export function AvailabilityView() {
     const updated = [...chambers, newChamber];
     setChambers(updated);
     setSelectedChamberId(newId);
+    if (newChamber.weeklySchedule) {
+      setWeeklySchedule(newChamber.weeklySchedule);
+    }
   };
 
   // Remove Chamber Handler
@@ -152,11 +193,14 @@ export function AvailabilityView() {
     const nextActive = updated[0];
     if (nextActive) {
       setSelectedChamberId(nextActive.id || "chamber-0");
+      if (nextActive.weeklySchedule) {
+        setWeeklySchedule(nextActive.weeklySchedule);
+      }
     }
   };
 
   // Update Field on Active Chamber
-  const handleUpdateActiveChamber = (field: keyof DoctorChamberDetail, value: string) => {
+  const handleUpdateActiveChamber = (field: keyof DoctorChamberDetail, value: any) => {
     setChambers((prev) => {
       const copy = [...prev];
       if (copy[activeIndex]) {
@@ -166,10 +210,40 @@ export function AvailabilityView() {
     });
   };
 
+  // Update day in schedule and sync visitingSchedule summary automatically
+  const handleUpdateScheduleDay = (day: string, updates: Partial<DaySchedule>) => {
+    const curWeekly = activeChamber.weeklySchedule || weeklySchedule;
+    const cur = curWeekly[day] || { isOpen: true, start: "09:00 AM", end: "05:00 PM", maxPatients: 20 };
+    const updatedDay: DaySchedule = { ...cur, ...updates };
+    const updatedWeekly: Record<string, DaySchedule> = { ...curWeekly, [day]: updatedDay };
+    const autoSummary = formatVisitingScheduleSummary(updatedWeekly);
+
+    setWeeklySchedule(updatedWeekly);
+    setChambers((prev) => {
+      const copy = [...prev];
+      if (copy[activeIndex]) {
+        copy[activeIndex] = {
+          ...copy[activeIndex],
+          weeklySchedule: updatedWeekly,
+          visitingSchedule: autoSummary,
+        };
+      }
+      return copy;
+    });
+  };
+
+  // Toggle Day: Switches between PRACTICING and OFF-DAY
+  const handleToggleDay = (day: string) => {
+    const curWeekly = activeChamber.weeklySchedule || weeklySchedule;
+    const cur = curWeekly[day] || { isOpen: true, start: "09:00 AM", end: "05:00 PM", maxPatients: 20 };
+    handleUpdateScheduleDay(day, { isOpen: !cur.isOpen });
+  };
+
   // Preset Schedule Handlers
   const handleApplyPreset = (presetType: "daily" | "weekdays" | "split") => {
+    let newSched: Record<string, DaySchedule>;
     if (presetType === "daily") {
-      setWeeklySchedule({
+      newSched = {
         Monday: { isOpen: true, start: "05:00 AM", end: "09:00 PM", maxPatients: 45 },
         Tuesday: { isOpen: true, start: "05:00 AM", end: "09:00 PM", maxPatients: 45 },
         Wednesday: { isOpen: true, start: "05:00 AM", end: "09:00 PM", maxPatients: 45 },
@@ -177,10 +251,9 @@ export function AvailabilityView() {
         Friday: { isOpen: true, start: "05:00 AM", end: "09:00 PM", maxPatients: 45 },
         Saturday: { isOpen: true, start: "05:00 AM", end: "09:00 PM", maxPatients: 45 },
         Sunday: { isOpen: true, start: "05:00 AM", end: "09:00 PM", maxPatients: 45 },
-      });
-      handleUpdateActiveChamber("visitingSchedule", "Daily 05:00 AM – 09:00 PM");
+      };
     } else if (presetType === "weekdays") {
-      setWeeklySchedule({
+      newSched = {
         Monday: { isOpen: true, start: "09:00 AM", end: "06:00 PM", maxPatients: 30 },
         Tuesday: { isOpen: true, start: "09:00 AM", end: "06:00 PM", maxPatients: 30 },
         Wednesday: { isOpen: true, start: "09:00 AM", end: "06:00 PM", maxPatients: 30 },
@@ -188,31 +261,32 @@ export function AvailabilityView() {
         Friday: { isOpen: true, start: "09:00 AM", end: "01:00 PM", maxPatients: 15 },
         Saturday: { isOpen: false, start: "09:00 AM", end: "05:00 PM", maxPatients: 0 },
         Sunday: { isOpen: false, start: "09:00 AM", end: "05:00 PM", maxPatients: 0 },
-      });
-      handleUpdateActiveChamber("visitingSchedule", "Mon – Thu: 09:00 AM – 06:00 PM, Fri: Morning");
+      };
     } else {
-      setWeeklySchedule({
-        Monday: { isOpen: true, start: "09:00 AM", end: "01:00 PM", maxPatients: 20 },
+      // Split / Custom (matches User's actual Image 3 setup)
+      newSched = {
+        Monday: { isOpen: false, start: "09:00 AM", end: "01:00 PM", maxPatients: 0 },
         Tuesday: { isOpen: true, start: "05:00 PM", end: "09:00 PM", maxPatients: 20 },
-        Wednesday: { isOpen: true, start: "09:00 AM", end: "01:00 PM", maxPatients: 20 },
+        Wednesday: { isOpen: false, start: "09:00 AM", end: "01:00 PM", maxPatients: 0 },
         Thursday: { isOpen: true, start: "05:00 PM", end: "09:00 PM", maxPatients: 20 },
         Friday: { isOpen: false, start: "09:00 AM", end: "01:00 PM", maxPatients: 0 },
         Saturday: { isOpen: true, start: "10:00 AM", end: "04:00 PM", maxPatients: 25 },
         Sunday: { isOpen: false, start: "09:00 AM", end: "01:00 PM", maxPatients: 0 },
-      });
-      handleUpdateActiveChamber("visitingSchedule", "Split Morning & Evening Sessions");
-    }
-  };
-
-  // Toggle Day
-  const handleToggleDay = (day: string) => {
-    setWeeklySchedule((prev) => {
-      const cur = prev[day];
-      if (!cur) return prev;
-      return {
-        ...prev,
-        [day]: { ...cur, isOpen: !cur.isOpen },
       };
+    }
+
+    const newSummary = formatVisitingScheduleSummary(newSched);
+    setWeeklySchedule(newSched);
+    setChambers((prev) => {
+      const copy = [...prev];
+      if (copy[activeIndex]) {
+        copy[activeIndex] = {
+          ...copy[activeIndex],
+          weeklySchedule: newSched,
+          visitingSchedule: newSummary,
+        };
+      }
+      return copy;
     });
   };
 
@@ -226,15 +300,19 @@ export function AvailabilityView() {
       const payload = {
         consultationFeeAed: Number(consultationFeeAed) || 0,
         chamberLocationsSummary: chamberSummary,
-        chambers: chambers.map((c) => ({
-          id: c.id,
-          facilityName: c.facilityName.trim() || "Consultation Chamber",
-          city: c.city.trim() || "",
-          visitingSchedule: c.visitingSchedule?.trim() || "Daily 05:00 AM – 09:00 PM",
-          roomNumber: c.roomNumber?.trim() || "",
-          contactPhone: c.contactPhone?.trim() || "",
-          timezone: c.timezone?.trim() || "Asia/Dubai",
-        })),
+        chambers: chambers.map((c) => {
+          const sched = c.weeklySchedule || weeklySchedule;
+          return {
+            id: c.id,
+            facilityName: c.facilityName.trim() || "Consultation Chamber",
+            city: c.city.trim() || "",
+            visitingSchedule: c.visitingSchedule?.trim() || formatVisitingScheduleSummary(sched),
+            weeklySchedule: sched,
+            roomNumber: c.roomNumber?.trim() || "",
+            contactPhone: c.contactPhone?.trim() || "",
+            timezone: c.timezone?.trim() || "Asia/Dubai",
+          };
+        }),
       };
 
       const res = await updateDoctorProfile(payload);
@@ -825,14 +903,38 @@ export function AvailabilityView() {
 
               {/* 3. Visiting Schedule / Hours */}
               <div>
-                <label style={{ display: "block", fontSize: 11.5, color: "#cbd5e1", marginBottom: 5, fontWeight: 600 }}>
-                  Visiting Schedule / Hours
-                </label>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 5 }}>
+                  <label style={{ fontSize: 11.5, color: "#cbd5e1", fontWeight: 600 }}>
+                    Visiting Schedule / Hours
+                  </label>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const curWeekly = activeChamber.weeklySchedule || weeklySchedule;
+                      const summary = formatVisitingScheduleSummary(curWeekly);
+                      handleUpdateActiveChamber("visitingSchedule", summary);
+                    }}
+                    style={{
+                      background: "none",
+                      border: "none",
+                      color: "#e5b869",
+                      fontSize: 10.5,
+                      fontWeight: 600,
+                      cursor: "pointer",
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: 4,
+                      padding: 0,
+                    }}
+                  >
+                    <RefreshCw size={11} /> Auto-Sync with Matrix
+                  </button>
+                </div>
                 <input
                   type="text"
                   value={activeChamber.visitingSchedule || ""}
                   onChange={(e) => handleUpdateActiveChamber("visitingSchedule", e.target.value)}
-                  placeholder="e.g. Daily 05:00 AM – 09:00 PM"
+                  placeholder="e.g. Tue, Thu: 05:00 PM – 09:00 PM, Sat: 10:00 AM – 04:00 PM"
                   style={{
                     width: "100%",
                     background: "rgba(255,255,255,0.04)",
@@ -1074,13 +1176,7 @@ export function AvailabilityView() {
                       type="text"
                       disabled={!schedule.isOpen}
                       value={schedule.start}
-                      onChange={(e) => {
-                        const val = e.target.value;
-                        setWeeklySchedule((prev) => ({
-                          ...prev,
-                          [day]: { ...prev[day], start: val },
-                        }));
-                      }}
+                      onChange={(e) => handleUpdateScheduleDay(day, { start: e.target.value })}
                       style={{
                         background: "rgba(255,255,255,0.04)",
                         border: "1px solid rgba(255,255,255,0.1)",
@@ -1097,13 +1193,7 @@ export function AvailabilityView() {
                       type="text"
                       disabled={!schedule.isOpen}
                       value={schedule.end}
-                      onChange={(e) => {
-                        const val = e.target.value;
-                        setWeeklySchedule((prev) => ({
-                          ...prev,
-                          [day]: { ...prev[day], end: val },
-                        }));
-                      }}
+                      onChange={(e) => handleUpdateScheduleDay(day, { end: e.target.value })}
                       style={{
                         background: "rgba(255,255,255,0.04)",
                         border: "1px solid rgba(255,255,255,0.1)",
@@ -1123,13 +1213,7 @@ export function AvailabilityView() {
                         max="200"
                         disabled={!schedule.isOpen}
                         value={schedule.maxPatients}
-                        onChange={(e) => {
-                          const maxP = Number(e.target.value);
-                          setWeeklySchedule((prev) => ({
-                            ...prev,
-                            [day]: { ...prev[day], maxPatients: maxP },
-                          }));
-                        }}
+                        onChange={(e) => handleUpdateScheduleDay(day, { maxPatients: Number(e.target.value) })}
                         style={{
                           background: "rgba(255,255,255,0.04)",
                           border: "1px solid rgba(255,255,255,0.1)",
@@ -1204,13 +1288,7 @@ export function AvailabilityView() {
                     type="text"
                     disabled={!schedule.isOpen}
                     value={schedule.start}
-                    onChange={(e) => {
-                      const val = e.target.value;
-                      setWeeklySchedule((prev) => ({
-                        ...prev,
-                        [day]: { ...prev[day], start: val },
-                      }));
-                    }}
+                    onChange={(e) => handleUpdateScheduleDay(day, { start: e.target.value })}
                     style={{
                       width: "100%",
                       background: "rgba(255,255,255,0.04)",
@@ -1232,13 +1310,7 @@ export function AvailabilityView() {
                     type="text"
                     disabled={!schedule.isOpen}
                     value={schedule.end}
-                    onChange={(e) => {
-                      const val = e.target.value;
-                      setWeeklySchedule((prev) => ({
-                        ...prev,
-                        [day]: { ...prev[day], end: val },
-                      }));
-                    }}
+                    onChange={(e) => handleUpdateScheduleDay(day, { end: e.target.value })}
                     style={{
                       width: "100%",
                       background: "rgba(255,255,255,0.04)",
@@ -1263,13 +1335,7 @@ export function AvailabilityView() {
                     max="200"
                     disabled={!schedule.isOpen}
                     value={schedule.maxPatients}
-                    onChange={(e) => {
-                      const maxP = Number(e.target.value);
-                      setWeeklySchedule((prev) => ({
-                        ...prev,
-                        [day]: { ...prev[day], maxPatients: maxP },
-                      }));
-                    }}
+                    onChange={(e) => handleUpdateScheduleDay(day, { maxPatients: Number(e.target.value) })}
                     style={{
                       background: "rgba(255,255,255,0.04)",
                       border: "1px solid rgba(255,255,255,0.12)",

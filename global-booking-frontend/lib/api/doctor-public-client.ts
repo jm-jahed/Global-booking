@@ -1,10 +1,11 @@
-import { getApiBaseUrl } from "./admin-client";
+import { getApiBaseUrl, type DaySchedule } from "./admin-client";
 
 export interface PublicChamberInfo {
   readonly id: string;
   readonly facilityName: string;
   readonly city: string;
   readonly visitingSchedule?: string;
+  readonly weeklySchedule?: Record<string, DaySchedule>;
 }
 
 export interface PublicServiceItem {

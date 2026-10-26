@@ -45,6 +45,11 @@ import {
   recoverGuestDoctorAppointment,
   getDoctorPublicQueueStatus,
 } from "@/lib/api/doctor-public-client";
+import {
+  getDayOfWeekFromDate,
+  getNextDateForDayOfWeek,
+  getWeeklyRosterList,
+} from "@/lib/utils/schedule-formatter";
 
 export interface DoctorPublicBookingNoticeProps {
   readonly slug: string;
@@ -241,6 +246,17 @@ export function DoctorPublicBookingNotice({ slug }: DoctorPublicBookingNoticePro
 
     if (!trimmedPhone || trimmedPhone.length < 5) {
       setBookingError("Please enter a valid contact phone number.");
+      return;
+    }
+
+    const currentChamber =
+      profile?.chambers?.find((c) => c.id === selectedChamberId) || profile?.chambers?.[0];
+    const dayName = getDayOfWeekFromDate(selectedDate);
+    const daySched = dayName && currentChamber?.weeklySchedule ? currentChamber.weeklySchedule[dayName] : undefined;
+    if (daySched && !daySched.isOpen) {
+      setBookingError(
+        `Dr. ${profile?.fullName || "The doctor"} is not practicing on ${dayName}s (${formatDateDDMMYYYY(selectedDate)}) at ${currentChamber?.facilityName || "this chamber"}. Please choose an open practicing day.`
+      );
       return;
     }
 
@@ -493,6 +509,13 @@ export function DoctorPublicBookingNotice({ slug }: DoctorPublicBookingNoticePro
 
   const selectedChamber =
     profile.chambers?.find((c) => c.id === selectedChamberId) || profile.chambers?.[0];
+
+  const selectedDayName = getDayOfWeekFromDate(selectedDate);
+  const chamberWeeklySchedule = selectedChamber?.weeklySchedule;
+  const selectedDaySchedule =
+    selectedDayName && chamberWeeklySchedule ? chamberWeeklySchedule[selectedDayName] : undefined;
+  const isDayOff = selectedDaySchedule !== undefined ? !selectedDaySchedule.isOpen : false;
+  const weeklyRoster = chamberWeeklySchedule ? getWeeklyRosterList(chamberWeeklySchedule) : [];
 
   // Global fee: numeric amount only, no currency suffix (AED). Only shown if doctor configured an amount > 0.
   const rawFeeAmount =
@@ -1404,10 +1427,10 @@ export function DoctorPublicBookingNotice({ slug }: DoctorPublicBookingNoticePro
                     style={{
                       width: "100%",
                       padding: "13px 16px",
-                      background: "#f8faff",
-                      border: "1.5px solid #e0e7ff",
+                      background: isDayOff ? "#fef2f2" : selectedDaySchedule ? "#f0fdf4" : "#f8faff",
+                      border: isDayOff ? "1.5px solid #fecaca" : selectedDaySchedule ? "1.5px solid #bbf7d0" : "1.5px solid #e0e7ff",
                       borderRadius: 12,
-                      color: "#4338ca",
+                      color: isDayOff ? "#b91c1c" : selectedDaySchedule ? "#15803d" : "#4338ca",
                       fontSize: 13,
                       fontWeight: 700,
                       display: "flex",
@@ -1415,25 +1438,96 @@ export function DoctorPublicBookingNotice({ slug }: DoctorPublicBookingNoticePro
                       gap: 8,
                       boxSizing: "border-box",
                       minHeight: 48,
+                      transition: "all 0.2s ease",
                     }}
                   >
-                    <Clock size={16} color="#4f46e5" style={{ flexShrink: 0 }} />
+                    {isDayOff ? (
+                      <AlertCircle size={16} color="#ef4444" style={{ flexShrink: 0 }} />
+                    ) : (
+                      <Clock size={16} color={selectedDaySchedule ? "#16a34a" : "#4f46e5"} style={{ flexShrink: 0 }} />
+                    )}
                     <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                      {selectedChamber?.visitingSchedule || "Daily 05:00 PM – 09:00 PM"}
+                      {isDayOff
+                        ? `${selectedDayName}: Closed (Off-Day)`
+                        : selectedDaySchedule
+                        ? `${selectedDayName}: ${selectedDaySchedule.start} – ${selectedDaySchedule.end}`
+                        : selectedChamber?.visitingSchedule || "Daily 05:00 PM – 09:00 PM"}
                     </span>
                   </div>
                 </div>
               </div>
 
+              {/* Off-Day Alert Notice Banner with Quick-Select Options */}
+              {isDayOff && (
+                <div
+                  style={{
+                    padding: "13px 16px",
+                    background: "#fef2f2",
+                    border: "1.5px solid #fecaca",
+                    borderRadius: 14,
+                    display: "flex",
+                    alignItems: "flex-start",
+                    gap: 12,
+                    boxShadow: "0 4px 12px rgba(239, 68, 68, 0.08)",
+                  }}
+                >
+                  <AlertCircle size={20} color="#dc2626" style={{ flexShrink: 0, marginTop: 1 }} />
+                  <div style={{ flex: 1 }}>
+                    <strong style={{ fontSize: 13.5, color: "#991b1b", display: "block" }}>
+                      Doctor is Not Practicing on {selectedDayName}s
+                    </strong>
+                    <p style={{ margin: "3px 0 8px", color: "#b91c1c", fontSize: 12.5, lineHeight: 1.45 }}>
+                      Dr. {profile.fullName} has marked {selectedDayName} as an <strong>OFF-DAY</strong> at {selectedChamber?.facilityName || "this chamber"}. Consultation appointments cannot be booked on off-duty days.
+                    </p>
+                    {chamberWeeklySchedule && (
+                      <div style={{ display: "flex", gap: 6, flexWrap: "wrap", alignItems: "center" }}>
+                        <span style={{ fontSize: 11.5, fontWeight: 700, color: "#7f1d1d" }}>
+                          Choose Next Open Day:
+                        </span>
+                        {Object.entries(chamberWeeklySchedule)
+                          .filter(([_, s]) => s.isOpen)
+                          .map(([openDay, s]) => (
+                            <button
+                              key={openDay}
+                              type="button"
+                              onClick={() => {
+                                const nextDate = getNextDateForDayOfWeek(openDay, selectedDate);
+                                if (nextDate) setSelectedDate(nextDate);
+                              }}
+                              style={{
+                                background: "#ffffff",
+                                border: "1px solid #f87171",
+                                color: "#b91c1c",
+                                padding: "4px 10px",
+                                borderRadius: 8,
+                                fontSize: 11.5,
+                                fontWeight: 700,
+                                cursor: "pointer",
+                                display: "inline-flex",
+                                alignItems: "center",
+                                gap: 4,
+                                boxShadow: "0 1px 3px rgba(239, 68, 68, 0.1)",
+                              }}
+                            >
+                              <span>👉 {openDay}</span>
+                              <span style={{ fontSize: 10, color: "#64748b" }}>({s.start} - {s.end})</span>
+                            </button>
+                          ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
               {/* Submit Action Button */}
               <button
                 type="submit"
-                disabled={isSubmitting}
+                disabled={isSubmitting || isDayOff}
                 style={{
                   marginTop: 6,
                   padding: "15px 24px",
                   borderRadius: 14,
-                  background: isSubmitting
+                  background: isSubmitting || isDayOff
                     ? "#94a3b8"
                     : "linear-gradient(135deg, #4338ca 0%, #6366f1 100%)",
                   border: "none",
@@ -1441,8 +1535,8 @@ export function DoctorPublicBookingNotice({ slug }: DoctorPublicBookingNoticePro
                   fontSize: 15,
                   fontWeight: 800,
                   letterSpacing: "0.01em",
-                  cursor: isSubmitting ? "not-allowed" : "pointer",
-                  boxShadow: "0 10px 25px rgba(79, 70, 229, 0.35)",
+                  cursor: isSubmitting || isDayOff ? "not-allowed" : "pointer",
+                  boxShadow: isSubmitting || isDayOff ? "none" : "0 10px 25px rgba(79, 70, 229, 0.35)",
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
@@ -1819,6 +1913,38 @@ export function DoctorPublicBookingNotice({ slug }: DoctorPublicBookingNoticePro
                       {selectedChamber?.visitingSchedule ||
                         "Daily Evening 6:00 PM - 10:00 PM (Except Friday)"}
                     </span>
+                    {weeklyRoster.length > 0 && (
+                      <div
+                        style={{
+                          marginTop: 10,
+                          display: "grid",
+                          gridTemplateColumns: "repeat(7, 1fr)",
+                          gap: 4,
+                        }}
+                      >
+                        {weeklyRoster.map((item) => (
+                          <div
+                            key={item.day}
+                            title={`${item.day}: ${item.hours}`}
+                            style={{
+                              textAlign: "center",
+                              padding: "4px 2px",
+                              borderRadius: 6,
+                              fontSize: 10,
+                              fontWeight: 700,
+                              background: item.isOpen ? "rgba(16, 185, 129, 0.12)" : "rgba(239, 68, 68, 0.08)",
+                              color: item.isOpen ? "#059669" : "#94a3b8",
+                              border: item.isOpen
+                                ? "1px solid rgba(16, 185, 129, 0.3)"
+                                : "1px solid rgba(239, 68, 68, 0.15)",
+                            }}
+                          >
+                            <div>{item.abbr}</div>
+                            <div style={{ fontSize: 8.5, marginTop: 1 }}>{item.isOpen ? "OPEN" : "OFF"}</div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 </div>
 
