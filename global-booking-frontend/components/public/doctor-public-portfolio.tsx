@@ -2101,7 +2101,7 @@ export function DoctorPublicPortfolio({
                       boxShadow: "0 8px 24px rgba(99, 102, 241, 0.05)",
                     }}
                   >
-                    <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 14 }}>
+                    <div style={{ display: "flex", alignItems: "flex-start", gap: 12, marginBottom: 14 }}>
                       <div
                         style={{
                           width: 42,
@@ -2111,15 +2111,23 @@ export function DoctorPublicPortfolio({
                           display: "grid",
                           placeItems: "center",
                           color: "#4f46e5",
+                          flexShrink: 0,
                         }}
                       >
                         <Building2 size={20} />
                       </div>
-                      <div>
+                      <div style={{ flex: 1, minWidth: 0 }}>
                         <h3 style={{ fontSize: 17, fontWeight: 700, color: "#1e1b4b", margin: 0 }}>
                           {ch.facilityName}
                         </h3>
-                        <div style={{ fontSize: 13, color: "#64748b" }}>{ch.city}</div>
+                        {ch.address ? (
+                          <div style={{ display: "flex", alignItems: "flex-start", gap: 6, fontSize: 13, color: "#475569", marginTop: 4, lineHeight: 1.4 }}>
+                            <MapPin size={14} color="#4f46e5" style={{ flexShrink: 0, marginTop: 2 }} />
+                            <span>{ch.address}{ch.city ? `, ${ch.city}` : ""}</span>
+                          </div>
+                        ) : (
+                          ch.city && <div style={{ fontSize: 13, color: "#64748b", marginTop: 2 }}>{ch.city}</div>
+                        )}
                       </div>
                     </div>
 

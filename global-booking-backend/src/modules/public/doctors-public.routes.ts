@@ -9,6 +9,7 @@ export interface PublicChamberInfo {
   readonly id: string;
   readonly facilityName: string;
   readonly city: string;
+  readonly address?: string | undefined;
   readonly visitingSchedule?: string | undefined;
   readonly weeklySchedule?: Record<string, DaySchedule> | undefined;
 }
@@ -254,6 +255,7 @@ export async function registerDoctorPublicRoutes(app: FastifyInstance): Promise<
               id: String(ch.id),
               facilityName: String(ch.facilityName),
               city: String(ch.city),
+              ...(ch.address ? { address: String(ch.address) } : {}),
               ...(ch.visitingSchedule ? { visitingSchedule: String(ch.visitingSchedule) } : {}),
               ...(ch.weeklySchedule ? { weeklySchedule: ch.weeklySchedule } : {}),
             }))

@@ -1002,6 +1002,15 @@ export function DoctorPublicBookingNotice({ slug }: DoctorPublicBookingNoticePro
                     {selectedChamber?.facilityName || profile.chamberLocationsSummary || "Main Chamber"}
                   </strong>
                 </span>
+                {(selectedChamber?.address || selectedChamber?.city) && (
+                  <>
+                    <span>•</span>
+                    <span style={{ display: "flex", alignItems: "center", gap: 5 }}>
+                      <MapPin size={14} color={isDark ? "#818cf8" : "#4f46e5"} />
+                      <span>{selectedChamber.address ? `${selectedChamber.address}${selectedChamber.city ? `, ${selectedChamber.city}` : ""}` : selectedChamber.city}</span>
+                    </span>
+                  </>
+                )}
                 <span>•</span>
                 <span style={{ display: "flex", alignItems: "center", gap: 5 }}>
                   <Clock size={14} color={isDark ? "#818cf8" : "#4f46e5"} />
@@ -1412,7 +1421,7 @@ export function DoctorPublicBookingNotice({ slug }: DoctorPublicBookingNoticePro
                     >
                       {profile.chambers.map((c) => (
                         <option key={c.id} value={c.id} style={{ background: isDark ? "#0b1325" : "#ffffff", color: isDark ? "#ffffff" : "#1e1b4b" }}>
-                          {c.facilityName} ({c.city})
+                          {c.facilityName}{c.address ? ` — ${c.address}` : (c.city ? ` (${c.city})` : "")}
                         </option>
                       ))}
                     </select>
@@ -1896,6 +1905,15 @@ export function DoctorPublicBookingNotice({ slug }: DoctorPublicBookingNoticePro
                   </strong>
                 </div>
 
+                {(selectedChamber?.address || selectedChamber?.city) && (
+                  <div style={{ display: "flex", justifyContent: "space-between", color: th.textSecondary }}>
+                    <span>{locale === "bn" ? "চেম্বারের ঠিকানা:" : "Chamber Address:"}</span>
+                    <strong style={{ color: th.textPrimary, textAlign: isRtl ? "left" : "right", maxWidth: "60%" }}>
+                      {selectedChamber?.address ? `${selectedChamber.address}${selectedChamber.city ? `, ${selectedChamber.city}` : ""}` : selectedChamber?.city}
+                    </strong>
+                  </div>
+                )}
+
                 <div style={{ display: "flex", justifyContent: "space-between", color: th.textSecondary }}>
                   <span>{tAppointments("timeLabelVoucher", undefined, "Time:")}</span>
                   <strong style={{ color: th.textPrimary }}>
@@ -2142,12 +2160,16 @@ export function DoctorPublicBookingNotice({ slug }: DoctorPublicBookingNoticePro
                   <MapPin size={20} color={isDark ? "#818cf8" : "#4f46e5"} style={{ flexShrink: 0, marginTop: 2 }} />
                   <div>
                     <strong style={{ fontSize: 13.5, color: th.textPrimary, display: "block" }}>
-                      {tAppointments("locationRoomHeading", undefined, "Location & Room")}
+                      {locale === "bn" ? "অবস্থান ও চেম্বারের ঠিকানা" : tAppointments("locationRoomHeading", undefined, "Location & Address")}
                     </strong>
-                    <span style={{ fontSize: 12.5, color: th.textMuted, marginTop: 2, display: "block" }}>
+                    <span style={{ fontSize: 13, color: th.textPrimary, marginTop: 2, display: "block", fontWeight: 700 }}>
                       {selectedChamber?.facilityName || "Main Specialized Chamber"}
-                      {selectedChamber?.city ? `, ${selectedChamber.city}` : ""}
                     </span>
+                    {(selectedChamber?.address || selectedChamber?.city) && (
+                      <span style={{ fontSize: 12.5, color: th.textMuted, marginTop: 2, display: "block" }}>
+                        {selectedChamber.address ? `${selectedChamber.address}${selectedChamber.city ? `, ${selectedChamber.city}` : ""}` : selectedChamber.city}
+                      </span>
+                    )}
                   </div>
                 </div>
 

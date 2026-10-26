@@ -378,6 +378,7 @@ export function DoctorSettingsEditor() {
         id: `CH-${Date.now().toString().slice(-4)}`,
         facilityName: "",
         city: "",
+        address: "",
         visitingSchedule: "Mon - Thu: 5:00 PM - 9:00 PM",
         roomNumber: "",
         contactPhone: "",
@@ -2316,6 +2317,27 @@ export function DoctorSettingsEditor() {
                             value={ch.facilityName}
                             onChange={(e) => handleUpdateChamber(idx, "facilityName", e.target.value)}
                             placeholder="e.g. Mediclinic City Hospital"
+                            style={{
+                              width: "100%",
+                              background: "rgba(255,255,255,0.04)",
+                              border: "1px solid rgba(255,255,255,0.1)",
+                              borderRadius: 6,
+                              padding: "7px 10px",
+                              color: "#fff",
+                              fontSize: 12,
+                            }}
+                          />
+                        </div>
+
+                        <div>
+                          <label style={{ display: "block", fontSize: 11, color: "#94a3b8", marginBottom: 4 }}>
+                            Chamber Address / Street
+                          </label>
+                          <input
+                            type="text"
+                            value={ch.address || ""}
+                            onChange={(e) => handleUpdateChamber(idx, "address", e.target.value)}
+                            placeholder="e.g. 123 Health Ave, Sector 7"
                             style={{
                               width: "100%",
                               background: "rgba(255,255,255,0.04)",

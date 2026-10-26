@@ -4,6 +4,7 @@ export interface PublicChamberInfo {
   readonly id: string;
   readonly facilityName: string;
   readonly city: string;
+  readonly address?: string;
   readonly visitingSchedule?: string;
   readonly weeklySchedule?: Record<string, DaySchedule>;
 }
