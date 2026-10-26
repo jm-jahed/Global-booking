@@ -36,6 +36,7 @@ import {
   setStoredAccountType,
   getStoredPortalUser,
   getAdminMe,
+  getDoctorProfile,
 } from "@/lib/api/admin-client";
 import { DoctorQrModal } from "./qr-code/doctor-qr-modal";
 import { useTranslation } from "@/lib/i18n/i18n-context";
@@ -379,7 +380,11 @@ export function PortalSidebar({
       getAdminMe()
         .then((res) => {
           if (res?.user) {
-            setCurrentUser(res.user);
+            setCurrentUser((prev: any) => ({
+              ...(prev || {}),
+              ...res.user,
+              avatar: res.user.avatar || prev?.avatar,
+            }));
             if (res.user.role === "HOSPITAL") {
               setAccountType("HOSPITAL");
             } else if (res.user.role === "STAFF") {
@@ -390,8 +395,48 @@ export function PortalSidebar({
           }
         })
         .catch(() => {});
+
+      // For Doctor accounts, directly synchronize from persistent doctor profile
+      const currentType = propAccountType || getStoredAccountType();
+      if (!currentType || currentType === "DOCTOR") {
+        getDoctorProfile()
+          .then((res) => {
+            if (res?.doctor) {
+              setCurrentUser((prev: any) => ({
+                ...(prev || {}),
+                ...res.doctor,
+                name: res.doctor.fullName || prev?.name,
+                avatar: res.doctor.avatar || prev?.avatar,
+              }));
+            }
+          })
+          .catch(() => {});
+      }
     }
   }, [propAccountType, propUser]);
+
+  // Real-time synchronization when profile is updated from Settings or other tabs
+  useEffect(() => {
+    const handleSync = (e?: any) => {
+      const updated = e?.detail || getStoredPortalUser();
+      if (updated) {
+        setCurrentUser((prev: any) => ({
+          ...(prev || {}),
+          ...updated,
+          avatar: updated.avatar || prev?.avatar,
+        }));
+      }
+    };
+
+    window.addEventListener("portal-user-updated", handleSync);
+    window.addEventListener("storage", handleSync);
+    window.addEventListener("global-booking-updated", handleSync);
+    return () => {
+      window.removeEventListener("portal-user-updated", handleSync);
+      window.removeEventListener("storage", handleSync);
+      window.removeEventListener("global-booking-updated", handleSync);
+    };
+  }, []);
 
   const handleLogout = async () => {
     try {

@@ -30,6 +30,7 @@ import {
   Sparkles,
   Layers,
   CheckCircle2,
+  X,
 } from "lucide-react";
 import {
   getDoctorProfile,
@@ -56,6 +57,7 @@ export function DoctorSettingsEditor() {
   const [loadError, setLoadError] = useState<string | null>(null);
   const [saveError, setSaveError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
 
   // Profile Form States
   const [profile, setProfile] = useState<DoctorProfileRecord | null>(null);
@@ -506,17 +508,20 @@ export function DoctorSettingsEditor() {
         if (typeof window !== "undefined") {
           try {
             const currentStored = JSON.parse(localStorage.getItem("gb_portal_user") || "{}");
-            localStorage.setItem(
-              "gb_portal_user",
-              JSON.stringify({
-                ...currentStored,
-                ...res.doctor,
-                name: res.doctor.fullName || currentStored.name,
-              })
-            );
+            const updatedUser = {
+              ...currentStored,
+              ...res.doctor,
+              name: res.doctor.fullName || currentStored.name,
+              avatar: res.doctor.avatar,
+            };
+            localStorage.setItem("gb_portal_user", JSON.stringify(updatedUser));
+            window.dispatchEvent(new Event("storage"));
+            window.dispatchEvent(new CustomEvent("portal-user-updated", { detail: updatedUser }));
+            window.dispatchEvent(new Event("global-booking-updated"));
           } catch {}
         }
         setSuccessMessage("All profile settings and portfolio sections saved successfully to database!");
+        setShowSuccessModal(true);
         setTimeout(() => setSuccessMessage(null), 6000);
       }
     } catch (err) {
@@ -2944,6 +2949,278 @@ export function DoctorSettingsEditor() {
           </div>
         </div>
       </form>
+
+      {/* =========================================================================
+          PREMIUM CONFIRMATION POPUP MODAL
+          ========================================================================= */}
+      {showSuccessModal && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          style={{
+            position: "fixed",
+            inset: 0,
+            zIndex: 99999,
+            backgroundColor: "rgba(3, 7, 18, 0.8)",
+            backdropFilter: "blur(14px)",
+            WebkitBackdropFilter: "blur(14px)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            padding: 20,
+          }}
+          onClick={() => setShowSuccessModal(false)}
+        >
+          <div
+            style={{
+              position: "relative",
+              maxWidth: 520,
+              width: "100%",
+              background: "linear-gradient(145deg, #0f172a 0%, #070c14 100%)",
+              borderRadius: 24,
+              border: "1px solid rgba(229, 184, 105, 0.45)",
+              boxShadow: "0 25px 60px -15px rgba(0, 0, 0, 0.95), 0 0 50px rgba(229, 184, 105, 0.2)",
+              padding: "36px 30px 28px",
+              textAlign: "center",
+              overflow: "hidden",
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Top gold ambient glow */}
+            <div
+              style={{
+                position: "absolute",
+                top: -60,
+                left: "50%",
+                transform: "translateX(-50%)",
+                width: 240,
+                height: 120,
+                background: "radial-gradient(circle, rgba(229, 184, 105, 0.28) 0%, transparent 70%)",
+                pointerEvents: "none",
+              }}
+            />
+
+            {/* Close Button */}
+            <button
+              type="button"
+              onClick={() => setShowSuccessModal(false)}
+              aria-label="Close modal"
+              style={{
+                position: "absolute",
+                top: 18,
+                right: 18,
+                background: "rgba(255, 255, 255, 0.06)",
+                border: "1px solid rgba(255, 255, 255, 0.12)",
+                borderRadius: "50%",
+                width: 34,
+                height: 34,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                color: "#94a3b8",
+                cursor: "pointer",
+                transition: "all 0.2s",
+              }}
+            >
+              <X size={18} />
+            </button>
+
+            {/* Glowing Icon Badge */}
+            <div
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                justifyContent: "center",
+                width: 76,
+                height: 76,
+                borderRadius: "50%",
+                background: "linear-gradient(135deg, rgba(229, 184, 105, 0.22) 0%, rgba(229, 184, 105, 0.06) 100%)",
+                border: "2px solid rgba(229, 184, 105, 0.5)",
+                boxShadow: "0 0 30px rgba(229, 184, 105, 0.28)",
+                marginBottom: 20,
+              }}
+            >
+              <CheckCircle2 size={42} color="#e5b869" />
+            </div>
+
+            {/* Modal Heading */}
+            <h3
+              style={{
+                margin: "0 0 6px",
+                fontSize: 22,
+                fontWeight: 800,
+                color: "#ffffff",
+                letterSpacing: "-0.01em",
+              }}
+            >
+              প্রোফাইল সফলভাবে সংরক্ষিত হয়েছে!
+            </h3>
+            <p
+              style={{
+                margin: "0 0 22px",
+                fontSize: 13,
+                color: "#94a3b8",
+                lineHeight: 1.5,
+              }}
+            >
+              Profile Settings, Photos & Portfolio Synchronized Successfully
+            </p>
+
+            {/* Doctor Profile Card Inside Modal */}
+            <div
+              style={{
+                background: "rgba(255, 255, 255, 0.03)",
+                border: "1px solid rgba(229, 184, 105, 0.25)",
+                borderRadius: 16,
+                padding: "16px 18px",
+                marginBottom: 24,
+                display: "flex",
+                alignItems: "center",
+                gap: 16,
+                textAlign: "left",
+              }}
+            >
+              <div
+                style={{
+                  position: "relative",
+                  width: 62,
+                  height: 62,
+                  borderRadius: "50%",
+                  overflow: "hidden",
+                  border: "2.5px solid #e5b869",
+                  boxShadow: "0 4px 14px rgba(229, 184, 105, 0.35)",
+                  flexShrink: 0,
+                  backgroundColor: "#1e293b",
+                }}
+              >
+                <img
+                  src={avatar?.trim() || "https://images.unsplash.com/photo-1622253692010-333f2da6031d?auto=format&fit=crop&q=80&w=400"}
+                  alt={fullName || "Doctor Profile"}
+                  style={{
+                    width: "100%",
+                    height: "100%",
+                    objectFit: "cover",
+                    objectPosition: "top center",
+                  }}
+                  onError={(e) => {
+                    (e.target as HTMLImageElement).src =
+                      "https://images.unsplash.com/photo-1622253692010-333f2da6031d?auto=format&fit=crop&q=80&w=400";
+                  }}
+                />
+              </div>
+
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div
+                  style={{
+                    fontSize: 16,
+                    fontWeight: 700,
+                    color: "#f8fafc",
+                    whiteSpace: "nowrap",
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                  }}
+                >
+                  {fullName || "Doctor"}
+                </div>
+                <div
+                  style={{
+                    fontSize: 13,
+                    color: "#e5b869",
+                    fontWeight: 500,
+                    whiteSpace: "nowrap",
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                    marginTop: 2,
+                  }}
+                >
+                  {specialty || "Medical Specialist"}
+                </div>
+                <div
+                  style={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: 6,
+                    fontSize: 11,
+                    color: "#34d399",
+                    fontWeight: 600,
+                    marginTop: 4,
+                  }}
+                >
+                  <span
+                    style={{
+                      width: 6,
+                      height: 6,
+                      borderRadius: "50%",
+                      backgroundColor: "#10b981",
+                      boxShadow: "0 0 6px #10b981",
+                    }}
+                  />
+                  <span>Sidebar, Topbar & Live Portfolio Synchronized</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Action Buttons */}
+            <div
+              style={{
+                display: "flex",
+                flexDirection: "row",
+                gap: 12,
+                justifyContent: "center",
+              }}
+            >
+              <button
+                type="button"
+                onClick={() => {
+                  const targetUrl = `/${slug}`;
+                  window.open(targetUrl, "_blank", "noopener,noreferrer");
+                }}
+                style={{
+                  flex: 1,
+                  display: "inline-flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: 8,
+                  background: "linear-gradient(135deg, #e5b869 0%, #c49a45 100%)",
+                  color: "#0b1325",
+                  fontWeight: 800,
+                  fontSize: 14,
+                  padding: "13px 20px",
+                  borderRadius: 12,
+                  border: "none",
+                  cursor: "pointer",
+                  boxShadow: "0 4px 14px rgba(229, 184, 105, 0.35)",
+                  transition: "all 0.2s",
+                }}
+              >
+                <ExternalLink size={16} />
+                <span>লাইভ প্রোফাইল দেখুন</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setShowSuccessModal(false)}
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  background: "rgba(255, 255, 255, 0.06)",
+                  border: "1px solid rgba(255, 255, 255, 0.14)",
+                  color: "#e2e8f0",
+                  fontWeight: 600,
+                  fontSize: 14,
+                  padding: "13px 24px",
+                  borderRadius: 12,
+                  cursor: "pointer",
+                  transition: "all 0.2s",
+                }}
+              >
+                <span>ঠিক আছে / সম্পন্ন</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

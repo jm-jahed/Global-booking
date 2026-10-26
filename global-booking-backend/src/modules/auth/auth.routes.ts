@@ -427,7 +427,9 @@ export async function registerAuthRoutes(app: FastifyInstance): Promise<void> {
 
       if (session.role === "DOCTOR") {
         const docCol = mongoAdapter.getDoctorCollection();
-        const doc = await docCol.findOne({ id: session.adminId });
+        const doc = await docCol.findOne({
+          $or: [{ id: session.adminId }, { doctorId: session.adminId }, { email: session.email }],
+        });
 
         if (!doc || doc.accountStatus === "SUSPENDED") {
           return reply.status(401).send({

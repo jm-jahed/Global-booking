@@ -120,7 +120,7 @@ export async function registerDoctorPortalRoutes(app: FastifyInstance): Promise<
       const cleanDoctorId = targetDoctorId.trim();
       const docCol = mongoAdapter.getDoctorCollection();
       const doctor = await docCol.findOne({
-        $or: [{ id: cleanDoctorId }, { doctorId: cleanDoctorId }],
+        $or: [{ id: cleanDoctorId }, { doctorId: cleanDoctorId }, { email: session.email }],
       });
 
       if (!doctor) {
@@ -201,7 +201,7 @@ export async function registerDoctorPortalRoutes(app: FastifyInstance): Promise<
       const cleanAdminId = session.adminId.trim();
       const docCol = mongoAdapter.getDoctorCollection();
       const currentDoctor = await docCol.findOne({
-        $or: [{ id: cleanAdminId }, { doctorId: cleanAdminId }],
+        $or: [{ id: cleanAdminId }, { doctorId: cleanAdminId }, { email: session.email }],
       });
 
       if (!currentDoctor) {
@@ -655,6 +655,29 @@ export async function registerDoctorPortalRoutes(app: FastifyInstance): Promise<
         { id: currentDoctor.id },
         { $set: updates },
       );
+
+      // Also sync avatar and name to adminUsers collection if present
+      try {
+        const adminCol = mongoAdapter.getAdminCollection();
+        const adminUpdates: Record<string, unknown> = {};
+        if (updates.avatar !== undefined) adminUpdates.avatar = updates.avatar;
+        if (updates.fullName !== undefined) adminUpdates.name = updates.fullName;
+        if (Object.keys(adminUpdates).length > 0) {
+          await adminCol.updateMany(
+            {
+              $or: [
+                { id: session.adminId },
+                { email: session.email },
+                { doctorId: currentDoctor.doctorId },
+                { id: currentDoctor.id },
+              ],
+            },
+            { $set: adminUpdates },
+          );
+        }
+      } catch {
+        // Non-fatal if adminUsers collection doesn't have a matching record
+      }
 
       const refreshedDoctor = await docCol.findOne({ id: currentDoctor.id });
 

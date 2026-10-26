@@ -15,7 +15,7 @@ import {
   Globe,
   RotateCcw,
 } from "lucide-react";
-import { getStoredPortalUser, getStoredAccountType, getAdminMe, getDoctorNotifications } from "@/lib/api/admin-client";
+import { getStoredPortalUser, getStoredAccountType, getAdminMe, getDoctorNotifications, getDoctorProfile } from "@/lib/api/admin-client";
 import {
   getStoredPortalDate,
   setStoredPortalDate,
@@ -97,12 +97,12 @@ export function PortalTopBar({
     getAdminMe()
       .then((res) => {
         if (res?.user) {
-          setUserProfile({
+          setUserProfile((prev) => ({
             name:
               res.user.name ||
               res.user.fullName ||
               res.user.institutionName ||
-              (res.user.role === "HOSPITAL" ? "Hospital Facility" : "Dr. Rashid Al Mamun"),
+              (res.user.role === "HOSPITAL" ? "Hospital Facility" : prev.name),
             role:
               res.user.role === "HOSPITAL"
                 ? "Hospital / Clinical Facility"
@@ -110,14 +110,50 @@ export function PortalTopBar({
                 ? "Staff & Receptionist"
                 : "Licensed Physician",
             email: res.user.email,
-            avatar: res.user.avatar || "https://images.unsplash.com/photo-1622253692010-333f2da6031d?auto=format&fit=crop&w=120&q=80",
-          });
+            avatar: res.user.avatar || prev.avatar,
+          }));
         }
       })
-      .catch(() => {
-        // Retain initial profile
-      });
+      .catch(() => {});
+
+    // For Doctor accounts, directly synchronize from persistent doctor profile
+    if (!accountType || accountType === "DOCTOR") {
+      getDoctorProfile()
+        .then((res) => {
+          if (res?.doctor) {
+            setUserProfile((prev) => ({
+              ...prev,
+              name: res.doctor.fullName || prev.name,
+              avatar: res.doctor.avatar || prev.avatar,
+            }));
+          }
+        })
+        .catch(() => {});
+    }
   }, [propUser, propAccountType]);
+
+  // Real-time synchronization when profile is updated from Settings or other tabs
+  useEffect(() => {
+    const handleSync = (e?: any) => {
+      const updated = e?.detail || getStoredPortalUser();
+      if (updated) {
+        setUserProfile((prev) => ({
+          ...prev,
+          name: updated.name || updated.fullName || updated.institutionName || prev.name,
+          avatar: updated.avatar || prev.avatar,
+        }));
+      }
+    };
+
+    window.addEventListener("portal-user-updated", handleSync);
+    window.addEventListener("storage", handleSync);
+    window.addEventListener("global-booking-updated", handleSync);
+    return () => {
+      window.removeEventListener("portal-user-updated", handleSync);
+      window.removeEventListener("storage", handleSync);
+      window.removeEventListener("global-booking-updated", handleSync);
+    };
+  }, []);
 
   const [selectedDateKey, setSelectedDateKey] = useState<string>(() => getStoredPortalDate());
   const [isDateDropdownOpen, setIsDateDropdownOpen] = useState(false);

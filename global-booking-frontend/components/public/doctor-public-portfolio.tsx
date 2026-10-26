@@ -801,7 +801,6 @@ export function DoctorPublicPortfolio({
                 marginBottom: 20,
               }}
             >
-              <Sparkles size={14} color="#4f46e5" />
               <span>{profile.customTitle || `${profile.specialty} Specialist Practice`}</span>
             </div>
 
@@ -920,7 +919,7 @@ export function DoctorPublicPortfolio({
             </div>
           </div>
 
-          {/* Right Column: Circular Backdrop with Doctor Image & Floating Badges (Match Mockup) */}
+          {/* Right Column: Circular Doctor Frame & Floating Badges */}
           <div
             style={{
               position: "relative",
@@ -930,30 +929,21 @@ export function DoctorPublicPortfolio({
               minHeight: "clamp(320px, 50vw, 480px)",
             }}
           >
-            {/* The Signature Lavender Organic Circle Backdrop */}
+            {/* The Signature Lavender Organic Circle Container with Centered Image */}
             <div
               style={{
-                width: "clamp(240px, 80vw, 480px)",
-                height: "clamp(240px, 80vw, 480px)",
+                width: "clamp(240px, 42vw, 440px)",
+                height: "clamp(240px, 42vw, 440px)",
                 maxWidth: "100%",
                 borderRadius: "50%",
                 background: "linear-gradient(145deg, #c7d2fe 0%, #e0e7ff 50%, #f1f5f9 100%)",
-                boxShadow: "0 24px 60px rgba(99, 102, 241, 0.2)",
-                position: "absolute",
-                zIndex: 1,
-              }}
-            />
-
-            {/* Doctor Photo */}
-            <div
-              style={{
+                boxShadow: "0 24px 60px rgba(99, 102, 241, 0.22), inset 0 0 0 3px rgba(255, 255, 255, 0.6)",
+                border: "4px solid #ffffff",
                 position: "relative",
-                zIndex: 2,
-                width: "clamp(220px, 75vw, 420px)",
-                height: "clamp(260px, 85vw, 500px)",
-                maxWidth: "100%",
+                zIndex: 1,
+                overflow: "hidden",
                 display: "flex",
-                alignItems: "flex-end",
+                alignItems: "center",
                 justifyContent: "center",
               }}
             >
@@ -962,27 +952,23 @@ export function DoctorPublicPortfolio({
                   src={profile.avatar}
                   alt={profile.fullName}
                   style={{
-                    maxHeight: "100%",
-                    maxWidth: "100%",
-                    objectFit: "contain",
-                    borderRadius: "0 0 40px 40px",
-                    filter: "drop-shadow(0 20px 30px rgba(15, 23, 42, 0.25))",
+                    width: "100%",
+                    height: "100%",
+                    objectFit: "cover",
+                    objectPosition: "top center",
                   }}
                 />
               ) : (
                 <div
                   style={{
-                    width: 260,
-                    height: 260,
-                    borderRadius: "50%",
+                    width: "100%",
+                    height: "100%",
                     background: "linear-gradient(135deg, #4338ca 0%, #6366f1 100%)",
                     display: "grid",
                     placeItems: "center",
                     color: "#ffffff",
                     fontSize: 72,
                     fontWeight: 900,
-                    boxShadow: "0 16px 40px rgba(79, 70, 229, 0.35)",
-                    marginBottom: 40,
                   }}
                 >
                   {doctorInitials}
